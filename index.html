@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Bandiecoot</title>
+<title>Bandiecoot · Destruction Hip Core</title>
 <meta name="theme-color" content="#0f0e0c">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -12,10 +12,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.min.js"></script>
 <script src="/config.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Press+Start+2P&family=Special+Elite&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Press+Start+2P&family=Rubik+Distressed&family=Special+Elite&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#0f0e0c; --ink:#151412; --paper:#ebe5d6; --paper2:#d9d1bd; --red:#e2402b; --tape:#f0c53a;
+  --bg:#0f0e0c; --ink:#151412; --paper:#ebe5d6; --paper2:#d9d1bd; --red:#2e3274; --tape:#e2c44c; --mustard:#e2c44c; --navy:#2e3274;
   --mut:#8a8476; --l0:#e2402b; --l1:#f0c53a; --l2:#3cc4cc; --l3:#b5ef3a;
 }
 *{box-sizing:border-box}
@@ -28,7 +28,7 @@ header{position:relative;padding:18px 0 6px}
 .logo{font-family:Anton,Impact,sans-serif;font-size:clamp(46px,14vw,88px);line-height:.88;letter-spacing:1px;text-transform:uppercase;margin:0;color:var(--paper);text-shadow:4px 4px 0 var(--red)}
 .tagline{font-family:'Special Elite',monospace;color:var(--mut);margin:10px 0 0}
 .tape{display:inline-block;background:var(--tape);color:var(--ink);font-family:'Special Elite',monospace;padding:3px 10px;box-shadow:0 2px 0 rgba(0,0,0,.45)}
-header .tape{position:absolute;right:0;top:12px;transform:rotate(5deg);font-size:13px}
+header .tape{transform:rotate(-2deg);font-size:12px}
 nav{display:flex;gap:10px;margin:14px 0 16px;position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0}
 nav button{flex:1}
 button{font-family:Anton,Impact,sans-serif;font-size:17px;letter-spacing:1px;text-transform:uppercase;background:var(--paper);color:var(--ink);border:2px solid var(--ink);padding:10px 12px;cursor:pointer;box-shadow:3px 3px 0 var(--red);border-radius:2px;touch-action:manipulation}
@@ -248,7 +248,7 @@ nav button{font-size:13px;padding:9px 1px;letter-spacing:.3px}
 .gbox{width:100%;max-width:360px;margin:auto}
 .gHead{text-align:center;margin-bottom:22px;position:relative}
 .gTape{display:inline-block;transform:rotate(-3deg);font-size:12px;margin-bottom:12px}
-.gLogo{font-size:clamp(60px,19vw,84px);text-align:center;line-height:.86}
+.gSticker{margin:0 auto}
 .gTag{font-family:'Special Elite',monospace;color:var(--mut);font-size:13px;margin:12px 0 0}
 .gCard{padding:22px 20px 20px;margin:0}
 .gH{font-family:Anton,Impact,sans-serif;font-size:26px;text-transform:uppercase;margin:0 0 14px;letter-spacing:.5px;line-height:1}
@@ -269,8 +269,8 @@ nav button{font-size:13px;padding:9px 1px;letter-spacing:.3px}
 .gNames button:disabled{opacity:.3;box-shadow:none}
 .gFoot{font-family:'Special Elite',monospace;color:var(--mut);font-size:12px;text-align:center;margin:18px 0 0;line-height:1.5}
 body.gated{overflow:hidden}
-.acctBtn{position:absolute;right:0;top:52px}
-.syncDot{position:absolute;right:4px;top:92px;width:9px;height:9px;border-radius:50%;background:#7dff9a}
+.acctBtn{}
+.syncDot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#7dff9a}
 .syncDot.err{background:var(--red)}
 .mrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.15)}
 .mrow b{font-family:Anton,Impact,sans-serif;font-weight:normal;font-size:16px}
@@ -280,14 +280,29 @@ body.gated{overflow:hidden}
 .overlay{position:fixed;inset:0;background:rgba(10,9,8,.92);display:flex;align-items:center;justify-content:center;z-index:30;padding:20px}
 .overlay .panel{max-width:420px;width:100%;text-align:center}
 .overlay .who{font-family:Anton,Impact,sans-serif;font-size:40px;text-transform:uppercase;margin:6px 0}
+
+/* ---- Bandiecoot sticker theme (from the helmet sticker) ---- */
+.hTop{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.sticker{display:block;width:fit-content;max-width:100%;background:var(--mustard);border:4px solid #111;box-shadow:inset 0 0 0 3px #f4f0e2,inset 0 0 0 5px #111,5px 5px 0 rgba(0,0,0,.55);padding:12px 18px 8px;transform:rotate(-1.2deg)}
+.stLogo{font-family:'Rubik Distressed',Anton,Impact,sans-serif;font-weight:400;font-size:clamp(38px,11.5vw,74px);line-height:.95;margin:0;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;-webkit-text-stroke:1px #111;text-shadow:1px 1px 0 #f4f0e2}
+.dhc{font-family:Anton,Impact,sans-serif;font-size:clamp(10px,2.6vw,14px);letter-spacing:2px;text-transform:uppercase;color:#111;text-align:right;margin-top:2px}
+.dhcFoot{font-family:'Rubik Distressed',Anton,sans-serif;color:var(--mustard);font-size:16px;letter-spacing:1px}
+.panel h2,.jbTitle,.gH,.revealTitleH{font-family:'Rubik Distressed',Anton,Impact,sans-serif;font-weight:400;letter-spacing:.5px}
+.panel h2{color:var(--navy)}
+button.big,.gBtn{background:var(--mustard);color:#111;box-shadow:3px 3px 0 var(--navy)}
+nav button.sel{background:var(--mustard);color:#111;box-shadow:3px 3px 0 var(--navy)}
+.panel{box-shadow:0 0 0 2px #111,5px 5px 0 2px rgba(0,0,0,.6)}
+.tagline{margin-top:14px}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <span class="tape">7 kursi · no extras</span>
-    <button class="acctBtn small" id="acctBtn" hidden>Akun</button><span class="syncDot ok" id="syncDot" title="Tersinkron"></span>
-    <h1 class="logo">Bandie<br>coot</h1>
+    <div class="hTop">
+      <span class="tape">7 kursi · no extras</span><span class="spacer"></span>
+      <span class="syncDot ok" id="syncDot" title="Tersinkron"></span><button class="acctBtn small" id="acctBtn" hidden>Akun</button>
+    </div>
+    <div class="sticker"><h1 class="stLogo">Bandiecoot</h1><div class="dhc">Destruction Hip Core</div></div>
     <p class="tagline">Studio rahasia. Rumbai, Pekanbaru. Angkatan 2004.</p>
   </header>
 
@@ -358,7 +373,7 @@ body.gated{overflow:hidden}
     </div>
 
     <div class="panel" id="revealPanel" hidden>
-      <span class="tape corner">lagu baru!</span>
+      <span class="tape corner">destruction hip core!</span>
       <h2>Lagunya jadi.</h2>
       <p class="sub">Kasih judul. Ini masuk ke Arsip Kaset.</p>
       <input type="text" class="reveal-title" id="revealTitle">
@@ -579,18 +594,18 @@ body.gated{overflow:hidden}
     </div>
   </section>
 
-  <footer>Bandiecoot · cuma buat 7 orang. Rumbai, Angkatan 2004.</footer>
+  <footer><span class="dhcFoot">Destruction Hip Core</span><br>Bandiecoot · cuma buat 7 orang · Rumbai, Angkatan 2004</footer>
 </div>
 
 <div class="gate" id="gate" hidden>
   <div class="gbox">
     <div class="gHead">
       <span class="tape gTape">7 kursi · no extras</span>
-      <h1 class="logo gLogo">Bandie<br>coot</h1>
+      <div class="sticker gSticker"><h1 class="stLogo">Bandiecoot</h1><div class="dhc">Destruction Hip Core</div></div>
       <p class="gTag">Studio rahasia · Rumbai · Angkatan 2004</p>
     </div>
     <div class="panel gCard">
-      <div id="gLoading" class="gload">Membuka pintu studio…</div>
+      <div id="gLoading" class="gload">Nyalain ampli… Destruction Hip Core.</div>
       <div id="gStepEmail" hidden>
         <h2 class="gH">Masuk</h2>
         <label class="gLabel" for="gEmail">EMAIL</label>
@@ -616,7 +631,7 @@ body.gated{overflow:hidden}
       </div>
       <div class="msg gMsg" id="gMsg"></div>
     </div>
-    <p class="gFoot">Cuma buat 7 orang. Belum diundang? Minta admin nambahin email kamu.</p>
+    <p class="gFoot">Cuma buat 7 orang. Belum diundang? Minta admin nambahin email kamu.<br><span class="dhcFoot">— Destruction Hip Core since Rumbai —</span></p>
   </div>
 </div>
 
@@ -1138,7 +1153,7 @@ function showPass(){
 $('#passGo').onclick=()=>{ $('#passOverlay').hidden=true; window.scrollTo({top:$('#relayPanel').offsetTop-70,behavior:'smooth'}); };
 
 const T_A=['Hujan','Asap','Kaset','Lapau','Camp','Bus Sekolah','Warnet','Kabel','Amplifier','Sinyal','Rumbai','Siak','Distorsi','Studio'];
-const T_B=['Tengah Malam','Terakhir','Bana','2003','Tanpa Ampun','di Sudirman','Kelok 9','Yang Hilang','Rusak','Jam 3 Pagi','Nggak Pulang','Bocor'];
+const T_B=['Hip Core','Destruction','Tengah Malam','Terakhir','Bana','2003','Tanpa Ampun','di Sudirman','Kelok 9','Yang Hilang','Rusak','Jam 3 Pagi','Nggak Pulang','Bocor'];
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const genTitle=()=>pick(T_A)+' '+pick(T_B);
 
@@ -1470,14 +1485,14 @@ function drawGame(now){
   if(now<0){
     c.fillStyle='rgba(0,0,0,.55)'; c.fillRect(0,0,W,H);
     c.fillStyle='#ebe5d6'; c.font='96px Anton, Impact, sans-serif'; c.fillText(String(Math.ceil(-now)),W/2,H/2);
-    c.font='16px "Special Elite", monospace'; c.fillText(G.title||'',W/2,H/2+40);
+    c.font='16px "Special Elite", monospace'; c.fillText(G.title||'',W/2,H/2+40); c.font='22px "Rubik Distressed", Anton, sans-serif'; c.fillStyle='#e2c44c'; c.fillText('DESTRUCTION HIP CORE',W/2,H/2+76);
   }
 }
 function endGame(){
   G.running=false; stopGameAudio();
   const N=G.notes.length||1, acc=G.pts/(300*N);
   const grade=acc>=.95?'S':acc>=.85?'A':acc>=.7?'B':acc>=.5?'C':'D';
-  const quip={S:'Rancak bana!',A:'Mantap, masih jago.',B:'Lumayan lah, karat dikit.',C:'Kurang latihan, bro.',D:'Balik ke studio. Sekarang.'}[grade];
+  const quip={S:'Destruction Hip Core! Rancak bana!',A:'Mantap, masih jago.',B:'Lumayan lah, karat dikit.',C:'Kurang latihan, bro.',D:'Balik ke studio. Sekarang.'}[grade];
   const prev=S.best[G.key]||0, isNew=G.score>prev;
   if(isNew){ S.best[G.key]=G.score; save(); }
   const r=$('#results');
@@ -2292,7 +2307,7 @@ function charSVG(p,uid){
       <ellipse cx="-22" cy="-62" rx="13" ry="7" fill="#c8452f" stroke="#111" stroke-width="1.5"/><ellipse cx="22" cy="-62" rx="13" ry="7" fill="#c8452f" stroke="#111" stroke-width="1.5"/>
       <ellipse cx="-38" cy="-48" rx="12" ry="5" fill="#ddd" stroke="#111" stroke-width="1.5"/>
       <circle cx="0" cy="-30" r="29" fill="#c8452f" stroke="#111" stroke-width="2"/><circle cx="0" cy="-30" r="23" fill="#f3ead2" stroke="#111" stroke-width="1.5"/>
-      <text x="0" y="-33" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="9" fill="#111">BANDIE</text><text x="0" y="-22" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="9" fill="#c8452f">COOT</text>`;
+      <text x="0" y="-33" text-anchor="middle" font-family="'Rubik Distressed',Anton,sans-serif" font-size="9" fill="#2e3274">BANDIE</text><text x="0" y="-22" text-anchor="middle" font-family="'Rubik Distressed',Anton,sans-serif" font-size="9" fill="#2e3274">COOT</text><text x="0" y="-13" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="4.5" letter-spacing=".4" fill="#111">DESTRUCTION HIP CORE</text>`;
     return `<g transform="translate(${p.x},${p.y}) scale(${p.s})">${torso}${head}${arms}${front}</g>`;
   }
   if(p.inst==='keys'){
@@ -2326,8 +2341,9 @@ function stageSVG(){
   return `<defs><linearGradient id="bgG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a1214"/><stop offset="1" stop-color="#2b1d20"/></linearGradient>
     <linearGradient id="spot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c4" stop-opacity=".55"/><stop offset="1" stop-color="#fff6c4" stop-opacity="0"/></linearGradient></defs>
     <rect width="400" height="320" fill="url(#bgG)"/><g opacity=".55">${bricks}</g>
-    <g transform="translate(200,44) rotate(-2)"><rect x="-128" y="-24" width="256" height="46" fill="#ebe5d6" stroke="#111" stroke-width="2"/><text x="0" y="14" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="38" letter-spacing="2" fill="#111">BANDIECOOT</text><text x="3" y="14" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="38" letter-spacing="2" fill="#e2402b" opacity=".35">BANDIECOOT</text>
-      <rect x="-140" y="-28" width="30" height="10" fill="#f0c53a" opacity=".9" transform="rotate(-20 -125 -23)"/><rect x="112" y="16" width="30" height="10" fill="#f0c53a" opacity=".9" transform="rotate(-20 127 21)"/></g>
+    <g transform="translate(200,46) rotate(-2)"><rect x="-140" y="-32" width="280" height="62" fill="#111"/><rect x="-135" y="-27" width="270" height="52" fill="#f4f0e2"/><rect x="-132" y="-24" width="264" height="46" fill="#111"/><rect x="-130" y="-22" width="260" height="42" fill="#e2c44c"/>
+      <text x="0" y="6" text-anchor="middle" font-family="'Rubik Distressed',Anton,Impact,sans-serif" font-size="36" fill="#2e3274" stroke="#111" stroke-width=".8">BANDIECOOT</text>
+      <text x="118" y="16" text-anchor="end" font-family="Anton,Impact,sans-serif" font-size="8.5" letter-spacing="1.2" fill="#111">DESTRUCTION HIP CORE</text></g>
     ${amp(2)}${amp(352)}
     <rect y="226" width="400" height="94" fill="#6b4423"/>${planks}<rect y="224" width="400" height="5" fill="#2a1a10"/>
     <g class="spots"><polygon points="70,0 92,0 140,320 20,320" fill="url(#spot)"/><polygon points="190,0 210,0 270,320 130,320" fill="url(#spot)"/><polygon points="308,0 330,0 380,320 260,320" fill="url(#spot)"/></g>`;
