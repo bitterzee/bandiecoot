@@ -1673,8 +1673,9 @@ function loadImgs(root){ root.querySelectorAll('img[data-img]').forEach(async im
 /* =================== MOMEN =================== */
 if(!S.moments) S.moments=[];
 if(!S.maps) S.maps={camp:{img:null,pins:[]},school:{img:null,pins:[]}};
-if(S.maps.camp.h36&&!S.maps.camp.h44){ S.maps.camp.pins.forEach(p=>{ if(p.view==='game'||(!p.view&&!S.maps.camp.img)) p.y=+(p.y*36/44).toFixed(2); }); S.maps.camp.h44=true; save(); }
-if(!S.maps.camp.h36){ S.maps.camp.pins.forEach(p=>{ if(p.view==='game'||(!p.view&&!S.maps.camp.img)) p.y=+(p.y*30/36).toFixed(2); }); S.maps.camp.h36=true; S.maps.camp.h44=true; save(); }
+const MAPKEYS=['camp','school'];
+{ const C=S.maps.camp, cur=C.rows||(C.h44?44:C.h36?36:30); if(cur!==57){ C.pins.forEach(p=>{ if(p.view==='game'||(!p.view&&!C.img)) p.y=+Math.min(99,p.y*cur/57).toFixed(2); }); C.rows=57; C.h36=true; save(); } }
+if(false){ S.maps.camp.pins.forEach(p=>{ if(p.view==='game'||(!p.view&&!S.maps.camp.img)) p.y=+(p.y*30/36).toFixed(2); }); S.maps.camp.h36=true; S.maps.camp.back36=true; save(); }
 const YEARS=['1998','1999','2000','2001','2002','2003','2004','Habis lulus','Sekarang'];
 const MAPDEF={
   camp:{short:'Camp',q:'Rumbai Camp Pekanbaru',
@@ -1698,7 +1699,7 @@ function findPin(place){ if(!place) return null; const [m,id]=place.split(':'); 
 function placeLabel(place){ const p=findPin(place); return p?`${MAPDEF[place.split(':')[0]].short}: ${p.title||'Tanpa nama'}`:''; }
 function placeOptions(sel){
   let h='<option value="">Tempat (opsional)</option>';
-  for(const m of ['camp','school']) for(const p of S.maps[m].pins){ const v=m+':'+p.id; h+=`<option value="${v}" ${sel===v?'selected':''}>${esc(MAPDEF[m].short+': '+(p.title||'Tanpa nama'))}</option>`; }
+  for(const m of MAPKEYS) for(const p of S.maps[m].pins){ const v=m+':'+p.id; h+=`<option value="${v}" ${sel===v?'selected':''}>${esc(MAPDEF[m].short+': '+(p.title||'Tanpa nama'))}</option>`; }
   return h;
 }
 const BAND=['Herru','Aries','Ferry','Fanny','Ari','Aldo','Aad'];
@@ -1909,15 +1910,18 @@ function nearLm(W,x,y,d){ return W.lms.some(l=>Math.abs(l.x-x)<=d&&Math.abs(l.y-
 function plantTree(W,x,y){ if(x<0||y<0||x>=GW||y>=W.gh) return; if(W.t[y][x]!=='grass'||W.solid[y][x]||nearLm(W,x,y,1)) return; obj(W,'tree',x,y); }
 
 function campWorld(){
-  const W=makeWorld(7,44), R=rng(99);
+  const W=makeWorld(7,57), R=rng(99);
   // river, banks, city road on the Tampan side
   fillT(W,'sand',0,25,40,1,false); fillT(W,'water',0,26,40,4,true); fillT(W,'sand',0,30,40,1,false);
   fillT(W,'dock',30,25,2,3,false); fillT(W,'road',0,34,40,2,false);
   // roads + bridge
   fillT(W,'road',0,12,40,2,false); fillT(W,'road',19,0,2,25,false);
-  fillT(W,'road',14,14,2,11,false); fillT(W,'bridge',14,25,2,6,false); fillT(W,'road',14,31,2,9,false);
-  fillT(W,'road',0,40,40,2,false); fillT(W,'conc',0,39,40,1,false);
-  W.roadsH=[12,34,40]; W.roadsV=[19,14];
+  fillT(W,'road',14,14,2,11,false); fillT(W,'bridge',14,25,2,6,false); fillT(W,'road',14,31,2,3,false);
+  // Pusat Kota Pekanbaru (downtown), south of Tampan
+  fillT(W,'conc',0,37,40,1); fillT(W,'conc',0,46,40,1); fillT(W,'road',0,47,40,2); fillT(W,'conc',0,49,40,1);
+  fillT(W,'road',19,50,2,5,false); fillT(W,'road',0,55,40,2);
+  fillT(W,'road',14,36,2,11,false);
+  W.roadsH=[12,34,47,55]; W.roadsV=[19,14];
   // golf
   fillT(W,'golf',1,1,12,10); fillT(W,'bunker',4,3,2,1); fillT(W,'bunker',9,7,2,1); obj(W,'gflag',10,3,false);
   // housing paths
@@ -1932,7 +1936,7 @@ function campWorld(){
   bld(W,14,6,3,3,'#b3243a','note');
   // Tampan side
   bld(W,16,31,3,3,'#3aa35a'); bld(W,20,31,3,3,'#e2402b','note');
-  bld(W,24,31,3,3,'#8c8478'); bld(W,28,31,3,3,'#d9822b','note'); bld(W,32,31,3,3,'#4a5fc4','note');
+  bld(W,24,31,3,3,'#8c8478'); bld(W,28,31,3,3,'#8c8478'); bld(W,32,31,3,3,'#4a5fc4','note');
   // parked cars (2 tiles wide, nose to the right)
   const car=(x,y,type,col,extra)=>{ W.objs.push(Object.assign({k:'car2',x,y,type,col},extra||{})); W.solid[y][x]=true; W.solid[y][x+1]=true; };
   car(24,4,'mpv','#8e9196');            // Aries - grey Kijang
@@ -1942,11 +1946,16 @@ function campWorld(){
   car(32,9,'sedan','#3a72c4');          // Ari - blue Timor
   car(16,5,'mpv','#2f5fa8');            // Aad - blue Kijang
   car(18,34,'mpv','#c0302a',{rack:1});  // Herru - red Panther
-  // Jalan Diponegoro and around
-  bld(W,2,35,11,4,'#2f8f45','gor');
-  bld(W,17,36,5,3,'#c8452f','pizza');
-  bld(W,23,36,3,3,'#e08a2e','batagor');
-  bld(W,28,35,7,4,'#2e3274','hotel');
+  // downtown buildings
+  bld(W,2,39,11,7,'#2f8f45','gor');
+  bld(W,26,38,9,8,'#2e3274','hotel');
+  bld(W,17,41,5,5,'#6b6f8a'); bld(W,36,41,3,5,'#8c8478');
+  bld(W,23,50,5,5,'#c8452f','pizza');
+  bld(W,15,51,3,4,'#e08a2e','batagor');
+  bld(W,2,50,5,5,'#b0563a'); bld(W,8,50,5,5,'#8a4fb3'); bld(W,31,50,5,5,'#6b6f8a');
+  obj(W,'car',8,48,true,{col:'#2f5fa8'}); obj(W,'car',33,47,true,{col:'#c0302a'}); obj(W,'motor',26,56,true,{col:'#d23b2b'});
+  // Studio Gelora, Rumbai side
+  bld(W,16,16,3,3,'#d9822b','note');
   // camp facilities
   bld(W,2,15,11,4,'#3f72c4'); fillT(W,'field',2,20,11,4); W.fields.push({x:2,y:20,w:11,h:4});
   obj(W,'bus',16,10); W.solid[10][17]=true;
@@ -1964,7 +1973,7 @@ function campWorld(){
   // places
   lm(W,'Studio Herru',21,34,'Studio Herru. Salah satu markas latihan Bandiecoot.',21.5,30.6,'studio');
   lm(W,'Scarlet',15,9,'Studio Scarlet · Umban Sari. Tetangganya Aad: booking jam, patungan sewa, gas latihan.',15.5,7.1,'studio');
-  lm(W,'Gelora',29,34,'Studio Gelora. Nama paling pas buat lagu-lagu Rage.',29.5,30.6,'studio');
+  lm(W,'Gelora',17,19,'Studio Gelora · Rumbai. Nama paling pas buat lagu-lagu Rage.',17.5,17.1,'studio');
   lm(W,'Publica',33,34,'Studio Publica. Ada cerita apa di sini? Tulis di pin.',33.5,32.1,'studio');
   lm(W,'Lapangan Golf',7,11,'Lapangan golf camp. Bola nyasar = rezeki anak-anak.',6.5,5.5);
   lm(W,'Sekolah Cendana',7,19,'Sekolah Cendana. Bel jam 7, telat = lari dari halte.',7.5,16.5);
@@ -1972,19 +1981,19 @@ function campWorld(){
   lm(W,'Commissary',25,19,'Commissary. Belanja bulanan sekalian cari jajan.',25.5,16.5);
   lm(W,'Country Club',34,18,'Country club & kolam renang. Berenang sampai mata merah.',34.5,16);
   lm(W,'Rumah Sakit',24,24,'Rumah sakit camp. Semoga jarang mampir.',24.5,22.2);
-  lm(W,'Jembatan',15,28,'Jembatan ke kota. Rute ke studio-studio tempat kalian latihan.',null,null);
+  lm(W,'Jembatan',15,28,'Jembatan ke kota. Rute ke Tampan dan pusat kota.',null,null);
   lm(W,'Dermaga',30,27,'Ujung dermaga. Sungai Siak mengalir pelan.',null,null);
-  lm(W,'GOR Tribuana',7,40,'GOR Tribuana. Festival band: panggung gede, sound pecah, deg-degan maksimal.',7.5,36.6,'studio');
-  lm(W,'Paparon',19,40,'Paparon. Pizza kalau lagi ada duit (atau ada yang ulang tahun).',19.5,37.1);
-  lm(W,'Ronggo',24,40,'Ronggowarsito. Batagor abis latihan, sambel kacang jangan lupa.',24.5,37.1);
-  lm(W,'Ardut',31,40,'Aryaduta. Hotel paling megah di Dipo; lewat aja udah berasa keren.',31.5,36.6);
-  lm(W,'Dipo',37,41,'Jalan Diponegoro. Muter-muter Dipo naik kereta, malam Minggu.',null,null);
+  lm(W,'GOR Tribuana',7,46,'GOR Tribuana. Festival band: panggung gede, sound pecah, deg-degan maksimal.',7.5,42.2,'studio');
+  lm(W,'Ardut',30,46,'Aryaduta. Hotel paling megah di Dipo; lewat aja udah berasa keren.',30.5,41.6);
+  lm(W,'Paparon',25,55,'Paparon. Pizza kalau lagi ada duit (atau ada yang ulang tahun).',25.5,51.9);
+  lm(W,'Ronggo',16,55,'Batagor Ronggowarsito. Abis latihan, sambel kacang jangan lupa.',16.5,52.7);
+  lm(W,'Dipo',37,48,'Jalan Diponegoro. Muter-muter Dipo naik kereta, malam Minggu.',null,null);
   // neighbourhood signs (labels only)
   W.areas=[{name:'KENARI',lx:27.5,ly:0.45},{name:'MERANTI',lx:23.5,ly:5.35},{name:'HIBRIDA',lx:31.5,ly:5.35},
-           {name:'UMBAN SARI',lx:15.5,ly:0.75},{name:'TAMPAN',lx:8,ly:32.5},{name:'KOTA PEKANBARU',lx:9,ly:34.6},{name:'JL. DIPONEGORO',lx:30,ly:41.5},{name:'SUNGAI SIAK',lx:7,ly:27.6}];
+           {name:'UMBAN SARI',lx:15.5,ly:0.75},{name:'TAMPAN',lx:8,ly:32.5},{name:'PUSAT KOTA PEKANBARU',lx:28,ly:36.5},{name:'JL. DIPONEGORO',lx:9,ly:48.6},{name:'JL. RONGGOWARSITO',lx:20,ly:50.1},{name:'SUNGAI SIAK',lx:7,ly:27.6}];
   W.spawn=[18,14];
   for(let y=0;y<W.gh;y++) for(let x=0;x<GW;x++){
-    const edge=y===0||x===0||x===GW-1, south=(y>=31&&y<=33&&x<13)||(y>=42)||(y>=35&&y<=38&&x>=36);
+    const edge=y===0||x===0||x===GW-1, south=(y>=31&&y<=33&&x<13)||y===36||y===38;
     if(!south&&(y===11||y===14||y>=24)) continue;
     if(R()<(south?.35:edge?.45:.07)) plantTree(W,x,y);
   }
@@ -2520,10 +2529,10 @@ let CLOUD=false, ME=null, SNAP={}, pushTimer=null, pushing=false, pushAgain=fals
 const COLLS={
   moment:{get:()=>Object.fromEntries(S.moments.map(m=>[m.id,m])),
     set:m=>{ S.moments=Object.values(m).sort((a,b)=>String(b.created).localeCompare(String(a.created))); }},
-  pin:{get:()=>{ const o={}; for(const k of ['camp','school']) for(const p of S.maps[k].pins) o[p.id]=Object.assign({map:k},p); return o; },
-    set:m=>{ for(const k of ['camp','school']) S.maps[k].pins=Object.values(m).filter(p=>p.map===k).map(p=>{ const q=Object.assign({},p); delete q.map; return q; }).sort((a,b)=>a.id.localeCompare(b.id)); }},
-  map:{get:()=>{ const o={}; for(const k of ['camp','school']) if(S.maps[k].img) o[k]={img:S.maps[k].img}; return o; },
-    set:m=>{ for(const k of ['camp','school']){ const was=S.maps[k].img; S.maps[k].img=m[k]?m[k].img:null; if(S.maps[k].img&&S.maps[k].img!==was) S.maps[k].view='photo'; if(!S.maps[k].img) S.maps[k].view='game'; } }},
+  pin:{get:()=>{ const o={}; for(const k of MAPKEYS) for(const p of S.maps[k].pins) o[p.id]=Object.assign({map:k},p); return o; },
+    set:m=>{ for(const k of MAPKEYS) S.maps[k].pins=Object.values(m).filter(p=>p.map===k).map(p=>{ const q=Object.assign({},p); delete q.map; return q; }).sort((a,b)=>a.id.localeCompare(b.id)); }},
+  map:{get:()=>{ const o={}; for(const k of MAPKEYS) if(S.maps[k].img) o[k]={img:S.maps[k].img}; return o; },
+    set:m=>{ for(const k of MAPKEYS){ const was=S.maps[k].img; S.maps[k].img=m[k]?m[k].img:null; if(S.maps[k].img&&S.maps[k].img!==was) S.maps[k].view='photo'; if(!S.maps[k].img) S.maps[k].view='game'; } }},
   song:{get:()=>Object.fromEntries(S.archive.map(s=>[s.id,s])),
     set:m=>{ S.archive=Object.values(m).sort((a,b)=>String(b.created).localeCompare(String(a.created))); }},
   avatar:{get:()=>S.avatars, set:m=>{ S.avatars=m; }},
