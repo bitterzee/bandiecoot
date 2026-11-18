@@ -2358,24 +2358,23 @@ let jbIdle=null;
 ['click','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,()=>{ clearTimeout(jbIdle); if(JB.key) jbIdle=setTimeout(jbLock,5*60*1000); },{passive:true}));
 
 /* =================== BAND CARICATURE (Studio) =================== */
-// layout follows the old studio photo: dark room, wood panel, poster on the wall
 const BAND_POS=[
-  {name:'Aldo',inst:'drums',x:262,y:296,s:.72,expr:'cool',role:'Drum',ty:-4},
-  {name:'Aries',inst:'rhythm',x:196,y:276,s:.74,expr:'grin',role:'Rhythm',ty:-2},
-  {name:'Ari',inst:'bass',x:340,y:244,s:1.2,expr:'grin',role:'Bass',tx:-12},
-  {name:'Aad',inst:'scream',pose:'cross',x:58,y:322,s:1.3,expr:'cool',role:'Scream',ty:-16,tx:6},
-  {name:'Herru',inst:'keys',pose:'hold',tank:true,x:136,y:330,s:1.38,expr:'grin',role:'Keys + Rap',ty:24},
-  {name:'Ferry',inst:'melody',gtr:'roundel',x:326,y:346,s:1.3,expr:'grin',role:'Melody',ty:14,tx:6},
-  {name:'Fanny',inst:'dj',pose:'crouch',x:226,y:410,s:1.12,expr:'cool',role:'DJ',ty:-8}
+  {name:'Fanny',inst:'dj',x:42,y:158,s:.6,expr:'grin',role:'DJ'},
+  {name:'Ari',inst:'bass',x:104,y:214,s:.7,expr:'cool',role:'Bass'},
+  {name:'Aldo',inst:'drums',x:200,y:190,s:.7,expr:'focus',role:'Drum'},
+  {name:'Herru',inst:'keys',x:298,y:214,s:.7,expr:'rap',role:'Keys + Rap'},
+  {name:'Aries',inst:'rhythm',x:62,y:298,s:.8,expr:'grin',role:'Rhythm'},
+  {name:'Aad',inst:'scream',x:200,y:300,s:.84,expr:'scream',role:'Scream'},
+  {name:'Ferry',inst:'melody',x:338,y:298,s:.8,expr:'grin',role:'Melody'}
 ];
 const AV_DEF={
-  Aldo:{hair:'short',hairColor:'#1d1712',skin:'#d9a273',shirt:'#3a2a24',glasses:'none',fh:'none'},
-  Ari:{hair:'spiky',hairColor:'#1d1712',skin:'#c68c5d',shirt:'#ebe5d6',glasses:'none',fh:'none'},
-  Herru:{hair:'short',hairColor:'#1d1712',skin:'#d9a273',shirt:'#ebe5d6',glasses:'glasses',fh:'none'},
-  Aries:{hair:'short',hairColor:'#1d1712',skin:'#e3b08a',shirt:'#111111',glasses:'none',fh:'none'},
-  Aad:{hair:'short',hairColor:'#120d0a',skin:'#c98f62',shirt:'#ebe5d6',glasses:'none',fh:'none'},
-  Ferry:{hair:'short',hairColor:'#1d1712',skin:'#c68c5d',shirt:'#ebe5d6',glasses:'none',fh:'none'},
-  Fanny:{hair:'short',hairColor:'#2a1d14',skin:'#d9a273',shirt:'#f0c53a',glasses:'glasses',fh:'none'}
+  Aldo:{hair:'spiky',hairColor:'#1d1712',skin:'#d9a273',shirt:'#1a1a1a',glasses:'none',fh:'none'},
+  Ari:{hair:'long',hairColor:'#2a1d14',skin:'#c68c5d',shirt:'#7a2b2b',glasses:'none',fh:'goatee'},
+  Herru:{hair:'cap',hairColor:'#1d1712',skin:'#d9a273',shirt:'#2f5fa0',glasses:'shades',fh:'none'},
+  Aries:{hair:'curly',hairColor:'#1d1712',skin:'#e3b08a',shirt:'#3d6b3a',glasses:'none',fh:'none'},
+  Aad:{hair:'messy',hairColor:'#120d0a',skin:'#c98f62',shirt:'#111111',glasses:'none',fh:'none'},
+  Ferry:{hair:'beanie',hairColor:'#1d1712',skin:'#deaa7f',shirt:'#8a4fb3',glasses:'glasses',fh:'none'},
+  Fanny:{hair:'short',hairColor:'#2a1d14',skin:'#e8b48e',shirt:'#f0c53a',glasses:'none',fh:'none'}
 };
 const AV_OPTS={
   hair:[['spiky','Jabrik'],['long','Gondrong'],['messy','Gondrong acak'],['curly','Keriting'],['short','Pendek'],['cap','Topi kebalik'],['beanie','Kupluk'],['bald','Botak']],
@@ -2463,7 +2462,7 @@ function charSVG(p,uid){
   let back='', mid='', front='', arms='';
   const head=`<g class="head" style="animation-delay:${(BAND_POS.indexOf(p)%3)*.12}s">${headSVG(p.name,av,p.expr,uid)}</g>`;
   if(p.inst==='rhythm'||p.inst==='melody'||p.inst==='bass'){
-    const col=p.inst==='bass'?'#2f6b47':p.inst==='melody'?'#f4f0e2':'#e9e2cf';
+    const col=p.inst==='bass'?'#1f3f7a':p.inst==='melody'?'#c8452f':'#e9e2cf';
     mid=guitarSVG(col,p.inst==='bass'?60:46,p.gtr==='roundel');
     arms=armL(-17,-78,-12,-56,sk,sh)+armL(17,-78,p.inst==='bass'?40:33,p.inst==='bass'?-80:-76,sk,sh);
     return `<g transform="translate(${p.x},${p.y}) scale(${p.s})">${legs}${torso}${mid}<g class="strum">${arms}</g>${head}</g>`;
@@ -2521,7 +2520,7 @@ function stageSVG(){
     <line x1="160" y1="0" x2="160" y2="196" stroke="#18181b" stroke-width="2"/>
     <rect y="192" width="400" height="128" fill="url(#wood)"/>${panel}<rect y="190" width="400" height="5" fill="#4a3624"/>
     <rect x="300" y="64" width="100" height="5" fill="#6e5238"/>
-    <g transform="translate(250,124) rotate(-1.5)"><rect x="-38" y="-54" width="76" height="110" fill="#e9e4d6" stroke="#111" stroke-width="1.5"/><rect x="-34" y="-50" width="68" height="86" fill="#7d9cc4"/><rect x="-34" y="0" width="68" height="36" fill="#5a7aa6"/>
+    <g transform="translate(262,96) rotate(-1.5)"><rect x="-38" y="-54" width="76" height="110" fill="#e9e4d6" stroke="#111" stroke-width="1.5"/><rect x="-34" y="-50" width="68" height="86" fill="#7d9cc4"/><rect x="-34" y="0" width="68" height="36" fill="#5a7aa6"/>
       <g transform="translate(0,30)">${sil}</g><rect x="-34" y="38" width="68" height="14" fill="#111"/>
       <text x="0" y="48" text-anchor="middle" font-family="'Rubik Distressed',Anton,Impact,sans-serif" font-size="10" fill="#e2c44c">BANDIECOOT</text>
       <text x="0" y="-38" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="6" letter-spacing="1" fill="#f4f0e2">DESTRUCTION HIP CORE</text></g>
