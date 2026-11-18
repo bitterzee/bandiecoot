@@ -30,7 +30,8 @@ header{position:relative;padding:18px 0 6px}
 .tape{display:inline-block;background:var(--tape);color:var(--ink);font-family:'Special Elite',monospace;padding:3px 10px;box-shadow:0 2px 0 rgba(0,0,0,.45)}
 header .tape{transform:rotate(-2deg);font-size:12px}
 nav{display:flex;gap:10px;margin:14px 0 16px;position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0}
-nav button{flex:1}
+nav{overflow-x:auto;scrollbar-width:none}nav::-webkit-scrollbar{display:none}
+nav button{flex:1 0 auto}
 button{font-family:Anton,Impact,sans-serif;font-size:17px;letter-spacing:1px;text-transform:uppercase;background:var(--paper);color:var(--ink);border:2px solid var(--ink);padding:10px 12px;cursor:pointer;box-shadow:3px 3px 0 var(--red);border-radius:2px;touch-action:manipulation}
 button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--red)}
 button.sel{background:var(--red);color:var(--paper)}
@@ -168,6 +169,22 @@ textarea{font-family:'Special Elite',monospace;font-size:15px;width:100%;min-hei
 .mlabel{position:absolute;transform:translate(-50%,-50%);font-family:'Press Start 2P',monospace;font-size:7px;line-height:1;background:#fff;color:#111;border:1px solid #111;padding:2px 3px 1px;white-space:nowrap;box-shadow:1px 1px 0 rgba(0,0,0,.5)}
 .mlabel.home{background:#ffe9a8;border-color:#7a4b12;color:#3a2410}
 .mlabel.studio{background:#e2402b;border-color:#111;color:#fff}
+.qzHead{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin:10px 0 12px;border-bottom:3px solid var(--ink);padding-bottom:10px}
+.qzSubj{font-family:'Rubik Distressed',Anton,Impact,sans-serif;font-size:30px;line-height:1;color:var(--navy);text-transform:uppercase}
+.qzWeek{font-size:11px;color:var(--mut);text-align:right;line-height:1.4}
+.qzQ{font-family:'Special Elite',monospace;font-size:17px;line-height:1.4;margin:10px 0 14px}
+.qzBar{height:8px;background:#d9d1bd;border:2px solid var(--ink);margin:6px 0 4px}
+.qzBar i{display:block;height:100%;background:var(--navy);width:100%}
+.qzCh{display:block;width:100%;text-align:left;text-transform:none;font-family:'Space Mono',monospace;font-size:15px;letter-spacing:0;margin:0 0 9px;padding:11px 12px;line-height:1.3}
+.qzCh b{display:inline-block;width:24px;font-family:Anton,Impact,sans-serif}
+.qzCh.ok{background:#3d9b55;color:#fff}.qzCh.bad{background:#c8452f;color:#fff}.qzCh.dim{opacity:.55}
+.qzX{background:#fff8ea;border:2px dashed var(--ink);padding:9px 10px;font-size:13px;margin:4px 0 12px}
+.qzTbl{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0 14px}
+.qzTbl td{border-bottom:1px solid #c9c0aa;padding:7px 4px}.qzTbl td:last-child{text-align:right;font-family:Anton,Impact,sans-serif;font-size:15px}
+.qzTbl tr.me td{background:#f3e7b8}.qzTbl .no{color:var(--mut)}
+.qzH3{font-family:Anton,Impact,sans-serif;text-transform:uppercase;font-size:16px;margin:16px 0 2px;letter-spacing:.5px}
+.qzBig{font-family:Anton,Impact,sans-serif;font-size:54px;line-height:1;color:var(--navy)}
+.qzRev{font-size:13px;margin:0 0 12px;padding:0 0 10px;border-bottom:1px solid #c9c0aa}.qzRev p{margin:4px 0}
 .mlabel.kid{background:#2e3274;border-color:#e2c44c;color:#e2c44c}
 .mlabel.area{background:#1a1a1a;color:#f0c53a;border-color:#f0c53a;font-size:6px;letter-spacing:1px}
 .dlg{position:absolute;left:3%;right:3%;bottom:3%;background:#fff;color:#111;border:3px double #111;padding:8px 10px 10px;font-family:'Press Start 2P',monospace;font-size:9px;line-height:1.6;box-shadow:0 0 0 2px #fff,0 0 0 4px #111}
@@ -365,6 +382,7 @@ html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adju
     <button id="tabNosBtn" class="sel">Nostalgia</button>
     <button id="tabMomBtn">Momen</button>
     <button id="tabKeretaBtn">Kereta Den</button>
+    <button id="tabKuisBtn">Kuis</button>
     <button id="tabJamesBtn">Jamesbon</button>
     <button id="tabRelayBtn">Studio</button>
     <button id="tabGameBtn">Main Tape</button>
@@ -462,6 +480,15 @@ html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adju
   </section>
 
   <!-- ============ KERETA DEN ============ -->
+  <section id="tabKuis" hidden>
+    <div class="panel">
+      <span class="tape corner">Ulangan harian</span>
+      <h2>Kuis Mingguan</h2>
+      <p class="sub">Tiap Senin pelajaran baru, diacak. 10 soal, 20 detik per soal, satu kali coba. Nyontek? Kita udah 40-an.</p>
+      <div id="kuisBox"></div>
+    </div>
+  </section>
+
   <section id="tabKereta" hidden>
     <div class="panel">
       <span class="tape corner">BM 2004 DHC</span>
@@ -2586,7 +2613,9 @@ const COLLS={
   lineup:{get:()=>({lineup:{members:S.members}}), set:m=>{ if(m.lineup) S.members=m.lineup.members; }},
   jbmeta:{get:()=>S.jb&&S.jb.check?{vault:S.jb}:{}, set:m=>{ S.jb=m.vault||null; }},
   jbstory:{get:()=>S.jbs||{}, set:m=>{ S.jbs=m; }},
-  bike:{get:()=>S.bike?{kereta:S.bike}:{}, set:m=>{ S.bike=m.kereta||null; }}
+  bike:{get:()=>S.bike?{kereta:S.bike}:{}, set:m=>{ S.bike=m.kereta||null; }},
+  quiz:{get:()=>S.quiz||{}, set:m=>{ S.quiz=m; }},
+  quizres:{get:()=>S.qres||{}, set:m=>{ S.qres=m; }}
 };
 function snapOf(c){ const o={}; for(const [id,v] of Object.entries(COLLS[c].get())) o[id]=JSON.stringify(v); return o; }
 async function pullAll(){
@@ -2640,6 +2669,7 @@ async function refreshAfterRemote(){
   if(t==='nostalgia'&&(cs.has('pin')||cs.has('map')||cs.has('moment'))&&$('#pinOverlay').hidden&&!WALK.on) renderNostalgia();
   if(t==='game'&&cs.has('song')&&!G.running) renderGameSetup();
   if(t==='kereta'&&cs.has('bike')&&document.activeElement!==$('#bkPrompt')) renderKereta();
+  if(t==='kuis'&&(cs.has('quiz')||cs.has('quizres'))&&!QZ.play) renderKuis();
 }
 
 // photos: storage paths under the private "media" bucket, cached on the device
@@ -2967,12 +2997,137 @@ const gasBtn=$('#bkGas');
 gasBtn.addEventListener('pointerdown',e=>{ e.preventDefault(); try{ gasBtn.setPointerCapture(e.pointerId); }catch(_){} if(!ENG.on){ engineOn(); setTimeout(()=>{ if(ENG.gasHeld) setGas(true); },500); } else setGas(true); ENG.gasHeld=true; });
 ['pointerup','pointercancel','lostpointercapture'].forEach(ev=>gasBtn.addEventListener(ev,()=>{ ENG.gasHeld=false; setGas(false); }));
 
+/* =================== KUIS MINGGUAN =================== */
+if(!S.quiz) S.quiz={}; if(!S.qres) S.qres={};
+const QTIME=20000, BULAN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+function weekKey(d=new Date()){
+  const t=new Date(d.getTime()+7*3600*1000), day=(t.getUTCDay()+6)%7; t.setUTCDate(t.getUTCDate()-day+3);
+  const y=t.getUTCFullYear(), jan4=new Date(Date.UTC(y,0,4));
+  const w=1+Math.round(((t-jan4)/864e5-3+((jan4.getUTCDay()+6)%7))/7);
+  return `${y}-W${String(w).padStart(2,'0')}`;
+}
+function weekRange(k){
+  const [y,w]=k.split('-W').map(Number), jan4=Date.UTC(y,0,4), mon=jan4-((new Date(jan4).getUTCDay()+6)%7)*864e5+(w-1)*7*864e5;
+  const f=t=>{ const d=new Date(t); return d.getUTCDate()+' '+BULAN[d.getUTCMonth()]; };
+  return `${f(mon)} – ${f(mon+6*864e5)}`;
+}
+const qzName=()=>ME&&ME.name||'Aku';
+const qzId=(wk,n)=>`${wk}~${n}`;
+const qzPts=(r,Q)=>!r||!Q?0:r.ans.reduce((t,a,i)=>t+(Q.qs[i]&&a.p===Q.qs[i].a?100+Math.round(50*Math.max(0,1-a.ms/QTIME)):0),0);
+const qzRight=(r,Q)=>!r||!Q?0:r.ans.filter((a,i)=>Q.qs[i]&&a.p===Q.qs[i].a).length;
+function qzBoard(wk){
+  const Q=S.quiz[wk]; if(!Q) return [];
+  return Object.values(S.qres).filter(r=>r.week===wk&&r.done).map(r=>({name:r.name,pts:qzPts(r,Q),right:qzRight(r,Q),ms:r.ans.reduce((t,a)=>t+a.ms,0)}))
+    .sort((a,b)=>b.pts-a.pts||a.ms-b.ms);
+}
+const QZ={play:null,shown:false,raf:0,timeout:0,busy:false,review:null,msg:''};
+function renderKuis(){
+  const box=$('#kuisBox'), wk=weekKey(), Q=S.quiz[wk], me=qzName(), mine=S.qres[qzId(wk,me)];
+  if(QZ.play) return renderQzPlay();
+  if(QZ.review) return renderQzReview(QZ.review);
+  let h=`<div class="qzHead"><div><div class="hint" style="margin:0">Pelajaran minggu ini</div><div class="qzSubj">${Q?esc(Q.subject):'???'}</div></div>
+    <div class="qzWeek">Minggu ${+wk.split('-W')[1]}<br>${weekRange(wk)}<br>Ganti Senin 00:00 WIB</div></div>`;
+  if(!Q){
+    h+=CLOUD?`<p>Soal minggu ini belum dibagi. Yang pertama buka, Claude yang bikin soalnya (sekitar setengah menit).</p><button class="big" id="qzOpen" ${QZ.busy?'disabled':''}>${QZ.busy?'Pak guru lagi nulis soal…':'Bagi soal minggu ini'}</button>`
+      :`<p class="hint">Kuis butuh online (masuk dulu).</p>`;
+  } else if(!mine||!mine.done){
+    const n=mine?mine.ans.length:0;
+    h+=`<p>10 soal ${esc(Q.subject)} level SMA. Benar = 100 poin, plus bonus sampai 50 kalau cepat. Nggak bisa diulang, jadi siapin waktu 5 menit.</p>
+      <button class="big" id="qzStart">${n?`Lanjut dari soal ${n+1}`:'Mulai ulangan'}</button>`;
+  } else {
+    const r=qzRight(mine,Q), p=qzPts(mine,Q);
+    h+=`<div style="display:flex;align-items:center;gap:14px;margin:4px 0 6px"><div class="qzBig">${r}/10</div><div><b>${p} poin</b><br><span class="hint" style="margin:0">${['Remedial dulu ya.','Remedial dulu ya.','Remedial dulu ya.','Masih bisa dikatrol.','Lumayan, naik kelas.','Lumayan, naik kelas.','Lumayan, naik kelas.','Ranking 10 besar.','Juara kelas!','Juara umum!','Juara umum!'][r]}</span></div></div>
+      <button class="small" id="qzMyRev">Lihat pembahasan</button>`;
+  }
+  const board=qzBoard(wk), played=new Set(board.map(b=>b.name));
+  h+=`<div class="qzH3">Papan nilai minggu ini</div><table class="qzTbl">${board.map((b,i)=>`<tr class="${b.name===me?'me':''}"><td>${i===0?'👑':i+1+'.'} ${esc(b.name)}</td><td>${b.right}/10</td><td>${b.pts}</td></tr>`).join('')}
+    ${BAND.filter(n=>!played.has(n)).map(n=>`<tr class="${n===me?'me':''}"><td class="no" colspan="2">${esc(n)}: ${Object.values(S.qres).some(r=>r.week===wk&&r.name===n)?'lagi ngerjain…':'belum ngerjain'}</td><td class="no">–</td></tr>`).join('')}</table>`;
+  const weeks=Object.keys(S.quiz).sort().reverse(), past=weeks.filter(k=>k<wk);
+  const tot={}; BAND.forEach(n=>tot[n]={pts:0,wins:0,n:0});
+  weeks.forEach(k=>{ const b=qzBoard(k); b.forEach(x=>{ if(!tot[x.name]) tot[x.name]={pts:0,wins:0,n:0}; tot[x.name].pts+=x.pts; tot[x.name].n++; }); if(k<wk&&b[0]) tot[b[0].name].wins++; });
+  if(weeks.length){
+    h+=`<div class="qzH3">Klasemen semester</div><table class="qzTbl">${Object.entries(tot).sort((a,b)=>b[1].pts-a[1].pts).map(([n,t],i)=>`<tr class="${n===me?'me':''}"><td>${i+1}. ${esc(n)} ${'👑'.repeat(Math.min(t.wins,5))}</td><td class="no">${t.n} kuis</td><td>${t.pts}</td></tr>`).join('')}</table>`;
+  }
+  if(past.length){
+    h+=`<div class="qzH3">Ulangan yang lalu</div><table class="qzTbl">${past.map(k=>{ const b=qzBoard(k); return `<tr><td>${weekRange(k)}<br><b>${esc(S.quiz[k].subject)}</b></td><td>${b[0]?'👑 '+esc(b[0].name):'<span class="no">nggak ada</span>'}</td><td><button class="small" data-qrev="${k}">Soal</button></td></tr>`; }).join('')}</table>`;
+  }
+  if(QZ.msg) h+=`<div class="msg">${esc(QZ.msg)}</div>`;
+  box.innerHTML=h;
+}
+async function qzFetch(){
+  const {data}=await sb.auth.getSession(); if(!data||!data.session){ sessionLost(); return; }
+  QZ.busy=true; QZ.msg=''; renderKuis();
+  try{
+    const r=await fetch('/api/quiz',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+data.session.access_token},body:'{}'});
+    const j=await r.json().catch(()=>({error:'Kuis lagi error.'}));
+    if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
+    S.quiz[j.quiz.week]=j.quiz; (SNAP.quiz=SNAP.quiz||{})[j.quiz.week]=JSON.stringify(j.quiz); save();
+  }catch(e){ QZ.msg=e.message; }
+  QZ.busy=false; renderKuis();
+}
+function qzStart(){
+  const wk=weekKey(), Q=S.quiz[wk]; if(!Q) return;
+  const id=qzId(wk,qzName());
+  if(!S.qres[id]){ S.qres[id]={week:wk,name:qzName(),ans:[],done:false,at:new Date().toISOString()}; save(); }
+  if(S.qres[id].done) return;
+  QZ.play={wk,id,i:S.qres[id].ans.length}; QZ.shown=false; renderKuis();
+}
+function renderQzPlay(){
+  const P=QZ.play, Q=S.quiz[P.wk], R=S.qres[P.id];
+  if(P.i>=10){ R.done=true; R.at=new Date().toISOString(); save(); QZ.play=null; renderKuis(); window.scrollTo({top:0}); return; }
+  const q=Q.qs[P.i], a=R.ans[P.i];
+  let h=`<div class="qzHead"><div class="qzSubj" style="font-size:22px">${esc(Q.subject)}</div><div class="qzWeek">Soal ${P.i+1}/10<br>${qzPts(R,Q)} poin</div></div>
+    <div class="qzBar"><i id="qzBarI" style="width:${a?0:100}%"></i></div>
+    <div class="qzQ">${esc(q.q)}</div>`;
+  h+=q.c.map((c,k)=>{ let cl=''; if(a){ cl=k===q.a?'ok':k===a.p?'bad':'dim'; } return `<button class="qzCh ${cl}" data-qch="${k}" ${a?'disabled style="opacity:1"':''}><b>${'ABCD'[k]}.</b>${esc(c)}</button>`; }).join('');
+  if(a){
+    const ok=a.p===q.a;
+    h+=`<div class="qzX"><b>${ok?`Betul! +${100+Math.round(50*Math.max(0,1-a.ms/QTIME))}`:a.p<0?'Waktu habis.':'Salah.'}</b> ${esc(q.x||'')}</div>
+      <button class="big" id="qzNext">${P.i<9?'Soal berikutnya':'Kumpulkan'}</button>`;
+  }
+  $('#kuisBox').innerHTML=h;
+  if(!a){
+    // the clock keeps running if you leave and come back, so peeking doesn't buy time
+    if(R.cur!==P.i){ R.cur=P.i; R.curAt=Date.now(); save(); }
+    const t0=R.curAt; cancelAnimationFrame(QZ.raf); clearTimeout(QZ.timeout);
+    const tick=()=>{ const b=$('#qzBarI'); if(!b||!QZ.play) return; b.style.width=Math.max(0,100-(Date.now()-t0)/QTIME*100)+'%'; QZ.raf=requestAnimationFrame(tick); };
+    QZ.raf=requestAnimationFrame(tick); QZ.t0=t0;
+    QZ.timeout=setTimeout(()=>qzPick(-1),Math.max(0,QTIME-(Date.now()-t0)));
+  }
+}
+function qzPick(k){
+  const P=QZ.play; if(!P) return; const R=S.qres[P.id]; if(R.ans.length>P.i) return;
+  cancelAnimationFrame(QZ.raf); clearTimeout(QZ.timeout);
+  const ms=Date.now()-QZ.t0; R.ans.push({p:ms>QTIME+500?-1:k,ms:Math.min(QTIME,Math.max(0,Math.round(ms)))}); save(); renderQzPlay();
+}
+function renderQzReview(wk){
+  const Q=S.quiz[wk], all=Object.values(S.qres).filter(r=>r.week===wk&&r.done), me=S.qres[qzId(wk,qzName())];
+  let h=`<div class="qzHead"><div><div class="hint" style="margin:0">${weekRange(wk)}</div><div class="qzSubj" style="font-size:24px">${esc(Q.subject)}</div></div><button class="small" id="qzBack">Kembali</button></div>`;
+  h+=Q.qs.map((q,i)=>{ const who=all.filter(r=>r.ans[i]&&r.ans[i].p===q.a).map(r=>r.name);
+    const mineA=me&&me.ans[i]; const myTxt=mineA?(mineA.p===q.a?'✅':mineA.p<0?'⏱ kehabisan waktu':`❌ kamu jawab ${'ABCD'[mineA.p]}`):'';
+    return `<div class="qzRev"><p><b>${i+1}. ${esc(q.q)}</b></p>${q.c.map((c,k)=>`<p style="${k===q.a?'font-weight:700;color:#2d7a43':'color:#555'}">${'ABCD'[k]}. ${esc(c)}${k===q.a?' ✓':''}</p>`).join('')}
+      <p class="hint" style="margin:6px 0 0">${myTxt} ${esc(q.x||'')}<br>Yang benar: ${who.length?who.map(esc).join(', '):'nggak ada'}</p></div>`; }).join('');
+  $('#kuisBox').innerHTML=h;
+}
+$('#kuisBox').addEventListener('click',e=>{
+  const t=e.target.closest('button'); if(!t) return;
+  if(t.id==='qzOpen') qzFetch();
+  else if(t.id==='qzStart') qzStart();
+  else if(t.dataset.qch!=null) qzPick(+t.dataset.qch);
+  else if(t.id==='qzNext'){ QZ.play.i++; renderQzPlay(); window.scrollTo({top:$('#tabKuis').offsetTop-70}); }
+  else if(t.id==='qzMyRev'){ QZ.review=weekKey(); renderKuis(); }
+  else if(t.dataset.qrev){ QZ.review=t.dataset.qrev; renderKuis(); window.scrollTo({top:0}); }
+  else if(t.id==='qzBack'){ QZ.review=null; renderKuis(); }
+});
+
 /* =================== TABS =================== */
-const TABS={kereta:['#tabKereta','#tabKeretaBtn','kereta'],james:['#tabJames','#tabJamesBtn','jamesbon'],relay:['#tabRelay','#tabRelayBtn','estafet'],game:['#tabGame','#tabGameBtn','maintape'],moments:['#tabMoments','#tabMomBtn','momen'],nostalgia:['#tabNostalgia','#tabNosBtn','nostalgia']};
+const TABS={kuis:['#tabKuis','#tabKuisBtn','kuis'],kereta:['#tabKereta','#tabKeretaBtn','kereta'],james:['#tabJames','#tabJamesBtn','jamesbon'],relay:['#tabRelay','#tabRelayBtn','estafet'],game:['#tabGame','#tabGameBtn','maintape'],moments:['#tabMoments','#tabMomBtn','momen'],nostalgia:['#tabNostalgia','#tabNosBtn','nostalgia']};
 function switchTab(t){
   if(!TABS[t]) t='nostalgia';
   if(t!=='james'&&JB.key) jbLock();
   if(t!=='kereta'&&ENG.on) engineOff();
+  if(t!=='kuis'&&QZ.play){ cancelAnimationFrame(QZ.raf); clearTimeout(QZ.timeout); QZ.play=null; }
+  if(t!=='kuis') QZ.review=null;
   stopSeq(); if(G.running) quitGame(); if(WALK.on){ WALK.on=false; showDialog(null); }
   for(const k in TABS){ $(TABS[k][0]).hidden=k!==t; $(TABS[k][1]).classList.toggle('sel',k===t); }
   if(t==='game'){ $('#results').hidden=true; $('#stage').hidden=true; $('#gameSetup').hidden=false; renderGameSetup(); }
@@ -2980,17 +3135,19 @@ function switchTab(t){
   else if(t==='nostalgia') renderNostalgia();
   else if(t==='james') renderJames();
   else if(t==='kereta') renderKereta();
+  else if(t==='kuis') renderKuis();
   else { renderRelay(); renderBand(); }
   try{ history.replaceState(null,'','#'+TABS[t][2]); }catch(e){}
   window.scrollTo({top:0});
 }
-const tabFromHash=()=>({'#kereta':'kereta','#jamesbon':'james','#estafet':'relay','#maintape':'game','#momen':'moments'})[location.hash]||'nostalgia';
+const tabFromHash=()=>({'#kuis':'kuis','#kereta':'kereta','#jamesbon':'james','#estafet':'relay','#maintape':'game','#momen':'moments'})[location.hash]||'nostalgia';
 $('#tabRelayBtn').onclick=()=>switchTab('relay');
 $('#tabGameBtn').onclick=()=>switchTab('game');
 $('#tabMomBtn').onclick=()=>switchTab('moments');
 $('#tabNosBtn').onclick=()=>switchTab('nostalgia');
 $('#tabJamesBtn').onclick=()=>switchTab('james');
 $('#tabKeretaBtn').onclick=()=>switchTab('kereta');
+$('#tabKuisBtn').onclick=()=>switchTab('kuis');
 window.addEventListener('hashchange',()=>switchTab(tabFromHash()));
 
 renderRelay();
