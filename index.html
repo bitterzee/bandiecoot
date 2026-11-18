@@ -426,11 +426,11 @@ body.tekaked .wrap,body.tekaked>*:not(.overlay){animation:shake .45s ease-in-out
     <div class="snav" data-g="kenangan">
       <button id="tabNosBtn" class="sel">Peta</button>
       <button id="tabMomBtn">Momen</button>
-      <button id="tabKeretaBtn">Kereta Den</button>
     </div>
     <div class="snav" data-g="seru" hidden>
       <button id="tabRelayBtn">Studio</button>
       <button id="tabKuisBtn">Kuis</button>
+      <button id="tabKeretaBtn">Kereta Den</button>
     </div>
     <div class="snav" data-g="ngobrol" hidden>
       <button id="tabCitoBtn">Cito Bongak<span class="nbadge" id="chatBadge" hidden></span></button>
@@ -3351,7 +3351,7 @@ function chatIncoming(m){
 
 /* =================== TABS =================== */
 const TABS={cito:['#tabCito','#tabCitoBtn','cito'],kuis:['#tabKuis','#tabKuisBtn','kuis'],kereta:['#tabKereta','#tabKeretaBtn','kereta'],james:['#tabJames','#tabJamesBtn','jamesbon'],relay:['#tabRelay','#tabRelayBtn','estafet'],moments:['#tabMoments','#tabMomBtn','momen'],nostalgia:['#tabNostalgia','#tabNosBtn','nostalgia']};
-const TAB_GROUP={nostalgia:'kenangan',moments:'kenangan',kereta:'kenangan',relay:'seru',kuis:'seru',cito:'ngobrol',james:'ngobrol'};
+const TAB_GROUP={nostalgia:'kenangan',moments:'kenangan',kereta:'seru',relay:'seru',kuis:'seru',cito:'ngobrol',james:'ngobrol'};
 const LAST_IN_GROUP={kenangan:'nostalgia',seru:'relay',ngobrol:'cito'};
 function switchTab(t){
   if(!TABS[t]) t='nostalgia';
