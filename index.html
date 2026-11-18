@@ -1924,7 +1924,9 @@ function campWorld(){
   fillT(W,'road',14,36,2,11,false);
   W.roadsH=[12,34,47,55]; W.roadsV=[19,14];
   // golf
-  fillT(W,'golf',1,1,12,10); fillT(W,'bunker',4,3,2,1); fillT(W,'bunker',9,7,2,1); obj(W,'gflag',10,3,false);
+  fillT(W,'golf',13,1,6,9); fillT(W,'bunker',14,3,2,1); fillT(W,'bunker',16,7,2,1); obj(W,'gflag',17,3,false);
+  // Umban Sari paths
+  fillT(W,'path',1,4,12,1); fillT(W,'path',1,9,12,1); fillT(W,'path',5,5,1,4); fillT(W,'path',5,10,1,2);
   // housing paths
   fillT(W,'path',21,4,18,1); fillT(W,'path',21,9,18,1); fillT(W,'path',29,10,1,2);
   const plain='#8c8478';
@@ -1933,8 +1935,8 @@ function campWorld(){
   // Meranti / Hibrida row + practice garage
   bld(W,22,6,3,3,'#8a4fb3'); bld(W,26,6,3,3,plain); bld(W,30,6,3,3,'#e08a2e'); bld(W,34,6,3,3,plain);
   // Umban Sari (outside the camp proper) + Studio Scarlet
-  bld(W,14,2,3,3,'#d4a72c');
-  bld(W,14,6,3,3,'#b3243a','note');
+  bld(W,2,1,3,3,'#d4a72c'); bld(W,6,1,3,3,plain); bld(W,10,1,3,3,'#7a9a5a');
+  bld(W,2,6,3,3,'#b3243a','note'); bld(W,6,6,3,3,'#b07a4a'); bld(W,10,6,3,3,plain);
   // Tampan side
   bld(W,16,31,3,3,'#3aa35a'); bld(W,20,31,3,3,'#e2402b','note');
   bld(W,24,31,3,3,'#8c8478'); bld(W,28,31,3,3,'#8c8478'); bld(W,32,31,3,3,'#4a5fc4','note');
@@ -1945,7 +1947,7 @@ function campWorld(){
   car(32,4,'suv','#c9c3b5',{spare:1});  // Fanny - Escudo
   car(24,9,'suv','#2f6b47',{spare:1});  // Aldo - Vitara
   car(32,9,'sedan','#3a72c4');          // Ari - blue Timor
-  car(16,5,'mpv','#2f5fa8');            // Aad - blue Kijang
+  car(4,4,'mpv','#2f5fa8');            // Aad - blue Kijang
   car(18,34,'mpv','#c0302a',{rack:1});  // Herru - red Panther
   // downtown buildings
   bld(W,2,39,11,7,'#2f8f45','gor');
@@ -1969,14 +1971,14 @@ function campWorld(){
   lm(W,'Rumah Fanny',31,4,'Rumah Fanny · Kenari. Escudo parkir manis. Kenari = markas tiga personel.',31.5,2.1,'home');
   lm(W,'Rumah Aldo',23,9,'Rumah Aldo · Meranti. Ada Vitara di depan. Ketuk pintu: "Do! Latihan!"',23.5,7.1,'home');
   lm(W,'Rumah Ari',31,9,'Rumah Ari · Hibrida. Timor biru parkir di depan. "Ri! Latihan!"',31.5,7.1,'home');
-  lm(W,'Rumah Aad',15,5,'Rumah Aad · Umban Sari. Kijang biru siap angkut ampli. "Aad! Latihan!"',15.5,3.1,'home');
+  lm(W,'Rumah Aad',3,4,'Rumah Aad · Umban Sari. Kijang biru siap angkut ampli. "Aad! Latihan!"',3.5,2.1,'home');
   lm(W,'Rumah Herru',17,34,'Rumah Herru · Tampan. Panther merah di depan, Studio Herru di sebelah. Paling jauh: nyebrang jembatan dulu.',17.5,32.1,'home');
   // places
   lm(W,'Studio Herru',21,34,'Studio Herru. Salah satu markas latihan Bandiecoot.',21.5,30.6,'studio');
-  lm(W,'Scarlet',15,9,'Studio Scarlet · Umban Sari. Tetangganya Aad: booking jam, patungan sewa, gas latihan.',15.5,7.1,'studio');
+  lm(W,'Scarlet',3,9,'Studio Scarlet · Umban Sari. Tetangganya Aad: booking jam, patungan sewa, gas latihan.',3.5,7.1,'studio');
   lm(W,'Gelora',17,19,'Studio Gelora · Rumbai. Nama paling pas buat lagu-lagu Rage.',17.5,17.1,'studio');
   lm(W,'Publica',33,34,'Studio Publica. Ada cerita apa di sini? Tulis di pin.',33.5,32.1,'studio');
-  lm(W,'Lapangan Golf',7,11,'Lapangan golf camp. Bola nyasar = rezeki anak-anak.',6.5,5.5);
+  lm(W,'Lapangan Golf',16,10,'Lapangan golf camp. Bola nyasar = rezeki anak-anak.',16,5.5);
   lm(W,'Sekolah Cendana',7,19,'Sekolah Cendana. Bel jam 7, telat = lari dari halte.',7.5,16.5);
   lm(W,'Halte Bus',16,11,'Halte bus sekolah. Ketinggalan bus = jalan kaki panas-panasan.',17,9.2);
   lm(W,'Commissary',25,19,'Commissary. Belanja bulanan sekalian cari jajan.',25.5,16.5);
@@ -1991,14 +1993,14 @@ function campWorld(){
   lm(W,'Dipo',37,48,'Jalan Diponegoro. Muter-muter Dipo naik kereta, malam Minggu.',null,null);
   // neighbourhood signs (labels only)
   W.areas=[{name:'KENARI',lx:27.5,ly:0.45},{name:'MERANTI',lx:23.5,ly:5.35},{name:'HIBRIDA',lx:31.5,ly:5.35},
-           {name:'UMBAN SARI',lx:15.5,ly:0.75},{name:'TAMPAN',lx:8,ly:32.5},{name:'PUSAT KOTA PEKANBARU',lx:28,ly:36.5},{name:'JL. DIPONEGORO',lx:9,ly:48.6},{name:'JL. RONGGOWARSITO',lx:20,ly:50.1},{name:'SUNGAI SIAK',lx:7,ly:27.6}];
+           {name:'UMBAN SARI',lx:7.5,ly:0.45},{name:'TAMPAN',lx:8,ly:32.5},{name:'PUSAT KOTA PEKANBARU',lx:28,ly:36.5},{name:'JL. DIPONEGORO',lx:9,ly:48.6},{name:'JL. RONGGOWARSITO',lx:20,ly:50.1},{name:'SUNGAI SIAK',lx:7,ly:27.6}];
   W.spawn=[18,14];
   for(let y=0;y<W.gh;y++) for(let x=0;x<GW;x++){
     const edge=y===0||x===0||x===GW-1, south=(y>=31&&y<=33&&x<13)||y===36||y===38;
     if(!south&&(y===11||y===14||y>=24)) continue;
     if(R()<(south?.35:edge?.45:.07)) plantTree(W,x,y);
   }
-  [[6,8],[12,2],[2,9],[11,5]].forEach(([x,y])=>{ if(W.t[y][x]==='golf') obj(W,'tree',x,y); });
+  [[18,1],[13,8],[18,5]].forEach(([x,y])=>{ if(W.t[y][x]==='golf') obj(W,'tree',x,y); });
   return W;
 }
 function schoolWorld(){
