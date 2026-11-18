@@ -140,7 +140,7 @@ textarea{font-family:'Special Elite',monospace;font-size:15px;width:100%;min-hei
 .tagc{border:1.5px solid var(--ink);padding:1px 7px;font-size:11px;font-weight:700}
 .placeLink{background:none;border:none;box-shadow:none;padding:0;font-family:'Space Mono',monospace;font-size:12px;text-decoration:underline;text-transform:none;letter-spacing:0;color:var(--ink)}
 .placeLink:active{transform:none;box-shadow:none}
-.pactions{display:flex;gap:8px;margin-top:10px}
+.pactions{display:flex;gap:8px;margin-top:10px;align-items:center}
 .empty{font-family:'Special Elite',monospace;color:var(--mut);text-align:center;padding:30px 10px;line-height:1.6}
 .mapBox{position:relative;margin:10px 0;border:2px solid var(--ink);background:#e3dccb;overflow:hidden}
 .mapBox.pinning{cursor:crosshair;outline:3px dashed var(--red);outline-offset:2px}
@@ -168,6 +168,8 @@ textarea{font-family:'Special Elite',monospace;font-size:15px;width:100%;min-hei
 #mapLabels{position:absolute;inset:0;pointer-events:none}
 #mapLabels .mlabel[data-lm]{pointer-events:auto;cursor:pointer}
 .mlabel .cam{display:inline-block;margin-left:3px;font-size:7px;vertical-align:0}
+.pby{font-size:11px;color:#6b6556;margin:6px 0 0}
+.rockers{font-size:11px;color:#6b6556;margin-left:6px;line-height:1.3}
 .plGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .plGrid button{padding:0;aspect-ratio:1;overflow:hidden;background:#d9d1bd;box-shadow:2px 2px 0 var(--navy);position:relative}
 .plGrid img{width:100%;height:100%;object-fit:cover;display:block}
@@ -1792,13 +1794,19 @@ $('#momPost').onclick=async()=>{
   if(!cap&&!MOM.data){ $('#momMsg').textContent='Isi foto atau ceritanya dulu.'; return; }
   const id='m'+Date.now().toString(36); let img=null;
   if(MOM.data){ img='mom:'+id; await imgSet(img,MOM.data); }
-  S.moments.unshift({id,cap,year:MOM.year,place:MOM.place,who:[...MOM.who],img,rock:0,created:new Date().toISOString()});
+  S.moments.unshift({id,cap,year:MOM.year,place:MOM.place,who:[...MOM.who],img,rock:0,rockBy:{},by:ME&&ME.name||'',created:new Date().toISOString()});
   save();
   MOM.data=null; MOM.who=new Set(); MOM.place=''; MOM.filter=null;
   $('#momCap').value=''; $('#momPreview').hidden=true; $('#momPreview').removeAttribute('src'); $('#photoDropTxt').hidden=false; $('#momMsg').textContent='';
   renderMoments();
   setTimeout(()=>$('#feed').scrollIntoView({behavior:'smooth'}),50);
 };
+function momDate(iso){ const d=new Date(iso); return isNaN(d)?'':`${d.getDate()} ${['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'][d.getMonth()]} ${d.getFullYear()}`; }
+function rockersTxt(m){
+  const by=Object.entries(m.rockBy||{}).sort((a,b)=>b[1]-a[1]), named=by.reduce((t,[,n])=>t+n,0), rest=(m.rock||0)-named;
+  const parts=by.map(([n,c])=>esc(n)+(c>1?` ×${c}`:'')); if(rest>0) parts.push(`+${rest}`);
+  return parts.join(', ');
+}
 function renderFeed(){
   const f=MOM.filter;
   const years=[...new Set(S.moments.map(m=>m.year))].sort((a,b)=>YEARS.indexOf(a)-YEARS.indexOf(b));
@@ -1818,7 +1826,8 @@ function renderFeed(){
       ${m.cap?`<div class="cap">${esc(m.cap)}</div>`:''}
       <div class="pmeta">${m.who.map(i=>`<span class="tagc">${esc(personName(i))}</span>`).join('')}
         ${pl?`<button class="placeLink" data-goplace="${esc(m.place)}">📍 ${esc(pl)}</button>`:''}</div>
-      <div class="pactions"><button class="small" data-rock="${m.id}">🤘 ${m.rock||''}</button><span class="spacer"></span><button class="small dark" data-mdel="${m.id}">Hapus</button></div>
+      ${m.by?`<div class="pby">${m.img?'📷':'✍️'} ${esc(m.by)}${m.created?` · ${momDate(m.created)}`:''}</div>`:''}
+      <div class="pactions"><button class="small" data-rock="${m.id}">🤘 ${m.rock||''}</button><span class="rockers">${rockersTxt(m)}</span><span class="spacer"></span><button class="small dark" data-mdel="${m.id}">Hapus</button></div>
     </div>`;
   }).join('');
   loadImgs($('#feed'));
@@ -1832,7 +1841,7 @@ $('#momFilters').addEventListener('click',e=>{
 });
 $('#feed').addEventListener('click',e=>{
   const r=e.target.closest('[data-rock]');
-  if(r){ const m=S.moments.find(x=>x.id===r.dataset.rock); if(m){ m.rock=(m.rock||0)+1; r.textContent='🤘 '+m.rock; if(CLOUD){ (SNAP.moment||{})[m.id]=JSON.stringify(m); sb.rpc('rock_moment',{p_id:m.id}); } else save(); } return; }
+  if(r){ const m=S.moments.find(x=>x.id===r.dataset.rock); if(m){ m.rock=(m.rock||0)+1; const me=ME&&ME.name; if(me){ m.rockBy=Object.assign({},m.rockBy); m.rockBy[me]=(m.rockBy[me]||0)+1; } r.textContent='🤘 '+m.rock; const rs=r.parentNode.querySelector('.rockers'); if(rs) rs.innerHTML=rockersTxt(m); if(CLOUD){ (SNAP.moment||{})[m.id]=JSON.stringify(m); sb.rpc('rock_moment',{p_id:m.id}); } else save(); } return; }
   const d=e.target.closest('[data-mdel]');
   if(d){
     if(!d.dataset.confirm){ d.dataset.confirm='1'; d.textContent='Yakin?'; setTimeout(()=>{ delete d.dataset.confirm; d.textContent='Hapus'; },2500); return; }
