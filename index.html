@@ -2783,23 +2783,43 @@ function scenerySVG(){
     <rect y="238" width="460" height="32" fill="#5f6066"/><rect y="238" width="460" height="3" fill="#7a7b80"/>${dash}
   </svg>`;
 }
+// helmets riding around Pekanbaru in the early 2000s: open-face with a flip-up visor, or the cheap half-shell 'helm batok'
+const HELM={Aldo:['open','#f4f4f2','#c8452f'],Ferry:['batok','#1c1c1e','#9a9a9a'],Aad:['open','#2f5fa8','#f4f4f2'],Ari:['batok','#c8302a','#f4f4f2'],
+  Herru:['open','#d23b2b','#111'],Aries:['open','#b9bdc2','#2e3274'],Fanny:['batok','#e2c44c','#2e3274']};
+function helmetSVG(name,hx,hy,sk,hair){
+  const [kind,col,str]=HELM[name]||['open','#f4f4f2','#c8452f'], dk=shade(col,-40);
+  const face=`<ellipse cx="${hx}" cy="${hy}" rx="17" ry="20" fill="${sk}" stroke="#111" stroke-width="2"/>
+    <path d="M${hx-16},${hy-2} q-6,4 -1,9" fill="${sk}" stroke="#111" stroke-width="2"/>
+    <circle cx="${hx-9}" cy="${hy-3}" r="2.3" fill="#111"/><path d="M${hx-13},${hy-8} l7,-1" stroke="${hair}" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M${hx-12},${hy+11} q4,2 8,0" stroke="#111" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="${hx+4}" cy="${hy+2}" r="4" fill="${shade(sk,-15)}"/>`;
+  if(kind==='batok') return face+`
+    <path d="M${hx-19},${hy-6} Q${hx-20},${hy-30} ${hx+2},${hy-31} Q${hx+24},${hy-30} ${hx+22},${hy-4} L${hx+20},${hy-2} L${hx-19},${hy-4}Z" fill="${col}" stroke="#111" stroke-width="2.5"/>
+    <path d="M${hx-21},${hy-5} L${hx+23},${hy-3}" stroke="${dk}" stroke-width="3" stroke-linecap="round"/>
+    <path d="M${hx-12},${hy-25} Q${hx},${hy-29} ${hx+12},${hy-24}" stroke="#fff" stroke-width="2.5" fill="none" opacity=".45" stroke-linecap="round"/>
+    <path d="M${hx+6},${hy-3} L${hx-1},${hy+19}" stroke="#222" stroke-width="2"/>`;
+  return `<path d="M${hx-18},${hy-10} Q${hx-16},${hy-34} ${hx+6},${hy-34} Q${hx+30},${hy-33} ${hx+30},${hy-6} Q${hx+30},${hy+14} ${hx+22},${hy+24} L${hx+2},${hy+24} Z" fill="${col}" stroke="#111" stroke-width="2.5"/>`
+    +`<path d="M${hx-18},${hy-11} A19.5,22.5 0 0 1 ${hx+12},${hy+19}" fill="none" stroke="${dk}" stroke-width="4" stroke-linecap="round"/>`+face+`
+    <path d="M${hx+6},${hy-33} Q${hx+28},${hy-30} ${hx+29},${hy-8}" stroke="${str}" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M${hx-22},${hy-16} Q${hx-20},${hy-38} ${hx+4},${hy-38} L${hx+6},${hy-31} Q${hx-12},${hy-31} ${hx-16},${hy-12}Z" fill="rgba(200,225,240,.55)" stroke="#555" stroke-width="1.5"/>
+    <circle cx="${hx+7}" cy="${hy-30}" r="2.5" fill="#888" stroke="#111" stroke-width="1"/>`;
+}
 function riderSVG(name,x,i,driver){
-  // sized against the 17" wheels: seated rider about 1.3 wheels tall above the seat, feet on the pegs
-  const av=avOf(name), sh=av.shirt, sk=av.skin, pants='#2c3e66', L=x-6;
-  const kx=x-38, ky=102, fx=x-30, fy=200;
-  const legs=`<path d="M${x+6},94 L${kx},${ky}" stroke="#111" stroke-width="19" stroke-linecap="round"/><path d="M${x+6},94 L${kx},${ky}" stroke="${pants}" stroke-width="15" stroke-linecap="round"/>
-    <path d="M${kx},${ky} L${fx},${fy}" stroke="#111" stroke-width="16" stroke-linecap="round"/><path d="M${kx},${ky} L${fx},${fy}" stroke="${pants}" stroke-width="12" stroke-linecap="round"/>
-    <path d="M${fx-16},${fy+3} Q${fx-14},${fy-6} ${fx+2},${fy-5} L${fx+8},${fy+4} Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>`;
-  const torso=`<path d="M${x-20},98 L${L-17},30 Q${L},18 ${L+19},28 L${x+20},98 Q${x},104 ${x-20},98Z" fill="${sh}" stroke="#111" stroke-width="2.5"/>
-    <path d="M${L-4},22 L${L+6},22 L${L+5},30 L${L-3},30Z" fill="${sk}" stroke="#111" stroke-width="1.5"/>`;
-  const arm=driver
-    ? `<path d="M${L-10},36 Q${L-26},62 214,52 L200,30" stroke="#111" stroke-width="14" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M${L-10},36 Q${L-26},62 214,52 L200,30" stroke="${sh}" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="200" cy="28" r="6.5" fill="${sk}" stroke="#111" stroke-width="1.5"/>`
-    : `<path d="M${L-10},38 Q${L-22},66 ${x-50},66" stroke="#111" stroke-width="14" fill="none" stroke-linecap="round"/><path d="M${L-10},38 Q${L-22},66 ${x-50},66" stroke="${sh}" stroke-width="10" fill="none" stroke-linecap="round"/><circle cx="${x-52}" cy="66" r="6.5" fill="${sk}" stroke="#111" stroke-width="1.5"/>`;
-  const hx=L, hy=0;
-  const helmet=`<g><circle cx="${hx}" cy="${hy}" r="24" fill="#e2c44c" stroke="#111" stroke-width="2.5"/><path d="M${hx-24},${hy-2} Q${hx-23},${hy+10} ${hx-7},${hy+12} L${hx-7},${hy-6} Q${hx-18},${hy-8} ${hx-24},${hy-2}Z" fill="#1a1a1a"/><rect x="${hx-3}" y="${hy-9}" width="23" height="9" fill="#2e3274" stroke="#111" stroke-width="1"/><circle cx="${hx+11}" cy="${hy-15}" r="3.5" fill="#fff" opacity=".6"/></g>`;
+  // a seated adult next to 17-inch wheels: about 1.2x seat height from seat to head, feet on the pegs
+  const av=avOf(name), sh=av.shirt, sk=av.skin, pants='#2c3e66', L=x-8;
+  const hipX=x+4, hipY=92, kx=x-50, ky=94, fx=x-40, fy=202;
+  const shin=`<path d="M${kx},${ky} L${fx},${fy}" stroke="#111" stroke-width="20" stroke-linecap="round"/><path d="M${kx},${ky} L${fx},${fy}" stroke="${pants}" stroke-width="16" stroke-linecap="round"/>
+    <path d="M${fx-20},${fy+5} Q${fx-18},${fy-7} ${fx+2},${fy-7} L${fx+10},${fy+5} Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>`;
+  const thigh=`<path d="M${hipX},${hipY} L${kx},${ky}" stroke="#111" stroke-width="25" stroke-linecap="round"/><path d="M${hipX},${hipY} L${kx},${ky}" stroke="${pants}" stroke-width="21" stroke-linecap="round"/><path d="M${hipX-8},${hipY-6} L${kx+4},${ky-7}" stroke="${shade(pants,25)}" stroke-width="3" stroke-linecap="round"/>`;
+  const torso=`<path d="M${x-22},98 L${L-24},10 Q${L-22},-2 ${L-6},-4 L${L+12},-3 Q${L+26},0 ${L+24},14 L${x+24},98 Q${x},104 ${x-22},98Z" fill="${sh}" stroke="#111" stroke-width="2.5"/>
+    <path d="M${L-6},-14 L${L+6},-14 L${L+6},-2 L${L-6},-2Z" fill="${sk}" stroke="#111" stroke-width="1.5"/>`;
+  const armPath=driver?`M${L-14},8 Q${L-30},46 ${x-58},40 L194,28`:`M${L-14},10 Q${L-26},52 ${x-62},58`;
+  const hand=driver?[194,27]:[x-64,58];
+  const arm=`<path d="${armPath}" stroke="#111" stroke-width="17" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="${armPath}" stroke="${sh}" stroke-width="13" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${hand[0]}" cy="${hand[1]}" r="7.5" fill="${sk}" stroke="#111" stroke-width="1.5"/>`;
+  const hx=L-4, hy=-34;
   const t=name.toUpperCase(), w=t.length*6.4+12;
-  const tag=`<g transform="translate(${hx},-38)"><rect x="${-w/2}" y="-9" width="${w}" height="14" rx="2" fill="#f0c53a" stroke="#111" stroke-width="1.2"/><text x="0" y="2" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="10" fill="#111">${esc(t)}${driver?' 🏍':''}</text></g>`;
-  return `<g class="rider" style="animation-delay:${i*.07}s">${legs}${torso}${arm}${helmet}${tag}</g>`;
+  const tag=`<g transform="translate(${hx+4},-90)"><rect x="${-w/2}" y="-9" width="${w}" height="14" rx="2" fill="#f0c53a" stroke="#111" stroke-width="1.2"/><text x="0" y="2" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="10" fill="#111">${esc(t)}${driver?' 🏍':''}</text></g>`;
+  return `<g class="rider" style="animation-delay:${i*.07}s">${shin}${torso}${thigh}${arm}${helmetSVG(name,hx,hy,sk,av.hairColor)}${tag}</g>`;
 }
 const BIKE_DEFAULT={body:'#161618',shield:'#f6f6f3',seat:'#1f1f22',stripe1:'#20a35c',stripe2:'#d42a2a',rims:'#dfe2e5',exhaust:'standar',headlight:'standar',stance:'standar',extras:[],plate:'BM 2004 DHC'};
 const BIKE_EXTRAS=['spion_bulat','box_belakang','bendera','stiker_dhc','lampu_disko','bulu_jok','tas_gitar','keranjang'];
@@ -2820,7 +2840,7 @@ function bikeSVG(riders,B){
   const spokeC=shade(B.rims,-28);
   const spokes=(cx,cy)=>{ let s=''; for(let i=0;i<12;i++){ const a=i*Math.PI/6; s+=`<line x1="${cx}" y1="${cy}" x2="${(cx+Math.cos(a)*34).toFixed(1)}" y2="${(cy+Math.sin(a)*34).toFixed(1)}" stroke="${spokeC}" stroke-width="1.6"/>`; } return s; };
   const wheel=(cx,cy)=>`<g class="wheel" style="transform-origin:${cx}px ${cy}px"><circle cx="${cx}" cy="${cy}" r="44" fill="none" stroke="#1a1a1a" stroke-width="${knob?16:13}" ${knob?'stroke-dasharray="7 4"':''}/>${knob?`<circle cx="${cx}" cy="${cy}" r="42" fill="none" stroke="#1a1a1a" stroke-width="9"/>`:''}<circle cx="${cx}" cy="${cy}" r="37" fill="none" stroke="${B.rims}" stroke-width="3"/>${spokes(cx,cy)}<circle cx="${cx}" cy="${cy}" r="10" fill="#cfd3d6" stroke="#111" stroke-width="2"/><circle cx="${cx}" cy="${cy}" r="3" fill="#555"/><path d="M${cx-31},${cy-31} a44,44 0 0 1 24,-12" stroke="#4a4a4a" stroke-width="3" fill="none"/></g>`;
-  const rs=riders.slice(0,3), xs=[252,306,358];
+  const rs=riders.slice(0,3), xs=[262,318,372];
   const exhaust=B.exhaust==='standar'
     ? `<path d="M248,238 Q300,244 362,236 L408,230 Q418,230 418,237 L413,244 L362,247 Q300,252 248,248Z" fill="#dcdfe2" stroke="#111" stroke-width="2.5"/><path d="M300,240 L362,236 L364,244 L300,248Z" fill="#2b2b2b"/>`
     : `<path d="M248,238 Q290,242 334,226 L338,234 Q292,252 248,248Z" fill="#cfd3d6" stroke="#111" stroke-width="2.5"/><g transform="rotate(-14 368 220)"><rect x="332" y="208" width="74" height="22" rx="10" fill="#26262a" stroke="#111" stroke-width="2.5"/><path d="M346,212 L392,212" stroke="#55555c" stroke-width="2"/><rect x="398" y="211" width="12" height="16" rx="3" fill="#cfd3d6" stroke="#111" stroke-width="1.5"/></g>`;
@@ -2835,7 +2855,7 @@ function bikeSVG(riders,B){
   let fur=''; if(has('bulu_jok')) for(let x=212;x<=372;x+=11) fur+=`<circle cx="${x}" cy="${86-(x-212)*0.025}" r="7.5" fill="#f5b8d2" stroke="#d98bb0" stroke-width="1"/>`;
   const plate=esc(B.plate);
   return `<svg viewBox="0 0 460 270" xmlns="http://www.w3.org/2000/svg">
-  <g transform="translate(48,52) scale(.78)"><g id="bikeBody">
+  <g transform="translate(60,78) scale(.72)"><g id="bikeBody">
     <ellipse cx="220" cy="256" rx="190" ry="7" fill="rgba(0,0,0,.25)"/>
     ${has('lampu_disko')?`<ellipse class="glow" cx="230" cy="250" rx="160" ry="10" fill="#b14cff" opacity=".6"/>`:''}
     ${wheel(100,206)}${wheel(330,206)}
