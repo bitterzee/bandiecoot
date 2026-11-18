@@ -228,6 +228,12 @@ nav button{font-size:13px;padding:9px 1px;letter-spacing:.3px}
 #bandSvg.live .sticks{animation:hit .21s ease-in-out infinite;transform-origin:50% 100%}
 #bandSvg.live .fist{animation:pump .42s ease-in-out infinite;transform-origin:0% 100%}
 #bandSvg.live .strum{animation:hit .42s ease-in-out infinite;transform-origin:50% 50%}
+#bandSvg .vinyl{transform-box:view-box}
+#bandSvg.live .vinyl{animation:vspin .9s linear infinite}
+@keyframes vspin{to{transform:rotate(360deg)}}
+#bandSvg .scratchArm{transform-box:fill-box;transform-origin:100% 0}
+#bandSvg.live .scratchArm{animation:scr .21s ease-in-out infinite alternate}
+@keyframes scr{to{transform:translateX(5px)}}
 #bandSvg .spots{opacity:.5}
 #bandSvg.live .spots{animation:flick 1.2s steps(3) infinite}
 @keyframes bang{0%,100%{transform:rotate(0)}50%{transform:rotate(9deg) translateY(4px)}}
@@ -258,7 +264,7 @@ nav button{font-size:13px;padding:9px 1px;letter-spacing:.3px}
 .gP{font-family:'Special Elite',monospace;font-size:14px;line-height:1.45;color:#3d3830;margin:0 0 14px;word-break:break-word}
 .gInput{display:block;width:100%;height:52px;padding:0 14px;font-family:'Space Mono',monospace;font-size:16px;color:var(--ink);background:#fff8ea;border:2px solid var(--ink);border-radius:2px;outline:none;margin:0 0 12px}
 .gInput:focus{box-shadow:0 0 0 3px rgba(226,64,43,.35)}
-.gCode{text-align:center;font-size:26px;letter-spacing:10px;font-weight:700}
+.gCode{text-align:center;font-size:24px;letter-spacing:6px;font-weight:700}
 .gBtn{display:block;width:100%;height:52px;font-size:20px;padding:0 12px}
 .gLink{display:block;margin:12px auto 0;background:none;border:none;box-shadow:none;font-family:'Space Mono',monospace;font-size:13px;text-transform:none;letter-spacing:0;color:#5d574b;text-decoration:underline;padding:4px}
 .gLink:active{transform:none;box-shadow:none}
@@ -701,7 +707,7 @@ nav button{flex:0 0 auto;padding:9px 11px}
       <div id="gStepCode" hidden>
         <h2 class="gH">Cek email</h2>
         <p class="gP">Link masuk dikirim ke <b id="gSentTo"></b>. Tap link-nya, atau ketik kodenya kalau ada:</p>
-        <input type="text" id="gCode" class="gInput gCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••">
+        <input type="text" id="gCode" class="gInput gCode" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="••••••••">
         <button class="gBtn" id="gVerify">Masuk</button>
         <button class="gLink" id="gBack">← Ganti email</button>
       </div>
@@ -2293,7 +2299,7 @@ let jbIdle=null;
 
 /* =================== BAND CARICATURE (Studio) =================== */
 const BAND_POS=[
-  {name:'Fanny',inst:'none',x:30,y:214,s:.62,expr:'grin',role:'?'},
+  {name:'Fanny',inst:'dj',x:42,y:158,s:.6,expr:'grin',role:'DJ'},
   {name:'Ari',inst:'bass',x:104,y:214,s:.7,expr:'cool',role:'Bass'},
   {name:'Aldo',inst:'drums',x:200,y:190,s:.7,expr:'focus',role:'Drum'},
   {name:'Herru',inst:'keys',x:298,y:214,s:.7,expr:'rap',role:'Keys + Rap'},
@@ -2411,6 +2417,15 @@ function charSVG(p,uid){
     const wedge=`<path d="M-44,2 L-36,-14 L36,-14 L44,2Z" fill="#2a2a2a" stroke="#111" stroke-width="2"/><rect x="-26" y="-11" width="52" height="8" fill="#444"/>`;
     const lines=`<g class="shout" stroke="#f0c53a" stroke-width="3" stroke-linecap="round"><line x1="-44" y1="-128" x2="-56" y2="-138"/><line x1="-46" y1="-112" x2="-60" y2="-112"/><line x1="44" y1="-140" x2="56" y2="-150"/></g>`;
     return `<g transform="translate(${p.x},${p.y}) scale(${p.s})">${legs}${torso}${head}${arms}${lines}${wedge}</g>`;
+  }
+  if(p.inst==='dj'){
+    const phones=`<path d="M-33,-118 Q-33,-158 0,-158 Q33,-158 33,-118" fill="none" stroke="#1a1a1a" stroke-width="5"/><rect x="-40" y="-126" width="12" height="20" rx="4" fill="#2e3274" stroke="#111" stroke-width="2"/><rect x="28" y="-126" width="12" height="20" rx="4" fill="#2e3274" stroke="#111" stroke-width="2"/>`;
+    const deck=(cx)=>`<ellipse cx="${cx}" cy="-52" rx="19" ry="7" fill="#2a2a2a" stroke="#111" stroke-width="1.5"/><g class="vinyl" style="transform-origin:${cx}px -52px"><ellipse cx="${cx}" cy="-53" rx="15" ry="5.5" fill="#111"/><ellipse cx="${cx}" cy="-53" rx="5" ry="2" fill="#e2c44c"/><path d="M${cx-10},-55 Q${cx},-58 ${cx+8},-55" stroke="#444" stroke-width="1" fill="none"/></g>`;
+    const table=`<rect x="-52" y="-48" width="104" height="46" fill="#1d1d20" stroke="#111" stroke-width="2"/><rect x="-52" y="-48" width="104" height="6" fill="#2e3274"/><text x="0" y="-18" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="9" letter-spacing="1" fill="#e2c44c">DHC</text>
+      <rect x="-56" y="-60" width="112" height="12" rx="2" fill="#3a3a40" stroke="#111" stroke-width="1.5"/>${deck(-30)}${deck(30)}<rect x="-8" y="-60" width="16" height="10" rx="1" fill="#555"/><circle cx="-3" cy="-55" r="1.6" fill="#3cc4cc"/><circle cx="3" cy="-55" r="1.6" fill="#e2402b"/>`;
+    arms=`<g class="scratchArm">${armL(-17,-78,-30,-58,sk,sh)}</g>${armL(17,-78,30,-110,sk,sh)}`;
+    const riser=`<rect x="-66" y="-2" width="132" height="${(232-p.y)/p.s}" fill="#26262b" stroke="#111" stroke-width="2"/><rect x="-66" y="-2" width="132" height="8" fill="#3a3a40"/><text x="0" y="40" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="14" letter-spacing="2" fill="#e2c44c">DJ</text>`;
+    return `<g transform="translate(${p.x},${p.y}) scale(${p.s})">${riser}${legs}${torso}${head}${phones}${table}${arms}</g>`;
   }
   arms=`<rect x="-22" y="-70" width="44" height="10" rx="5" fill="${sk}" stroke="#111" stroke-width="1.5"/>`;
   const bub=`<g class="bubble"><ellipse cx="40" cy="-158" rx="17" ry="14" fill="#fff" stroke="#111" stroke-width="2"/><path d="M28,-148 L22,-138 L34,-146Z" fill="#fff" stroke="#111" stroke-width="2"/><text x="40" y="-151" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="20" fill="#111">?</text></g>`;
@@ -2570,7 +2585,7 @@ $('#gSend').onclick=async()=>{
   GATE_EMAIL=email; $('#gSentTo').textContent=email; gateStep('gStepCode');
 };
 $('#gVerify').onclick=async()=>{
-  const token=$('#gCode').value.replace(/\D/g,''); if(token.length<6){ $('#gMsg').textContent='Kode 6 angka.'; return; }
+  const token=$('#gCode').value.replace(/\D/g,''); if(token.length<6){ $('#gMsg').textContent='Kodenya 6–8 angka, cek email.'; return; }
   $('#gVerify').disabled=true;
   const {error}=await sb.auth.verifyOtp({email:GATE_EMAIL,token,type:'email'});
   $('#gVerify').disabled=false;
