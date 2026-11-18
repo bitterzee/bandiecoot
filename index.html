@@ -377,6 +377,33 @@ nav button{flex:0 0 auto;padding:9px 11px}
 .garage.ride .flame{opacity:1}
 @keyframes flame{50%{opacity:.6}}
 html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+nav.tabs{display:block;padding:8px 0 10px}
+nav.tabs .gnav{display:flex;gap:6px}
+nav.tabs .gnav button{flex:1;font-size:16px;padding:10px 4px;letter-spacing:.8px;position:relative}
+nav.tabs .snav{display:flex;gap:6px;margin-top:8px}
+nav.tabs .snav[hidden]{display:none}
+nav.tabs .snav button{flex:1;font-family:'Space Mono',monospace;text-transform:none;letter-spacing:0;font-size:13px;padding:6px 4px;border-width:1px;border-color:#5a564d;color:var(--paper);position:relative}
+nav.tabs .snav button.sel{background:var(--paper);color:#111;border-color:var(--paper);box-shadow:2px 2px 0 var(--navy);font-weight:700}
+.nbadge{position:absolute;top:-7px;right:-4px;background:#e2402b;color:#fff;font-family:Anton,Impact,sans-serif;font-size:11px;line-height:1;padding:3px 5px;border-radius:9px;border:2px solid var(--bg);letter-spacing:0}
+/* Cito Bongak-bongak */
+.chatLog{height:min(56vh,520px);overflow-y:auto;background:#f6f1e3;border:2px solid var(--ink);padding:10px 8px;display:flex;flex-direction:column;gap:7px;-webkit-overflow-scrolling:touch}
+.cm{max-width:82%;align-self:flex-start;background:#fff;border:2px solid var(--ink);padding:6px 9px 5px;box-shadow:2px 2px 0 rgba(0,0,0,.25);font-size:14px;line-height:1.35;word-wrap:break-word;white-space:pre-wrap}
+.cm.me{align-self:flex-end;background:var(--mustard)}
+.cm b{display:block;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:12px;letter-spacing:.5px;color:var(--navy);text-transform:uppercase}
+.cm small{display:block;text-align:right;font-size:10px;color:#7a7466;margin-top:2px}
+.cn{align-self:center;font-family:Anton,Impact,sans-serif;font-size:14px;letter-spacing:.5px;text-transform:uppercase;background:var(--navy);color:var(--mustard);padding:5px 10px;transform:rotate(-1deg);text-align:center}
+.cn small{display:block;font-family:'Space Mono',monospace;text-transform:none;letter-spacing:0;font-size:10px;color:#cfd2ef}
+.cday{align-self:center;font-size:10px;color:#8a8476;margin:4px 0}
+.chatIn{display:flex;gap:8px;margin:10px 0 0}
+.chatIn textarea{flex:1;height:46px;min-height:46px;max-height:120px;resize:none;font-family:'Space Mono',monospace;font-size:15px;padding:10px;border:2px solid var(--ink);background:#fff8ea;border-radius:2px}
+.tekakRow{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0;align-items:center}
+.tekakRow button{font-size:13px;padding:6px 9px}
+.tekakRow .tk{background:#e2402b;color:#fff}
+body.tekaked .wrap,body.tekaked>*:not(.overlay){animation:shake .45s ease-in-out 2}
+.tekakToast{position:fixed;left:50%;top:18%;transform:translateX(-50%) rotate(-3deg);z-index:40;background:var(--mustard);color:#111;border:3px solid #111;box-shadow:6px 6px 0 var(--navy);padding:14px 18px;text-align:center;min-width:240px;animation:pop .25s ease-out}
+.tekakToast b{display:block;font-family:'Rubik Distressed',Anton,Impact,sans-serif;font-size:34px;line-height:1;color:var(--navy)}
+.tekakToast span{display:block;font-size:13px;margin:6px 0 10px}
+@keyframes pop{from{transform:translateX(-50%) rotate(-3deg) scale(.6);opacity:0}}
 </style>
 </head>
 <body>
@@ -390,14 +417,25 @@ html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adju
     <p class="tagline">Studio rahasia. Rumbai, Pekanbaru. Angkatan 2004.</p>
   </header>
 
-  <nav>
-    <button id="tabNosBtn" class="sel">Nostalgia</button>
-    <button id="tabMomBtn">Momen</button>
-    <button id="tabKeretaBtn">Kereta Den</button>
-    <button id="tabKuisBtn">Kuis</button>
-    <button id="tabJamesBtn">Jamesbon</button>
-    <button id="tabRelayBtn">Studio</button>
-    <button id="tabGameBtn">Main Tape</button>
+  <nav class="tabs">
+    <div class="gnav">
+      <button data-g="kenangan" class="sel">Kenangan</button>
+      <button data-g="seru">Seru</button>
+      <button data-g="ngobrol">Ngobrol<span class="nbadge" id="chatBadgeG" hidden></span></button>
+    </div>
+    <div class="snav" data-g="kenangan">
+      <button id="tabNosBtn" class="sel">Peta</button>
+      <button id="tabMomBtn">Momen</button>
+      <button id="tabKeretaBtn">Kereta Den</button>
+    </div>
+    <div class="snav" data-g="seru" hidden>
+      <button id="tabRelayBtn">Studio</button>
+      <button id="tabKuisBtn">Kuis</button>
+    </div>
+    <div class="snav" data-g="ngobrol" hidden>
+      <button id="tabCitoBtn">Cito Bongak<span class="nbadge" id="chatBadge" hidden></span></button>
+      <button id="tabJamesBtn">Jamesbon</button>
+    </div>
   </nav>
 
   <!-- ============ ESTAFET RIFF ============ -->
@@ -466,7 +504,6 @@ html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adju
       <div class="credits" id="revealCredits"></div>
       <div class="row">
         <button class="small" id="revealPlay" data-play="">▶ Putar</button>
-        <button class="small" id="revealGame">Main di Main Tape</button>
         <button class="small dark" id="revealClose">Estafet baru</button>
       </div>
     </div>
@@ -492,6 +529,21 @@ html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adju
   </section>
 
   <!-- ============ KERETA DEN ============ -->
+  <section id="tabCito" hidden>
+    <div class="panel">
+      <span class="tape corner">rehat dulu</span>
+      <h2>Cito Bongak-bongak</h2>
+      <p class="sub">Capek kerja? Ngecek bentar, cito sebentar. Kalau sepi, tekak aja yang lain.</p>
+      <div class="chatLog" id="chatLog"></div>
+      <div class="chatIn">
+        <textarea id="chatText" maxlength="600" placeholder="Bongak apa hari ini?" rows="1"></textarea>
+        <button id="chatSend" style="height:46px">Kirim</button>
+      </div>
+      <div class="tekakRow" id="tekakRow"></div>
+      <div class="msg" id="chatMsg"></div>
+    </div>
+  </section>
+
   <section id="tabKuis" hidden>
     <div class="panel">
       <span class="tape corner">Ulangan harian</span>
@@ -1341,7 +1393,6 @@ function showReveal(song){
 }
 $('#revealTitle').oninput=e=>{ if(REVEAL){ REVEAL.title=e.target.value||'Tanpa Judul'; save(); renderArchive(); } };
 $('#revealPlay').onclick=()=>{ if(REVEAL) toggleSeq('song:'+REVEAL.id,()=>REVEAL.layers,()=>REVEAL.bpm); };
-$('#revealGame').onclick=()=>{ if(REVEAL){ GAME.src={kind:'song',id:REVEAL.id}; switchTab('game'); } };
 $('#revealClose').onclick=()=>{ stopSeq(); $('#revealPanel').hidden=true; renderRelay(); };
 
 function renderArchive(){
@@ -1354,7 +1405,6 @@ function renderArchive(){
       <div class="meta">${d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})} · ${s.bpm} BPM · ${s.layers.map(l=>esc(l.name)).join(', ')}</div>
       <div class="row" style="margin:0">
         <button class="small" data-play="song:${s.id}" data-sid="${s.id}" data-act="play">▶ Putar</button>
-        <button class="small" data-sid="${s.id}" data-act="game">Main Tape</button>
         <span class="spacer"></span>
         <button class="small dark" data-sid="${s.id}" data-act="del">Hapus</button>
       </div></div>`;
@@ -2722,7 +2772,8 @@ const COLLS={
   bike:{get:()=>S.bike?{kereta:S.bike}:{}, set:m=>{ S.bike=m.kereta||null; }},
   quiz:{get:()=>S.quiz||{}, set:m=>{ S.quiz=m; }},
   quizres:{get:()=>S.qres||{}, set:m=>{ S.qres=m; }},
-  placepic:{get:()=>S.ppics||{}, set:m=>{ S.ppics=m; }}
+  placepic:{get:()=>S.ppics||{}, set:m=>{ S.ppics=m; }},
+  chat:{get:()=>S.chat||{}, set:m=>{ S.chat=m; }}
 };
 function snapOf(c){ const o={}; for(const [id,v] of Object.entries(COLLS[c].get())) o[id]=JSON.stringify(v); return o; }
 async function pullAll(){
@@ -2762,6 +2813,7 @@ function onRemote(p){
   if(p.eventType==='DELETE'){ delete map[row.id]; delete (SNAP[c]||{})[row.id]; }
   else { const j=JSON.stringify(row.data); if((SNAP[c]||{})[row.id]===j) return; map[row.id]=row.data; (SNAP[c]=SNAP[c]||{})[row.id]=j; }
   COLLS[c].set(map); remoteColls.add(c);
+  if(c==='chat'&&p.eventType==='INSERT') chatIncoming(row.data);
   try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){}
   clearTimeout(remoteTimer); remoteTimer=setTimeout(refreshAfterRemote,250);
 }
@@ -2778,6 +2830,7 @@ async function refreshAfterRemote(){
   if(t==='game'&&cs.has('song')&&!G.running) renderGameSetup();
   if(t==='kereta'&&cs.has('bike')&&document.activeElement!==$('#bkPrompt')) renderKereta();
   if(t==='kuis'&&(cs.has('quiz')||cs.has('quizres'))&&!QZ.play) renderKuis();
+  if(cs.has('chat')){ if(t==='cito') renderCito(); else chatBadge(); }
 }
 
 // photos: storage paths under the private "media" bucket, cached on the device
@@ -2837,7 +2890,7 @@ async function enterApp(){
   }
   const i=BAND.indexOf(ME.name); if(i>=0){ JB.from=String(i); MOM.who=new Set([i]); }
   $('#acctBtn').hidden=false; $('#acctBtn').textContent=ME.name||'Akun';
-  showGate(false); switchTab(tabFromHash());
+  showGate(false); switchTab(tabFromHash()); chatBadge();
 }
 function sessionLost(){
   if(!CLOUD&&!entered) return;
@@ -3228,8 +3281,78 @@ $('#kuisBox').addEventListener('click',e=>{
   else if(t.id==='qzBack'){ QZ.review=null; renderKuis(); }
 });
 
+/* =================== CITO BONGAK-BONGAK =================== */
+if(!S.chat) S.chat={};
+const TEKAK_LINES=['Woi, rehat dulu!','Kerja terus, kayak Kijang dipanaskan.','Muncul lah, cito bentar.','Ado yang hiduik?','Destruction Hip Core dulu, kerja nanti.','Pangsit Pakde nunggu.'];
+const chatMe=()=>ME&&ME.name||'Aku';
+const chatList=()=>Object.entries(S.chat||{}).map(([id,v])=>Object.assign({id},v)).sort((a,b)=>String(a.at).localeCompare(String(b.at)));
+const hhmm=d=>`${String(d.getHours()).padStart(2,'0')}.${String(d.getMinutes()).padStart(2,'0')}`;
+function chatDay(d){ const t=new Date(), y=new Date(Date.now()-864e5); const same=(a,b)=>a.toDateString()===b.toDateString();
+  return same(d,t)?'Hari ini':same(d,y)?'Kemarin':`${['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][d.getDay()]}, ${d.getDate()} ${BULAN[d.getMonth()]}`; }
+function chatUnread(){ const seen=localStorage.getItem('bc.chatSeen')||''; const me=chatMe(); return chatList().filter(m=>m.at>seen&&m.by!==me).length; }
+function chatBadge(){ const n=curTab()==='cito'?0:chatUnread(); ['#chatBadge','#chatBadgeG'].forEach(s=>{ const b=$(s); b.hidden=!n; b.textContent=n>9?'9+':n; }); }
+function renderCito(){
+  const me=chatMe(), all=chatList().slice(-200), log=$('#chatLog');
+  const atBottom=log.scrollHeight-log.scrollTop-log.clientHeight<60;
+  let h='', day='';
+  if(!all.length) h=`<div class="cday" style="margin:auto">Masih sepi. Mulai bongak, atau tekak yang lain.</div>`;
+  all.forEach(m=>{
+    const d=new Date(m.at), dk=d.toDateString(); if(dk!==day){ day=dk; h+=`<div class="cday">${chatDay(d)}</div>`; }
+    if(m.k==='n') h+=`<div class="cn">👊 ${esc(m.by)} nekak ${m.to==='*'?'semua':esc(m.to===me?'kamu':m.to)}<small>${m.t?esc(m.t)+' · ':''}${hhmm(d)}</small></div>`;
+    else h+=`<div class="cm ${m.by===me?'me':''}">${m.by===me?'':`<b>${esc(m.by)}</b>`}${esc(m.t)}<small>${hhmm(d)}</small></div>`;
+  });
+  log.innerHTML=h;
+  if(atBottom||!CITO.drawn) log.scrollTop=log.scrollHeight; CITO.drawn=true;
+  const left=Math.ceil((CITO.cool-Date.now())/1000);
+  $('#tekakRow').innerHTML=`<button class="tk" data-tk="*" ${left>0?'disabled':''}>👊 Tekak semua</button>`+BAND.filter(n=>n!==me).map(n=>`<button class="small" data-tk="${n}" ${left>0?'disabled':''}>${esc(n)}</button>`).join('')
+    +(left>0?`<span class="hint" style="margin:0">tunggu ${left} dtk</span>`:'');
+  try{ localStorage.setItem('bc.chatSeen',new Date().toISOString()); }catch(e){}
+  chatBadge();
+}
+const CITO={cool:0,drawn:false,coolTimer:0};
+function chatPost(o){
+  const id='c'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  S.chat[id]=Object.assign({by:chatMe(),at:new Date().toISOString()},o); save(); renderCito();
+}
+$('#chatSend').onclick=()=>{
+  const t=$('#chatText').value.trim(); if(!t) return;
+  if(!CLOUD) $('#chatMsg').textContent='Lagi offline: pesan baru terkirim pas masuk.';
+  chatPost({k:'m',t:t.slice(0,600)}); $('#chatText').value=''; $('#chatText').style.height='';
+  $('#chatLog').scrollTop=$('#chatLog').scrollHeight;
+};
+$('#chatText').addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey&&!/Mobi|Android|iPhone/.test(navigator.userAgent)){ e.preventDefault(); $('#chatSend').click(); } });
+$('#chatText').addEventListener('input',e=>{ const t=e.target; t.style.height=''; t.style.height=Math.min(120,t.scrollHeight)+'px'; });
+$('#tekakRow').addEventListener('click',e=>{
+  const b=e.target.closest('[data-tk]'); if(!b||CITO.cool>Date.now()) return;
+  chatPost({k:'n',to:b.dataset.tk,t:TEKAK_LINES[Math.floor(Math.random()*TEKAK_LINES.length)]});
+  knock(); CITO.cool=Date.now()+30000; clearInterval(CITO.coolTimer);
+  CITO.coolTimer=setInterval(()=>{ if(curTab()==='cito') renderCito(); if(CITO.cool<=Date.now()) clearInterval(CITO.coolTimer); },1000);
+  $('#chatLog').scrollTop=$('#chatLog').scrollHeight;
+});
+function knock(){
+  try{ const ctx=ac(), t=ctx.currentTime;
+    [0,.16,.42].forEach(d=>{ const o=ctx.createOscillator(); o.type='triangle'; o.frequency.setValueAtTime(180,t+d); o.frequency.exponentialRampToValueAtTime(70,t+d+.12);
+      const g=ctx.createGain(); g.gain.setValueAtTime(.0001,t+d); g.gain.exponentialRampToValueAtTime(.9,t+d+.005); g.gain.exponentialRampToValueAtTime(.0001,t+d+.14);
+      o.connect(g).connect(MASTER); o.start(t+d); o.stop(t+d+.16); });
+  }catch(e){}
+}
+function chatIncoming(m){
+  if(!m||m.k!=='n') return; const me=chatMe();
+  if(m.by===me||(m.to!=='*'&&m.to!==me)||Date.now()-new Date(m.at)>120000) return;
+  knock(); try{ navigator.vibrate&&navigator.vibrate([180,80,180,80,260]); }catch(e){}
+  document.body.classList.remove('tekaked'); void document.body.offsetWidth; document.body.classList.add('tekaked');
+  setTimeout(()=>document.body.classList.remove('tekaked'),1000);
+  document.querySelectorAll('.tekakToast').forEach(x=>x.remove());
+  const d=document.createElement('div'); d.className='tekakToast';
+  d.innerHTML=`<b>TEKAK!</b><span>${esc(m.by)} nekak ${m.to==='*'?'semua':'kamu'}: “${esc(m.t||'')}”</span><button class="small" data-open="1">Buka Cito</button> <button class="small dark">Nanti</button>`;
+  d.onclick=e=>{ if(e.target.dataset.open) switchTab('cito'); if(e.target.closest('button')) d.remove(); };
+  document.body.appendChild(d); setTimeout(()=>d.remove(),9000);
+}
+
 /* =================== TABS =================== */
-const TABS={kuis:['#tabKuis','#tabKuisBtn','kuis'],kereta:['#tabKereta','#tabKeretaBtn','kereta'],james:['#tabJames','#tabJamesBtn','jamesbon'],relay:['#tabRelay','#tabRelayBtn','estafet'],game:['#tabGame','#tabGameBtn','maintape'],moments:['#tabMoments','#tabMomBtn','momen'],nostalgia:['#tabNostalgia','#tabNosBtn','nostalgia']};
+const TABS={cito:['#tabCito','#tabCitoBtn','cito'],kuis:['#tabKuis','#tabKuisBtn','kuis'],kereta:['#tabKereta','#tabKeretaBtn','kereta'],james:['#tabJames','#tabJamesBtn','jamesbon'],relay:['#tabRelay','#tabRelayBtn','estafet'],moments:['#tabMoments','#tabMomBtn','momen'],nostalgia:['#tabNostalgia','#tabNosBtn','nostalgia']};
+const TAB_GROUP={nostalgia:'kenangan',moments:'kenangan',kereta:'kenangan',relay:'seru',kuis:'seru',cito:'ngobrol',james:'ngobrol'};
+const LAST_IN_GROUP={kenangan:'nostalgia',seru:'relay',ngobrol:'cito'};
 function switchTab(t){
   if(!TABS[t]) t='nostalgia';
   if(t!=='james'&&JB.key) jbLock();
@@ -3238,28 +3361,32 @@ function switchTab(t){
   if(t!=='kuis') QZ.review=null;
   stopSeq(); if(G.running) quitGame(); if(WALK.on){ WALK.on=false; showDialog(null); }
   for(const k in TABS){ $(TABS[k][0]).hidden=k!==t; $(TABS[k][1]).classList.toggle('sel',k===t); }
-  if(t==='game'){ $('#results').hidden=true; $('#stage').hidden=true; $('#gameSetup').hidden=false; renderGameSetup(); }
-  else if(t==='moments') renderMoments();
+  const grp=TAB_GROUP[t]; LAST_IN_GROUP[grp]=t;
+  document.querySelectorAll('nav.tabs .gnav button').forEach(b=>b.classList.toggle('sel',b.dataset.g===grp));
+  document.querySelectorAll('nav.tabs .snav').forEach(d=>d.hidden=d.dataset.g!==grp);
+  if(t==='moments') renderMoments();
   else if(t==='nostalgia') renderNostalgia();
   else if(t==='james') renderJames();
   else if(t==='kereta') renderKereta();
   else if(t==='kuis') renderKuis();
+  else if(t==='cito'){ CITO.drawn=false; renderCito(); }
   else { renderRelay(); renderBand(); }
   try{ history.replaceState(null,'','#'+TABS[t][2]); }catch(e){}
   window.scrollTo({top:0});
 }
-const tabFromHash=()=>({'#kuis':'kuis','#kereta':'kereta','#jamesbon':'james','#estafet':'relay','#maintape':'game','#momen':'moments'})[location.hash]||'nostalgia';
+const tabFromHash=()=>({'#cito':'cito','#kuis':'kuis','#kereta':'kereta','#jamesbon':'james','#estafet':'relay','#momen':'moments'})[location.hash]||'nostalgia';
 $('#tabRelayBtn').onclick=()=>switchTab('relay');
-$('#tabGameBtn').onclick=()=>switchTab('game');
 $('#tabMomBtn').onclick=()=>switchTab('moments');
 $('#tabNosBtn').onclick=()=>switchTab('nostalgia');
 $('#tabJamesBtn').onclick=()=>switchTab('james');
 $('#tabKeretaBtn').onclick=()=>switchTab('kereta');
 $('#tabKuisBtn').onclick=()=>switchTab('kuis');
+$('#tabCitoBtn').onclick=()=>switchTab('cito');
+document.querySelectorAll('nav.tabs .gnav button').forEach(b=>b.onclick=()=>switchTab(LAST_IN_GROUP[b.dataset.g]));
 window.addEventListener('hashchange',()=>switchTab(tabFromHash()));
 
 renderRelay();
-switchTab(tabFromHash());
+switchTab(tabFromHash()); chatBadge();
 bootCloud();
 })();
 </script>
