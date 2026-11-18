@@ -1673,12 +1673,13 @@ function loadImgs(root){ root.querySelectorAll('img[data-img]').forEach(async im
 /* =================== MOMEN =================== */
 if(!S.moments) S.moments=[];
 if(!S.maps) S.maps={camp:{img:null,pins:[]},school:{img:null,pins:[]}};
-if(!S.maps.camp.h36){ S.maps.camp.pins.forEach(p=>{ if(p.view==='game'||(!p.view&&!S.maps.camp.img)) p.y=+(p.y*30/36).toFixed(2); }); S.maps.camp.h36=true; save(); }
+if(S.maps.camp.h36&&!S.maps.camp.h44){ S.maps.camp.pins.forEach(p=>{ if(p.view==='game'||(!p.view&&!S.maps.camp.img)) p.y=+(p.y*36/44).toFixed(2); }); S.maps.camp.h44=true; save(); }
+if(!S.maps.camp.h36){ S.maps.camp.pins.forEach(p=>{ if(p.view==='game'||(!p.view&&!S.maps.camp.img)) p.y=+(p.y*30/36).toFixed(2); }); S.maps.camp.h36=true; S.maps.camp.h44=true; save(); }
 const YEARS=['1998','1999','2000','2001','2002','2003','2004','Habis lulus','Sekarang'];
 const MAPDEF={
   camp:{short:'Camp',q:'Rumbai Camp Pekanbaru',
     info:'Komplek Caltex di Rumbai, di seberang Sungai Siak dari kota.',
-    quick:['Tempat nongkrong','Tempat manggung','Sekolah Cendana','Commissary','Country club','Kolam renang','Lapangan golf','Rumah sakit camp','Halte bus sekolah']},
+    quick:['Tempat nongkrong','Tempat manggung','Warung langganan','Sekolah Cendana','Commissary','Country club','Kolam renang','Lapangan golf','Rumah sakit camp','Halte bus sekolah']},
   school:{short:'Cendana',q:'SMA Cendana Rumbai Pekanbaru',
     info:'Komplek Palem, Rumbai. Upload foto udara sekolahnya, lalu tandai kelas, kantin, dan tempat-tempat kalian.',
     quick:['Kelas 3 SMA','Kelas SMP','Kantin','Lapangan','Perpustakaan','Lab komputer','Gerbang','Panggung pensi','Tempat cabut']}
@@ -1908,14 +1909,15 @@ function nearLm(W,x,y,d){ return W.lms.some(l=>Math.abs(l.x-x)<=d&&Math.abs(l.y-
 function plantTree(W,x,y){ if(x<0||y<0||x>=GW||y>=W.gh) return; if(W.t[y][x]!=='grass'||W.solid[y][x]||nearLm(W,x,y,1)) return; obj(W,'tree',x,y); }
 
 function campWorld(){
-  const W=makeWorld(7,36), R=rng(99);
+  const W=makeWorld(7,44), R=rng(99);
   // river, banks, city road on the Tampan side
   fillT(W,'sand',0,25,40,1,false); fillT(W,'water',0,26,40,4,true); fillT(W,'sand',0,30,40,1,false);
   fillT(W,'dock',30,25,2,3,false); fillT(W,'road',0,34,40,2,false);
   // roads + bridge
   fillT(W,'road',0,12,40,2,false); fillT(W,'road',19,0,2,25,false);
-  fillT(W,'road',14,14,2,11,false); fillT(W,'bridge',14,25,2,6,false); fillT(W,'road',14,31,2,3,false);
-  W.roadsH=[12,34]; W.roadsV=[19,14];
+  fillT(W,'road',14,14,2,11,false); fillT(W,'bridge',14,25,2,6,false); fillT(W,'road',14,31,2,9,false);
+  fillT(W,'road',0,40,40,2,false); fillT(W,'conc',0,39,40,1,false);
+  W.roadsH=[12,34,40]; W.roadsV=[19,14];
   // golf
   fillT(W,'golf',1,1,12,10); fillT(W,'bunker',4,3,2,1); fillT(W,'bunker',9,7,2,1); obj(W,'gflag',10,3,false);
   // housing paths
@@ -1940,6 +1942,11 @@ function campWorld(){
   car(32,9,'sedan','#3a72c4');          // Ari - blue Timor
   car(16,5,'mpv','#2f5fa8');            // Aad - blue Kijang
   car(18,34,'mpv','#c0302a',{rack:1});  // Herru - red Panther
+  // Jalan Diponegoro and around
+  bld(W,2,35,11,4,'#2f8f45','gor');
+  bld(W,17,36,5,3,'#c8452f','pizza');
+  bld(W,23,36,3,3,'#e08a2e','batagor');
+  bld(W,28,35,7,4,'#2e3274','hotel');
   // camp facilities
   bld(W,2,15,11,4,'#3f72c4'); fillT(W,'field',2,20,11,4); W.fields.push({x:2,y:20,w:11,h:4});
   obj(W,'bus',16,10); W.solid[10][17]=true;
@@ -1967,12 +1974,17 @@ function campWorld(){
   lm(W,'Rumah Sakit',24,24,'Rumah sakit camp. Semoga jarang mampir.',24.5,22.2);
   lm(W,'Jembatan',15,28,'Jembatan ke kota. Rute ke studio-studio tempat kalian latihan.',null,null);
   lm(W,'Dermaga',30,27,'Ujung dermaga. Sungai Siak mengalir pelan.',null,null);
+  lm(W,'GOR Tribuana',7,40,'GOR Tribuana. Festival band: panggung gede, sound pecah, deg-degan maksimal.',7.5,36.6,'studio');
+  lm(W,'Paparon',19,40,'Paparon. Pizza kalau lagi ada duit (atau ada yang ulang tahun).',19.5,37.1);
+  lm(W,'Ronggo',24,40,'Ronggowarsito. Batagor abis latihan, sambel kacang jangan lupa.',24.5,37.1);
+  lm(W,'Ardut',31,40,'Aryaduta. Hotel paling megah di Dipo; lewat aja udah berasa keren.',31.5,36.6);
+  lm(W,'Dipo',37,41,'Jalan Diponegoro. Muter-muter Dipo naik kereta, malam Minggu.',null,null);
   // neighbourhood signs (labels only)
   W.areas=[{name:'KENARI',lx:27.5,ly:0.45},{name:'MERANTI',lx:23.5,ly:5.35},{name:'HIBRIDA',lx:31.5,ly:5.35},
-           {name:'UMBAN SARI',lx:15.5,ly:0.75},{name:'TAMPAN',lx:8,ly:32.5},{name:'KOTA PEKANBARU',lx:30,ly:35.3},{name:'SUNGAI SIAK',lx:7,ly:27.6}];
+           {name:'UMBAN SARI',lx:15.5,ly:0.75},{name:'TAMPAN',lx:8,ly:32.5},{name:'KOTA PEKANBARU',lx:9,ly:34.6},{name:'JL. DIPONEGORO',lx:30,ly:41.5},{name:'SUNGAI SIAK',lx:7,ly:27.6}];
   W.spawn=[18,14];
   for(let y=0;y<W.gh;y++) for(let x=0;x<GW;x++){
-    const edge=y===0||x===0||x===GW-1, south=y>=31&&y<=33&&x<13;
+    const edge=y===0||x===0||x===GW-1, south=(y>=31&&y<=33&&x<13)||(y>=42)||(y>=35&&y<=38&&x>=36);
     if(!south&&(y===11||y===14||y>=24)) continue;
     if(R()<(south?.35:edge?.45:.07)) plantTree(W,x,y);
   }
@@ -2052,6 +2064,10 @@ function drawBld(c,o){
   box(c,X,Y,W,H,PAL.ink);
   const ry=Y+Math.floor(roofH/2);
   if(o.extra==='cross'){ c.fillStyle='#d23b2b'; c.fillRect(cx-1,ry-3,3,7); c.fillRect(cx-3,ry-1,7,3); }
+  if(o.extra==='hotel'){ for(let yy=Y+3;yy<Y+roofH-3;yy+=5) for(let xx=X+3;xx<X+W-4;xx+=5){ c.fillStyle=(xx+yy)%3?'#ffe68a':PAL.winL; c.fillRect(xx,yy,2,3); } c.fillStyle='#e2c44c'; c.fillRect(X+W/2-6,Y-3,12,3); }
+  if(o.extra==='gor'){ c.fillStyle='rgba(255,255,255,.35)'; for(let xx=X+4;xx<X+W-3;xx+=6) c.fillRect(xx,Y+2,2,roofH-4); c.fillStyle=PAL.ink; c.fillRect(cx-1,ry-4,1,6); c.fillRect(cx,ry-4,2,1); c.fillRect(cx-3,ry+1,3,2); }
+  if(o.extra==='pizza'){ c.fillStyle='#f0c53a'; c.beginPath(); c.moveTo(cx-5,ry-3); c.lineTo(cx+5,ry-3); c.lineTo(cx,ry+5); c.closePath(); c.fill(); c.fillStyle='#d23b2b'; c.fillRect(cx-2,ry-2,2,2); c.fillRect(cx+1,ry,2,2); c.fillStyle='#b5651d'; c.fillRect(cx-5,ry-4,10,1); }
+  if(o.extra==='batagor'){ c.fillStyle='#fff'; for(let xx=X+1;xx<X+W-1;xx+=4) c.fillRect(xx,Y+roofH-3,2,2); c.fillStyle='#f0c53a'; c.fillRect(cx-3,ry-2,6,3); }
   if(o.extra==='note'){ c.fillStyle=PAL.ink; c.fillRect(cx+1,ry-4,1,6); c.fillRect(cx+2,ry-4,2,1); c.fillRect(cx+3,ry-3,1,1); c.fillRect(cx-1,ry+1,3,2); c.fillStyle='#fff'; c.fillRect(cx-1,ry+1,1,1); }
 }
 function drawObj(c,o){
