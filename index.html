@@ -2438,7 +2438,7 @@ async function pushDiff(){
       SNAP[c]=old;
     }
     syncBadge('ok');
-  }catch(e){ console.warn('sync',e); syncBadge('err'); setTimeout(schedulePush,5000); }
+  }catch(e){ console.warn('sync',e); if(authErr(e)){ pushing=false; sessionLost(); return; } syncBadge('err'); setTimeout(schedulePush,5000); }
   pushing=false;
   if(pushAgain){ pushAgain=false; pushDiff(); }
 }
@@ -2523,6 +2523,18 @@ async function enterApp(){
   $('#acctBtn').hidden=false; $('#acctBtn').textContent=ME.name||'Akun';
   showGate(false); switchTab(tabFromHash());
 }
+function sessionLost(){
+  if(!CLOUD&&!entered) return;
+  CLOUD=false; ME=null; $('#acctOverlay').hidden=true; $('#acctBtn').hidden=true;
+  showGate(true); gateStep('gStepEmail'); $('#gMsg').textContent='Sesi kamu habis. Masuk lagi ya.';
+}
+// Make sure we still have a valid sign-in before doing something that needs it.
+async function needSession(){
+  const {data}=await sb.auth.getSession();
+  if(data&&data.session) return true;
+  sessionLost(); return false;
+}
+const authErr=e=>e&&(e.code==='42501'||/permission denied|JWT|401/i.test(e.message||''));
 async function signOut(){
   try{ await sb.auth.signOut(); }catch(e){}
   try{ localStorage.removeItem(KEY); indexedDB.deleteDatabase('bandiecoot'); }catch(e){}
@@ -2530,13 +2542,16 @@ async function signOut(){
 }
 // account / invites
 async function openAcct(){
+  if(!(await needSession())) return;
+  $('#acctMsg').textContent='';
   $('#acctWho').textContent=`${ME.name||'?'} · ${ME.email}`;
   $('#acctAdmin').hidden=!ME.admin;
   if(ME.admin) await renderMembers2();
   $('#acctOverlay').hidden=false;
 }
 async function renderMembers2(){
-  const {data}=await sb.from('members').select('email,name,is_admin,added_at').order('added_at');
+  const {data,error}=await sb.from('members').select('email,name,is_admin,added_at').order('added_at');
+  if(error){ if(authErr(error)) sessionLost(); else $('#acctMsg').textContent='Gagal ambil daftar: '+error.message; return; }
   const rows=data||[];
   $('#acctList').innerHTML=rows.map(r=>`<div class="mrow"><div><b>${esc(r.name||'(belum pilih nama)')}</b><div class="hint">${esc(r.email)}${r.is_admin?' · admin':''}</div></div>${r.email===ME.email?'':`<button class="small dark" data-rm="${esc(r.email)}">Hapus</button>`}</div>`).join('');
   $('#acctCount').textContent=`${rows.length}/7 kursi terisi`;
@@ -2546,7 +2561,12 @@ $('#acctBtn').onclick=openAcct;
 $('#acctClose').onclick=()=>{ $('#acctOverlay').hidden=true; };
 $('#acctOut').onclick=signOut;
 $('#acctAdd').onclick=async()=>{
-  const email=$('#acctEmail').value.trim(); const {error}=await sb.rpc('add_member',{p_email:email});
+  const email=$('#acctEmail').value.trim(); if(!email) return;
+  if(!(await needSession())) return;
+  $('#acctAdd').disabled=true;
+  const {error}=await sb.rpc('add_member',{p_email:email});
+  $('#acctAdd').disabled=false;
+  if(error&&authErr(error)&&!/admin/i.test(error.message)){ sessionLost(); return; }
   $('#acctMsg').textContent=error?error.message:`${email} diundang. Kirim link app-nya ke dia.`; if(!error){ $('#acctEmail').value=''; renderMembers2(); }
 };
 $('#acctList').addEventListener('click',async e=>{
@@ -2562,7 +2582,7 @@ function bootCloud(){
   let started=false;
   sb.auth.onAuthStateChange((ev,session)=>{
     if(session&&!started){ started=true; setTimeout(afterSignIn,0); }
-    if(!session&&ev==='SIGNED_OUT'){ started=false; }
+    if(!session&&ev==='SIGNED_OUT'){ started=false; sessionLost(); }
   });
   sb.auth.getSession().then(({data})=>{ if(!data.session&&!started) gateStep('gStepEmail'); });
 }
