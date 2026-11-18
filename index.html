@@ -295,6 +295,51 @@ button.big,.gBtn{background:var(--mustard);color:#111;box-shadow:3px 3px 0 var(-
 nav button.sel{background:var(--mustard);color:#111;box-shadow:3px 3px 0 var(--navy)}
 .panel{box-shadow:0 0 0 2px #111,5px 5px 0 2px rgba(0,0,0,.6)}
 .tagline{margin-top:14px}
+nav{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:0 0 auto;padding:9px 11px}
+.garage{position:relative;overflow:hidden;border:3px solid #111;background:#bfe3f2;aspect-ratio:460/270;margin:8px 0 10px;box-shadow:4px 4px 0 var(--navy)}
+.scenery{position:absolute;left:0;top:0;width:200%;height:100%;display:flex;transform:translateX(-50%)}
+.scenery svg{flex:0 0 50%;width:50%;height:100%;display:block}
+.scenery svg+svg{margin-left:-1px}
+.garage.ride .scenery{animation:roll 1.8s linear infinite}
+@keyframes roll{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+#bikeBox{position:absolute;inset:0}
+#bikeBox svg{width:100%;height:100%;display:block;overflow:visible}
+.garage.on #bikeBody{animation:vib .09s linear infinite}
+.garage.ride #bikeBody{animation:vib .05s linear infinite}
+@keyframes vib{50%{transform:translateY(1px)}}
+#bikeBox .wheel{transform-box:view-box}
+.garage.ride .wheel{animation:spin .28s linear infinite}
+@keyframes spin{to{transform:rotate(-360deg)}}
+.puff{opacity:0;transform-box:fill-box;transform-origin:center}
+.garage.on .puff{animation:puff 1.2s ease-out infinite}
+.garage.ride .puff{animation-duration:.5s}
+@keyframes puff{0%{opacity:.7;transform:translate(0,0) scale(.4)}100%{opacity:0;transform:translate(44px,-18px) scale(1.8)}}
+.garage.ride .rider{animation:lean .5s ease-in-out infinite}
+@keyframes lean{50%{transform:translateY(-1.5px)}}
+.garage.honk{animation:honk .5s}
+@keyframes honk{20%,60%{transform:translateX(-2px)}40%,80%{transform:translateX(2px)}}
+.bikeCtl button{flex:1}
+.gasBtn{background:var(--mustard);font-size:20px;user-select:none;-webkit-user-select:none;touch-action:none}
+.bkSpec{width:100%;border-collapse:collapse;margin-top:14px;font-size:13px;background:#fff8ea;border:2px solid #111}
+.bkSpec td{padding:7px 10px;border-bottom:1px dashed #b9ae94}
+.bkSpec td:first-child{font-family:Anton,Impact,sans-serif;letter-spacing:.5px;width:30%;color:var(--navy)}
+.bkMod{margin:16px 0 4px;padding:14px;background:#151517;color:var(--paper);border:3px solid #111;box-shadow:4px 4px 0 var(--mustard)}
+.bkMod.off{opacity:.55}
+.bkModH{font-family:'Rubik Distressed',Anton,sans-serif;font-size:22px;color:var(--mustard)}
+.bkModP{font-size:12px;color:#b9b2a2;margin:4px 0 0;line-height:1.45}
+.bkCap{font-family:'Special Elite',monospace;font-size:15px;margin-top:10px;color:#fff;line-height:1.4}
+.bkHist{font-size:12px;margin-top:10px;line-height:1.6;color:#d9d2c0}
+.bkHist .hint{color:#8f8a7e}
+.glow{animation:glow 1.2s linear infinite}
+@keyframes glow{0%{fill:#b14cff}33%{fill:#3cc4cc}66%{fill:#ff4fa3}100%{fill:#b14cff}}
+.flag{transform-box:fill-box;transform-origin:0 50%;animation:wave 1s ease-in-out infinite}
+@keyframes wave{50%{transform:skewY(-4deg) scaleX(.94)}}
+.garage.on .flame{animation:flame .12s steps(2) infinite}
+.flame{opacity:0}
+.garage.ride .flame{opacity:1}
+@keyframes flame{50%{opacity:.6}}
 </style>
 </head>
 <body>
@@ -311,6 +356,7 @@ nav button.sel{background:var(--mustard);color:#111;box-shadow:3px 3px 0 var(--n
   <nav>
     <button id="tabNosBtn" class="sel">Nostalgia</button>
     <button id="tabMomBtn">Momen</button>
+    <button id="tabKeretaBtn">Kereta Den</button>
     <button id="tabJamesBtn">Jamesbon</button>
     <button id="tabRelayBtn">Studio</button>
     <button id="tabGameBtn">Main Tape</button>
@@ -404,6 +450,44 @@ nav button.sel{background:var(--mustard);color:#111;box-shadow:3px 3px 0 var(--n
       <h2>Arsip Kaset</h2>
       <p class="sub">Semua lagu hasil estafet.</p>
       <div id="archive"></div>
+    </div>
+  </section>
+
+  <!-- ============ KERETA DEN ============ -->
+  <section id="tabKereta" hidden>
+    <div class="panel">
+      <span class="tape corner">BM 2004 DHC</span>
+      <h2>Kereta Den</h2>
+      <p class="sub">Kereta = motor. Den = aden, aku. Bebek hitam-putih yang nganter ke sekolah, ke studio, dan pulang kemalaman.</p>
+      <div class="garage" id="garage"><div class="scenery" id="scenery"></div><div id="bikeBox"></div></div>
+      <div class="row bikeCtl">
+        <button id="bkStart">🔑 Starter</button>
+        <button id="bkGas" class="gasBtn">Gas!</button>
+        <button id="bkHorn">📯 Tin tin</button>
+      </div>
+      <div class="hint">Tahan "Gas!" buat keliling camp.</div>
+      <div class="bkMod" id="bkModBox">
+        <div class="bkModH">Bengkel Claude</div>
+        <p class="bkModP">Semua bisa modif dikit-dikit. Tulis maumu, Claude yang ngoprek (maks 3 perubahan sekali minta).</p>
+        <div class="bkCap" id="bkCap"></div>
+        <div class="row" style="margin:8px 0 0">
+          <input type="text" id="bkPrompt" class="gInput" maxlength="200" placeholder="mis. knalpot racing + jok bulu pink" style="flex:1;margin:0;height:46px">
+          <button id="bkMod" style="height:46px">Modif</button>
+        </div>
+        <div class="bkHist" id="bkHist"></div>
+        <button class="small dark" id="bkReset" style="margin-top:8px">Balikin ke standar</button>
+      </div>
+      <div class="hint" style="margin-top:14px">BONCENG SIAPA? Maks 3. Yang pertama nyetir.</div>
+      <div class="whoChips" id="bkWho"></div>
+      <div class="msg" id="bkMsg"></div>
+      <table class="bkSpec">
+        <tr><td>Jenis</td><td>Bebek 2000-an</td></tr>
+        <tr><td>Warna</td><td>Hitam-putih, stripe merah-hijau</td></tr>
+        <tr><td>Plat</td><td>BM 2004 DHC</td></tr>
+        <tr><td>Muatan</td><td>3 orang + ampli (kalau ada razia: 1)</td></tr>
+        <tr><td>Bensin</td><td>Selalu tinggal segaris</td></tr>
+        <tr><td>Motto</td><td><b>Destruction Hip Core</b></td></tr>
+      </table>
     </div>
   </section>
 
@@ -2409,7 +2493,8 @@ const COLLS={
   relay:{get:()=>({current:S.relay}), set:m=>{ if(m.current) S.relay=m.current; }},
   lineup:{get:()=>({lineup:{members:S.members}}), set:m=>{ if(m.lineup) S.members=m.lineup.members; }},
   jbmeta:{get:()=>S.jb&&S.jb.check?{vault:S.jb}:{}, set:m=>{ S.jb=m.vault||null; }},
-  jbstory:{get:()=>S.jbs||{}, set:m=>{ S.jbs=m; }}
+  jbstory:{get:()=>S.jbs||{}, set:m=>{ S.jbs=m; }},
+  bike:{get:()=>S.bike?{kereta:S.bike}:{}, set:m=>{ S.bike=m.kereta||null; }}
 };
 function snapOf(c){ const o={}; for(const [id,v] of Object.entries(COLLS[c].get())) o[id]=JSON.stringify(v); return o; }
 async function pullAll(){
@@ -2462,6 +2547,7 @@ async function refreshAfterRemote(){
   if(t==='moments'&&(cs.has('moment')||cs.has('pin'))&&!busyInput) renderMoments();
   if(t==='nostalgia'&&(cs.has('pin')||cs.has('map')||cs.has('moment'))&&$('#pinOverlay').hidden&&!WALK.on) renderNostalgia();
   if(t==='game'&&cs.has('song')&&!G.running) renderGameSetup();
+  if(t==='kereta'&&cs.has('bike')&&document.activeElement!==$('#bkPrompt')) renderKereta();
 }
 
 // photos: storage paths under the private "media" bucket, cached on the device
@@ -2588,27 +2674,204 @@ function bootCloud(){
 }
 
 function myTurn(){ return !CLOUD||!ME||!ME.name||RELAY_OVERRIDE||S.relay.turn>=7||memberName(curMember())===ME.name; }
+/* =================== KERETA DEN (the bike) =================== */
+function scenerySVG(){
+  const house=(x,roof)=>`<g transform="translate(${x},150)"><rect y="16" width="56" height="34" fill="#f1e6c8" stroke="#111" stroke-width="2"/><path d="M-5,18 L28,-2 L61,18Z" fill="${roof}" stroke="#111" stroke-width="2"/><rect x="22" y="30" width="12" height="20" fill="#5a3a22"/><rect x="6" y="24" width="10" height="9" fill="#3f6aa8"/><rect x="40" y="24" width="10" height="9" fill="#3f6aa8"/></g>`;
+  const tree=x=>`<g transform="translate(${x},140)"><rect x="-4" y="30" width="8" height="30" fill="#6b4423"/><circle cx="0" cy="22" r="22" fill="#2f7a34" stroke="#1f5a25" stroke-width="2"/><circle cx="-7" cy="14" r="7" fill="#4fa852"/></g>`;
+  let dash=''; for(let x=0;x<460;x+=46) dash+=`<rect x="${x}" y="253" width="22" height="3" fill="#efe7c9"/>`;
+  return `<svg viewBox="0 0 460 270" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="460" height="200" fill="#bfe3f2"/><circle cx="395" cy="48" r="22" fill="#fff3b0"/>
+    <g fill="#fff" opacity=".85"><ellipse cx="90" cy="46" rx="30" ry="9"/><ellipse cx="112" cy="40" rx="18" ry="9"/><ellipse cx="270" cy="70" rx="26" ry="8"/></g>
+    <rect y="196" width="460" height="44" fill="#6db35a"/>
+    ${house(18,'#c8452f')}${tree(108)}${house(140,'#3f72c4')}
+    <g transform="translate(212,118)"><rect x="40" y="40" width="5" height="40" fill="#555"/><rect x="88" y="40" width="5" height="40" fill="#555"/><rect x="0" y="0" width="134" height="44" fill="#111"/><rect x="3" y="3" width="128" height="38" fill="#f4f0e2"/><rect x="5" y="5" width="124" height="34" fill="#e2c44c"/>
+      <text x="67" y="20" text-anchor="middle" font-family="'Rubik Distressed',Anton,sans-serif" font-size="13" fill="#2e3274">BANDIECOOT</text><text x="67" y="33" text-anchor="middle" font-family="Anton,sans-serif" font-size="8" letter-spacing="1" fill="#111">DESTRUCTION HIP CORE</text></g>
+    ${tree(372)}${house(392,'#2f9e9a')}
+    <g transform="translate(330,168)"><rect x="-2" y="10" width="4" height="30" fill="#777"/><rect x="-22" y="-4" width="44" height="16" rx="2" fill="#1f7a3a" stroke="#fff" stroke-width="1.5"/><text x="0" y="8" text-anchor="middle" font-family="Anton,sans-serif" font-size="9" fill="#fff">RUMBAI</text></g>
+    <rect y="238" width="460" height="32" fill="#5f6066"/><rect y="238" width="460" height="3" fill="#7a7b80"/>${dash}
+  </svg>`;
+}
+function riderSVG(name,x,i,driver){
+  const av=avOf(name), sh=av.shirt, sk=av.skin;
+  const legs=`<path d="M${x+4},96 Q${x-10},112 ${x-26},118 L${x-30},150" stroke="#2c3e66" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="${x-34}" cy="152" rx="10" ry="5" fill="#111"/>`;
+  const torso=`<path d="M${x-14},${96} L${x-10},${44} Q${x},${36} ${x+12},${44} L${x+16},${96} Z" fill="${sh}" stroke="#111" stroke-width="2.5"/>`;
+  const arm=driver?`<path d="M${x-6},52 Q${x-30},60 202,27" stroke="${sh}" stroke-width="9" fill="none" stroke-linecap="round"/><circle cx="202" cy="27" r="5" fill="${sk}" stroke="#111" stroke-width="1.5"/>`
+                  :`<path d="M${x-6},54 Q${x-24},66 ${x-44},64" stroke="${sh}" stroke-width="9" fill="none" stroke-linecap="round"/><circle cx="${x-46}" cy="64" r="5" fill="${sk}" stroke="#111" stroke-width="1.5"/>`;
+  const helmet=`<g><circle cx="${x}" cy="18" r="21" fill="#e2c44c" stroke="#111" stroke-width="2.5"/><path d="M${x-21},16 Q${x-20},26 ${x-6},28 L${x-6},12 Q${x-16},10 ${x-21},16Z" fill="#1a1a1a"/><rect x="${x-2}" y="10" width="20" height="8" fill="#2e3274" stroke="#111" stroke-width="1"/><circle cx="${x+10}" cy="4" r="3" fill="#fff" opacity=".6"/></g>`;
+  const t=name.toUpperCase(), w=t.length*6.4+12;
+  const tag=`<g transform="translate(${x},-14)"><rect x="${-w/2}" y="-9" width="${w}" height="14" rx="2" fill="#f0c53a" stroke="#111" stroke-width="1.2"/><text x="0" y="2" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="10" fill="#111">${esc(t)}${driver?' 🏍':''}</text></g>`;
+  return `<g class="rider" style="animation-delay:${i*.07}s">${legs}${torso}${arm}${helmet}${tag}</g>`;
+}
+const BIKE_DEFAULT={body:'#161618',shield:'#f6f6f3',seat:'#1f1f22',stripe1:'#20a35c',stripe2:'#d42a2a',rims:'#dfe2e5',exhaust:'standar',headlight:'standar',stance:'standar',extras:[],plate:'BM 2004 DHC'};
+const BIKE_EXTRAS=['spion_bulat','box_belakang','bendera','stiker_dhc','lampu_disko','bulu_jok','tas_gitar','keranjang'];
+function cleanBike(b){
+  const o=Object.assign({},BIKE_DEFAULT,{extras:[]}); if(!b||typeof b!=='object') return o;
+  for(const k of ['body','shield','seat','stripe1','stripe2','rims']) if(/^#[0-9a-f]{6}$/i.test(b[k]||'')) o[k]=b[k].toLowerCase();
+  if(['standar','racing','racing_api'].includes(b.exhaust)) o.exhaust=b.exhaust;
+  if(['standar','bulat','sangar'].includes(b.headlight)) o.headlight=b.headlight;
+  if(['standar','ceper','trail'].includes(b.stance)) o.stance=b.stance;
+  if(Array.isArray(b.extras)) o.extras=[...new Set(b.extras.filter(e=>BIKE_EXTRAS.includes(e)))].slice(0,5);
+  if(typeof b.plate==='string') o.plate=b.plate.toUpperCase().replace(/[^A-Z0-9 ]/g,'').trim().slice(0,12)||BIKE_DEFAULT.plate;
+  return o;
+}
+const bikeNow=()=>cleanBike(S.bike&&S.bike.d);
+function bikeSVG(riders,B){
+  B=B||bikeNow(); const has=e=>B.extras.includes(e);
+  const dy=B.stance==='ceper'?9:B.stance==='trail'?-10:0, knob=B.stance==='trail';
+  const spokeC=shade(B.rims,-28);
+  const spokes=(cx,cy)=>{ let s=''; for(let i=0;i<12;i++){ const a=i*Math.PI/6; s+=`<line x1="${cx}" y1="${cy}" x2="${(cx+Math.cos(a)*34).toFixed(1)}" y2="${(cy+Math.sin(a)*34).toFixed(1)}" stroke="${spokeC}" stroke-width="1.6"/>`; } return s; };
+  const wheel=(cx,cy)=>`<g class="wheel" style="transform-origin:${cx}px ${cy}px"><circle cx="${cx}" cy="${cy}" r="44" fill="none" stroke="#1a1a1a" stroke-width="${knob?16:13}" ${knob?'stroke-dasharray="7 4"':''}/>${knob?`<circle cx="${cx}" cy="${cy}" r="42" fill="none" stroke="#1a1a1a" stroke-width="9"/>`:''}<circle cx="${cx}" cy="${cy}" r="37" fill="none" stroke="${B.rims}" stroke-width="3"/>${spokes(cx,cy)}<circle cx="${cx}" cy="${cy}" r="10" fill="#cfd3d6" stroke="#111" stroke-width="2"/><circle cx="${cx}" cy="${cy}" r="3" fill="#555"/><path d="M${cx-31},${cy-31} a44,44 0 0 1 24,-12" stroke="#4a4a4a" stroke-width="3" fill="none"/></g>`;
+  const rs=riders.slice(0,3), xs=[248,300,348];
+  const exhaust=B.exhaust==='standar'
+    ? `<path d="M248,238 Q300,244 362,236 L408,230 Q418,230 418,237 L413,244 L362,247 Q300,252 248,248Z" fill="#dcdfe2" stroke="#111" stroke-width="2.5"/><path d="M300,240 L362,236 L364,244 L300,248Z" fill="#2b2b2b"/>`
+    : `<path d="M248,238 Q290,242 334,226 L338,234 Q292,252 248,248Z" fill="#cfd3d6" stroke="#111" stroke-width="2.5"/><g transform="rotate(-14 368 220)"><rect x="332" y="208" width="74" height="22" rx="10" fill="#26262a" stroke="#111" stroke-width="2.5"/><path d="M346,212 L392,212" stroke="#55555c" stroke-width="2"/><rect x="398" y="211" width="12" height="16" rx="3" fill="#cfd3d6" stroke="#111" stroke-width="1.5"/></g>`;
+  const pX=B.exhaust==='standar'?420:414, pY=B.exhaust==='standar'?236:200;
+  const flame=B.exhaust==='racing_api'?`<g class="flame"><path d="M412,198 Q436,186 452,196 Q436,202 446,212 Q426,206 412,208Z" fill="#ff8a1f"/><path d="M412,200 Q428,194 438,200 Q428,204 434,208 Q422,205 412,206Z" fill="#ffe14d"/></g>`:'';
+  const headlight=B.headlight==='bulat'
+    ? `<circle cx="114" cy="48" r="13" fill="#cfd3d6" stroke="#111" stroke-width="2"/><circle cx="114" cy="48" r="9" fill="#fff6c8" stroke="#111" stroke-width="1.5"/>`
+    : `<ellipse cx="117" cy="48" rx="8" ry="12" fill="#fff6c8" stroke="#111" stroke-width="2"/>${B.headlight==='sangar'?`<path d="M106,34 L128,44 L126,48 L106,40Z" fill="#111"/><path d="M112,52 L122,50" stroke="#e2402b" stroke-width="2"/>`:''}`;
+  const mirror=has('spion_bulat')
+    ? `<path d="M158,34 L164,4" stroke="#9aa0a5" stroke-width="2.5"/><circle cx="166" cy="0" r="10" fill="#cfe3f5" stroke="#9aa0a5" stroke-width="3"/><path d="M146,40 L140,8" stroke="#9aa0a5" stroke-width="2.5"/><circle cx="138" cy="4" r="10" fill="#cfe3f5" stroke="#9aa0a5" stroke-width="3"/>`
+    : `<path d="M158,34 L166,8" stroke="#9aa0a5" stroke-width="2.5"/><ellipse cx="168" cy="6" rx="9" ry="5" fill="#2b2b2b" stroke="#111" stroke-width="1.5"/>`;
+  let fur=''; if(has('bulu_jok')) for(let x=212;x<=372;x+=11) fur+=`<circle cx="${x}" cy="${86-(x-212)*0.025}" r="7.5" fill="#f5b8d2" stroke="#d98bb0" stroke-width="1"/>`;
+  const plate=esc(B.plate);
+  return `<svg viewBox="0 0 460 270" xmlns="http://www.w3.org/2000/svg">
+  <g transform="translate(48,52) scale(.78)"><g id="bikeBody">
+    <ellipse cx="220" cy="256" rx="190" ry="7" fill="rgba(0,0,0,.25)"/>
+    ${has('lampu_disko')?`<ellipse class="glow" cx="230" cy="250" rx="160" ry="10" fill="#b14cff" opacity=".6"/>`:''}
+    ${wheel(100,206)}${wheel(330,206)}
+    <g transform="translate(0,${dy})">
+    ${has('tas_gitar')?`<g transform="rotate(-24 330 70)"><rect x="300" y="14" width="28" height="112" rx="13" fill="#1b1b1b" stroke="#111" stroke-width="2"/><rect x="307" y="-20" width="14" height="38" rx="5" fill="#1b1b1b" stroke="#111" stroke-width="2"/><path d="M314,30 L314,110" stroke="#444" stroke-width="2"/></g>`:''}
+    ${has('box_belakang')?`<rect x="352" y="44" width="48" height="38" rx="6" fill="#222" stroke="#111" stroke-width="2.5"/><rect x="358" y="50" width="36" height="6" rx="2" fill="#d42a2a"/>`:''}
+    ${has('bendera')?`<path d="M398,100 L410,-14" stroke="#9aa0a5" stroke-width="3"/><g class="flag"><path d="M410,-14 L452,-8 Q446,2 452,12 L408,6Z" fill="#e2c44c" stroke="#111" stroke-width="2"/><text x="429" y="3" text-anchor="middle" font-family="'Rubik Distressed',Anton,sans-serif" font-size="11" fill="#2e3274">DHC</text></g>`:''}
+    <path d="M60,184 Q100,146 144,174 L136,182 Q100,160 70,190Z" fill="${B.body}" stroke="#111" stroke-width="2"/>
+    <line x1="142" y1="68" x2="104" y2="${204-dy}" stroke="#c9cdd1" stroke-width="9" stroke-linecap="round"/><line x1="142" y1="68" x2="104" y2="${204-dy}" stroke="#8e9398" stroke-width="2.5"/>
+    <line x1="330" y1="${206-dy}" x2="252" y2="212" stroke="#b9bdc1" stroke-width="9" stroke-linecap="round"/>
+    <path d="M262,198 L334,193 L336,208 L262,214Z" fill="${B.body}" stroke="#111" stroke-width="2"/>
+    <path d="M222,186 L284,182 Q300,194 292,218 L270,236 L232,236 Q212,220 222,186Z" fill="#c9ccd0" stroke="#111" stroke-width="2.5"/>
+    <circle cx="250" cy="212" r="15" fill="#e6e8ea" stroke="#111" stroke-width="2"/><circle cx="250" cy="212" r="6" fill="#b5b9bd"/>
+    <path d="M276,190 L290,190 M278,197 L292,197 M279,204 L292,204" stroke="#8e9398" stroke-width="2"/>
+    ${exhaust}${flame}
+    <g class="puffs"><circle class="puff" cx="${pX}" cy="${pY}" r="7" fill="#e9e9e9"/><circle class="puff" cx="${pX}" cy="${pY}" r="7" fill="#e9e9e9" style="animation-delay:.4s"/><circle class="puff" cx="${pX}" cy="${pY}" r="7" fill="#e9e9e9" style="animation-delay:.8s"/></g>
+    <line x1="232" y1="236" x2="220" y2="${254-dy}" stroke="#b9bdc1" stroke-width="5" stroke-linecap="round"/>
+    <path d="M348,114 L338,${196-dy}" stroke="#b9bdc1" stroke-width="6"/><path d="M346,124 l-7,4 l9,4 l-9,4 l9,4 l-9,4 l9,4 l-9,4 l9,4" stroke="#7d8287" stroke-width="2" fill="none"/>
+    <path d="M198,112 L380,106 Q396,108 396,126 L390,152 Q386,170 364,170 L300,164 Q262,164 246,180 L214,180 Q194,162 198,112Z" fill="${B.body}" stroke="#111" stroke-width="2.5"/>
+    <path d="M252,136 L388,124 L387,131 L252,143Z" fill="${B.stripe1}"/><path d="M252,144 L386,132 L385,139 L252,151Z" fill="${B.stripe2}"/>
+    <path d="M300,130 L370,124" stroke="#fff" stroke-width="1" opacity=".35"/>
+    <rect x="386" y="98" width="16" height="11" rx="2" fill="#f08a24" stroke="#111" stroke-width="2"/><rect x="390" y="100" width="8" height="7" fill="#d42a2a"/>
+    <g transform="translate(398,118) rotate(4)"><rect width="54" height="22" rx="2" fill="#111" stroke="#ddd" stroke-width="1.5"/><text x="27" y="15" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="${plate.length>11?8.5:10}" letter-spacing=".6" fill="#fff">${plate}</text></g>
+    <path d="M204,104 Q206,86 230,84 L362,80 Q386,80 384,96 L380,108 L208,112Z" fill="${B.seat}" stroke="#111" stroke-width="2.5"/>
+    <path d="M232,90 L356,86" stroke="${shade(B.seat,55)}" stroke-width="3" stroke-linecap="round"/>${fur}
+    <path d="M176,198 L226,188 L232,204 L184,216Z" fill="${shade(B.body,-6)}"/>
+    <path d="M152,58 Q180,56 186,90 L202,150 Q208,178 198,198 L178,214 Q160,220 150,206 Q142,170 132,140 Q122,100 152,58Z" fill="${B.shield}" stroke="#111" stroke-width="3"/>
+    <path d="M160,80 Q176,90 184,140" stroke="${shade(B.shield,-34)}" stroke-width="4" fill="none" stroke-linecap="round"/>
+    ${has('stiker_dhc')?`<g transform="translate(146,124) rotate(-10)"><rect width="42" height="20" fill="#111"/><rect x="2" y="2" width="38" height="16" fill="#f4f0e2"/><rect x="3.5" y="3.5" width="35" height="13" fill="#e2c44c"/><text x="21" y="14" text-anchor="middle" font-family="'Rubik Distressed',Anton,sans-serif" font-size="10" fill="#2e3274">DHC</text></g>`:''}
+    <path d="M118,36 Q142,24 164,34 L170,58 Q152,68 124,62 Q110,50 118,36Z" fill="${B.body}" stroke="#111" stroke-width="2.5"/>
+    ${headlight}<rect x="108" y="62" width="10" height="6" rx="2" fill="#f08a24" stroke="#111" stroke-width="1.5"/>
+    ${has('keranjang')?`<g transform="translate(86,60)"><rect width="38" height="26" fill="rgba(200,200,200,.25)" stroke="#9aa0a5" stroke-width="2.5"/>${[8,16,24,32].map(x=>`<line x1="${x}" y1="0" x2="${x}" y2="26" stroke="#9aa0a5" stroke-width="1.2"/>`).join('')}<line x1="0" y1="13" x2="38" y2="13" stroke="#9aa0a5" stroke-width="1.2"/></g>`:''}
+    <path d="M150,40 L196,28" stroke="#111" stroke-width="5" stroke-linecap="round"/><path d="M192,28 L208,24" stroke="#2a2a2a" stroke-width="8" stroke-linecap="round"/>
+    ${mirror}
+    ${rs.slice().reverse().map((n,k)=>{ const i=rs.length-1-k; return riderSVG(n,xs[i],i,i===0); }).join('')}
+    </g>
+  </g></g></svg>`;
+}
+const BK={who:[]};
+const ENG={on:false,n:null,gas:false};
+function renderKereta(){
+  if(!$('#scenery').innerHTML) $('#scenery').innerHTML=scenerySVG()+scenerySVG();
+  $('#bikeBox').innerHTML=bikeSVG(BK.who);
+  const hist=(S.bike&&S.bike.hist)||[];
+  $('#bkCap').textContent=hist[0]?`“${hist[0].caption}” — ${hist[0].by}`:'Masih standar pabrik. Kamu yang modif pertama?';
+  $('#bkHist').innerHTML=hist.slice(1,8).map(h=>`<div><b>${esc(h.by)}</b>: ${esc(h.prompt)} <span class="hint">→ ${esc(h.caption)}</span></div>`).join('');
+  $('#bkModBox').classList.toggle('off',!CLOUD);
+  $('#bkWho').innerHTML=BAND.map(n=>{ const i=BK.who.indexOf(n); return `<button data-bk="${n}" class="${i>=0?'sel':''}">${i===0?'🏍 ':''}${n}${i>0?' +'+i:''}</button>`; }).join('');
+  $('#bkStart').textContent=ENG.on?'■ Matikan':'🔑 Starter';
+}
+$('#bkWho').addEventListener('click',e=>{
+  const b=e.target.closest('[data-bk]'); if(!b) return; const n=b.dataset.bk, i=BK.who.indexOf(n);
+  if(i>=0) BK.who.splice(i,1); else { if(BK.who.length>=3){ $('#bkMsg').textContent='Maks 3 orang. Kalau ada razia, 1.'; return; } BK.who.push(n); }
+  $('#bkMsg').textContent=''; renderKereta();
+});
+function engineOn(){
+  if(ENG.on) return; const ctx=ac(), t=ctx.currentTime; ENG.on=true; $('#garage').classList.add('on');
+  const st=ctx.createOscillator(); st.type='sawtooth'; st.frequency.setValueAtTime(160,t); st.frequency.linearRampToValueAtTime(330,t+.45);
+  st.connect(filt(ctx,'bandpass',900,2)).connect(envG(ctx,t,.1,.02,.35,.08)).connect(MASTER); st.start(t); st.stop(t+.55);
+  const o=ctx.createOscillator(); o.type='sawtooth'; o.frequency.value=46;
+  const ws=ctx.createWaveShaper(); ws.curve=curve(8);
+  const lp=filt(ctx,'lowpass',420,1.5);
+  const trem=ctx.createGain(); trem.gain.value=.55;
+  const lfo=ctx.createOscillator(); lfo.type='square'; lfo.frequency.value=9; const lg=ctx.createGain(); lg.gain.value=.45; lfo.connect(lg).connect(trem.gain);
+  const out=ctx.createGain(); out.gain.setValueAtTime(0.0001,t); out.gain.linearRampToValueAtTime(.32,t+.6);
+  o.connect(ws).connect(lp).connect(trem).connect(out).connect(MASTER); o.start(t+.35); lfo.start(t+.35);
+  ENG.n={o,lp,lfo,out}; renderKereta();
+}
+function engineOff(){
+  if(!ENG.on) return; const ctx=ac(), t=ctx.currentTime, n=ENG.n; ENG.on=false; setGas(false);
+  n.out.gain.cancelScheduledValues(t); n.out.gain.setValueAtTime(n.out.gain.value,t); n.out.gain.linearRampToValueAtTime(0.0001,t+.5);
+  n.o.stop(t+.6); n.lfo.stop(t+.6); ENG.n=null; $('#garage').classList.remove('on'); renderKereta();
+}
+function setGas(on){
+  ENG.gas=on; $('#garage').classList.toggle('ride',on&&ENG.on);
+  if(!ENG.n) return; const t=AC.currentTime, n=ENG.n;
+  n.o.frequency.cancelScheduledValues(t); n.o.frequency.setValueAtTime(n.o.frequency.value,t); n.o.frequency.linearRampToValueAtTime(on?125:46,t+(on?1.2:.7));
+  n.lfo.frequency.setTargetAtTime(on?24:9,t,.3); n.lp.frequency.setTargetAtTime(on?1500:420,t,.3);
+}
+function horn(){
+  const ctx=ac(), t=ctx.currentTime;
+  [0,.24].forEach(d=>{ [410,518].forEach(f=>{ const o=ctx.createOscillator(); o.type='square'; o.frequency.value=f; o.connect(filt(ctx,'lowpass',2200)).connect(envG(ctx,t+d,.09,.01,.15,.04)).connect(MASTER); o.start(t+d); o.stop(t+d+.25); }); });
+  const g=$('#garage'); g.classList.remove('honk'); void g.offsetWidth; g.classList.add('honk');
+}
+$('#bkStart').onclick=()=>{ ENG.on?engineOff():engineOn(); };
+$('#bkMod').onclick=async()=>{
+  const prompt=$('#bkPrompt').value.trim(); if(!prompt) return;
+  if(!CLOUD){ $('#bkMsg').textContent='Bengkel cuma buka kalau sudah masuk.'; return; }
+  const {data}=await sb.auth.getSession(); if(!data||!data.session){ sessionLost(); return; }
+  const btn=$('#bkMod'); btn.disabled=true; btn.textContent='Ngoprek…'; $('#bkMsg').textContent='';
+  try{
+    const r=await fetch('/api/bike',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+data.session.access_token},body:JSON.stringify({prompt,bike:bikeNow()})});
+    const j=await r.json().catch(()=>({error:'Bengkel lagi error.'}));
+    if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
+    const hist=[{by:ME&&ME.name||'?',prompt,caption:j.caption,at:new Date().toISOString()},...((S.bike&&S.bike.hist)||[])].slice(0,12);
+    S.bike={d:cleanBike(j.bike),hist}; save(); $('#bkPrompt').value=''; renderKereta(); horn();
+  }catch(e){ $('#bkMsg').textContent=e.message; }
+  btn.disabled=false; btn.textContent='Modif';
+};
+$('#bkPrompt').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); $('#bkMod').click(); } });
+$('#bkReset').onclick=e=>{
+  const b=e.target; if(!b.dataset.confirm){ b.dataset.confirm='1'; b.textContent='Yakin? Semua modif hilang'; setTimeout(()=>{ delete b.dataset.confirm; b.textContent='Balikin ke standar'; },3000); return; }
+  delete b.dataset.confirm; b.textContent='Balikin ke standar';
+  const hist=[{by:ME&&ME.name||'?',prompt:'(balikin ke standar)',caption:'Balik standar pabrik.',at:new Date().toISOString()},...((S.bike&&S.bike.hist)||[])].slice(0,12);
+  S.bike={d:cleanBike(BIKE_DEFAULT),hist}; save(); renderKereta();
+};
+$('#bkHorn').onclick=horn;
+const gasBtn=$('#bkGas');
+gasBtn.addEventListener('pointerdown',e=>{ e.preventDefault(); try{ gasBtn.setPointerCapture(e.pointerId); }catch(_){} if(!ENG.on){ engineOn(); setTimeout(()=>{ if(ENG.gasHeld) setGas(true); },500); } else setGas(true); ENG.gasHeld=true; });
+['pointerup','pointercancel','lostpointercapture'].forEach(ev=>gasBtn.addEventListener(ev,()=>{ ENG.gasHeld=false; setGas(false); }));
+
 /* =================== TABS =================== */
-const TABS={james:['#tabJames','#tabJamesBtn','jamesbon'],relay:['#tabRelay','#tabRelayBtn','estafet'],game:['#tabGame','#tabGameBtn','maintape'],moments:['#tabMoments','#tabMomBtn','momen'],nostalgia:['#tabNostalgia','#tabNosBtn','nostalgia']};
+const TABS={kereta:['#tabKereta','#tabKeretaBtn','kereta'],james:['#tabJames','#tabJamesBtn','jamesbon'],relay:['#tabRelay','#tabRelayBtn','estafet'],game:['#tabGame','#tabGameBtn','maintape'],moments:['#tabMoments','#tabMomBtn','momen'],nostalgia:['#tabNostalgia','#tabNosBtn','nostalgia']};
 function switchTab(t){
   if(!TABS[t]) t='nostalgia';
   if(t!=='james'&&JB.key) jbLock();
+  if(t!=='kereta'&&ENG.on) engineOff();
   stopSeq(); if(G.running) quitGame(); if(WALK.on){ WALK.on=false; showDialog(null); }
   for(const k in TABS){ $(TABS[k][0]).hidden=k!==t; $(TABS[k][1]).classList.toggle('sel',k===t); }
   if(t==='game'){ $('#results').hidden=true; $('#stage').hidden=true; $('#gameSetup').hidden=false; renderGameSetup(); }
   else if(t==='moments') renderMoments();
   else if(t==='nostalgia') renderNostalgia();
   else if(t==='james') renderJames();
+  else if(t==='kereta') renderKereta();
   else { renderRelay(); renderBand(); }
   try{ history.replaceState(null,'','#'+TABS[t][2]); }catch(e){}
   window.scrollTo({top:0});
 }
-const tabFromHash=()=>({'#jamesbon':'james','#estafet':'relay','#maintape':'game','#momen':'moments'})[location.hash]||'nostalgia';
+const tabFromHash=()=>({'#kereta':'kereta','#jamesbon':'james','#estafet':'relay','#maintape':'game','#momen':'moments'})[location.hash]||'nostalgia';
 $('#tabRelayBtn').onclick=()=>switchTab('relay');
 $('#tabGameBtn').onclick=()=>switchTab('game');
 $('#tabMomBtn').onclick=()=>switchTab('moments');
 $('#tabNosBtn').onclick=()=>switchTab('nostalgia');
 $('#tabJamesBtn').onclick=()=>switchTab('james');
+$('#tabKeretaBtn').onclick=()=>switchTab('kereta');
 window.addEventListener('hashchange',()=>switchTab(tabFromHash()));
 
 renderRelay();

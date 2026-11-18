@@ -27,7 +27,7 @@ jobs:
         with:
           version: 3.0.0
       - name: Record migrations that were applied by hand before this workflow existed
-        run: supabase migration repair --status applied 20261118000000 20261118000100 --remote="$REF" --password "$PASSWORD" --yes
+        run: supabase migration repair --status applied 20261118000000 20261118000100 20261118000200 --remote="$REF" --password "$PASSWORD" --yes
       - name: Show pending
         run: supabase migration list --remote="$REF" --password "$PASSWORD" --yes
       - name: Apply
