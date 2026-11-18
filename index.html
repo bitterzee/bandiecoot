@@ -168,6 +168,7 @@ textarea{font-family:'Special Elite',monospace;font-size:15px;width:100%;min-hei
 .mlabel{position:absolute;transform:translate(-50%,-50%);font-family:'Press Start 2P',monospace;font-size:7px;line-height:1;background:#fff;color:#111;border:1px solid #111;padding:2px 3px 1px;white-space:nowrap;box-shadow:1px 1px 0 rgba(0,0,0,.5)}
 .mlabel.home{background:#ffe9a8;border-color:#7a4b12;color:#3a2410}
 .mlabel.studio{background:#e2402b;border-color:#111;color:#fff}
+.mlabel.kid{background:#2e3274;border-color:#e2c44c;color:#e2c44c}
 .mlabel.area{background:#1a1a1a;color:#f0c53a;border-color:#f0c53a;font-size:6px;letter-spacing:1px}
 .dlg{position:absolute;left:3%;right:3%;bottom:3%;background:#fff;color:#111;border:3px double #111;padding:8px 10px 10px;font-family:'Press Start 2P',monospace;font-size:9px;line-height:1.6;box-shadow:0 0 0 2px #fff,0 0 0 4px #111}
 .dlg.top{top:3%;bottom:auto}
@@ -1683,7 +1684,7 @@ const MAPDEF={
     quick:['Tempat nongkrong','Tempat manggung','Warung langganan','Sekolah Cendana','Commissary','Country club','Kolam renang','Lapangan golf','Rumah sakit camp','Halte bus sekolah']},
   school:{short:'Cendana',q:'SMA Cendana Rumbai Pekanbaru',
     info:'Komplek Palem, Rumbai. Upload foto udara sekolahnya, lalu tandai kelas, kantin, dan tempat-tempat kalian.',
-    quick:['Kelas 3 SMA','Kelas SMP','Kantin','Lapangan','Perpustakaan','Lab komputer','Gerbang','Panggung pensi','Tempat cabut']}
+    quick:['Kelas 3 SMA','Kantin','Lapangan','Perpustakaan','Lab komputer','Gerbang','Panggung pensi','Tempat cabut']}
 };
 const PIN_TYPES={rumah:{l:'Rumah',c:'#f0c53a'},sekolah:{l:'Sekolah',c:'#3cc4cc'},studio:{l:'Latihan / Manggung',c:'#e2402b'},nongkrong:{l:'Nongkrong',c:'#b5ef3a'},lain:{l:'Lainnya',c:'#ebe5d6'}};
 function guessType(t){
@@ -2008,7 +2009,7 @@ function schoolWorld(){
   fillT(W,'conc',18,27,4,1,false); obj(W,'pillar',17,27); obj(W,'pillar',22,27);
   fillT(W,'conc',2,7,36,2); fillT(W,'conc',10,2,2,25); fillT(W,'conc',28,2,2,25); fillT(W,'conc',12,9,16,1);
   fillT(W,'conc',2,17,36,2); fillT(W,'conc',18,21,4,6);
-  bld(W,12,2,15,5,'#c8452f'); bld(W,3,2,7,5,'#3f72c4'); bld(W,30,2,7,5,'#2f9e9a');
+  bld(W,12,2,15,5,'#c8452f'); bld(W,30,2,7,5,'#2f9e9a');
   bld(W,3,10,7,5,'#8a4fb3','note'); bld(W,30,10,7,5,'#7a7f86');
   fillT(W,'court',13,10,13,7); W.fields.push({x:13,y:10,w:13,h:7,court:true}); obj(W,'flagpole',19,9);
   obj(W,'stage',15,19,true,{w:9,h:2}); for(let i=15;i<24;i++){ W.solid[19][i]=true; W.solid[20][i]=true; }
@@ -2016,7 +2017,6 @@ function schoolWorld(){
   fillT(W,'conc',23,24,14,3); for(let x=24;x<=36;x+=2) obj(W,'motor',x,25,true,{col:['#d23b2b','#2f6fc4','#222','#f0c53a'][x%4===0?0:(x%8===2?1:(x%8===6?2:3))]});
   lm(W,'Gerbang',19,26,'Gerbang sekolah. Satpam selalu tahu siapa yang telat.',19.8,28.6);
   lm(W,'Ruang Guru',19,7,'Ruang guru. Dipanggil ke sini = firasat buruk.',19.5,4.2);
-  lm(W,'Gedung SMP',6,7,'Gedung SMP. 1998–2001: celana biru, masih culun.',6.5,4.2);
   lm(W,'Gedung SMA',33,7,'Gedung SMA. 2001–2004: celana abu-abu, kelas 3 = raja.',33.5,4.2);
   lm(W,'Ruang Musik',6,15,'Ruang musik. Ampli seadanya, drum pinjaman. Bandiecoot mulai dari sini?',6.5,12.2);
   lm(W,'Lab Komputer',33,15,'Lab komputer. Main game diam-diam pas guru keluar.',33.5,12.2);
@@ -2026,8 +2026,19 @@ function schoolWorld(){
   lm(W,'Perpustakaan',33,23,'Perpustakaan. Tempat tidur siang paling sunyi.',33.5,20.6);
   lm(W,'Parkiran',23,25,'Parkiran motor. Motor bapak dipinjam tanpa izin.',30,23.6);
   lm(W,'Pagar Belakang',2,3,'Pagar belakang. Rute cabut legendaris. Jangan bilang-bilang.',4.6,1.2);
+  // Bandiecoot, kelas 3 SMA
+  const KIDS=[
+    ['Aldo',8,24,'#3a2410','sticks','Aldo. Nge-drum meja kantin pakai sumpit. Ibu kantin udah pasrah.',8,25.6],
+    ['Aad',17,12,'#111','scream','Aad. Teriak ala Chester pas upacara. Kepala sekolah belum sadar mic-nya nyala.',17,10.6],
+    ['Herru',33,24,'#2a1a10','rap','Herru. Ngerap di depan perpus. Sudah tiga kali disuruh diam, masih nambah verse.',33.5,25.6],
+    ['Ferry',5,3,'#3a2410','guitar','Ferry. Cabut lewat pagar belakang, gitar di punggung. "Bentar doang, latihan."',5,4.6],
+    ['Aries',27,14,'#1a1a1a','zzz','Aries. Ketiduran di pinggir lapangan, tas gitar jadi bantal. Bel pulang udah dari tadi.',27,15.6],
+    ['Ari',15,26,'#2a1a10','bass','Ari. Telat, manjat pagar depan bawa bass. Satpam lihat, pura-pura nggak lihat.',13,25.4],
+    ['Fanny',24,8,'#4a2a12','dj','Fanny. Scratch kaset walkman di depan ruang guru. Wakasek ikut goyang dikit.',24,9.6]
+  ];
+  KIDS.forEach(([n,x,y,hair,act,txt,lx,ly])=>{ obj(W,'kid',x,y,true,{hair,act}); lm(W,n,x,y,txt,lx,ly,'kid'); });
   W.spawn=[19,25];
-  [[12,20],[13,22],[25,21],[26,20],[3,24],[5,25],[8,24],[14,24],[16,25],[37,10],[37,14],[37,21],[37,24],[2,12],[2,23]].forEach(([x,y])=>plantTree(W,x,y));
+  [[3,6],[8,6],[12,20],[13,22],[25,21],[26,20],[3,24],[5,25],[14,24],[16,25],[37,10],[37,14],[37,21],[37,24],[2,12],[2,23]].forEach(([x,y])=>plantTree(W,x,y));
   for(let x=0;x<GW;x++){ if(x%3!==1) plantTree(W,x,0); }
   return W;
 }
@@ -2110,6 +2121,23 @@ function drawObj(c,o){
         if(o.spare){ c.fillStyle='#111'; c.fillRect(x0-2,Y+3,2,2); } }
       break; }
     case 'motor': c.fillStyle=PAL.ink; c.fillRect(X+1,Y+5,2,2); c.fillRect(X+5,Y+5,2,2); c.fillStyle=o.col; c.fillRect(X+2,Y+3,5,2); c.fillStyle='#333'; c.fillRect(X+3,Y+2,3,1); break;
+    case 'kid': {
+      const hair=o.hair, put=(a,b,w,h,col)=>{ c.fillStyle=col; c.fillRect(X+a,Y+b,w,h); };
+      c.fillStyle='rgba(0,0,0,.3)'; c.fillRect(X,Y+7,8,1);
+      if(o.act==='zzz'){ put(-3,4,4,3,'#2b2b2b'); put(-2,3,3,2,hair); put(-1,5,2,1,'#f2c69b'); put(1,4,4,3,'#fafafa'); put(5,4,4,3,'#8a8f98'); put(9,5,1,2,'#111');
+        c.fillStyle='#fff'; c.fillRect(X+1,Y-1,3,1); c.fillRect(X+2,Y,1,1); c.fillRect(X+1,Y+1,3,1); c.fillRect(X+5,Y-5,4,1); c.fillRect(X+7,Y-4,1,1); c.fillRect(X+6,Y-3,1,1); c.fillRect(X+5,Y-2,4,1); break; }
+      put(2,-2,4,2,hair); put(1,-1,1,2,hair); put(6,-1,1,2,hair);
+      put(2,0,4,3,'#f2c69b'); put(3,1,1,1,'#111'); put(5,1,1,1,'#111');
+      if(o.act==='scream') put(3,2,2,2,'#7a1010');
+      put(1,3,6,3,'#fafafa'); put(4,3,1,2,'#8a8f98'); put(2,6,4,1,'#8a8f98'); put(2,7,1,1,'#111'); put(5,7,1,1,'#111');
+      put(0,3,1,2,'#f2c69b'); put(7,3,1,2,'#f2c69b');
+      if(o.act==='sticks'){ put(-3,2,3,1,'#e6c27a'); put(8,1,3,1,'#e6c27a'); put(-5,5,5,2,'#8b5a2b'); }
+      if(o.act==='scream'){ put(8,0,1,4,'#bbb'); put(7,-1,2,2,'#333'); put(10,-4,1,4,'#fff'); put(12,-3,1,3,'#fff'); put(10,1,1,1,'#fff'); put(12,1,1,1,'#fff'); }
+      if(o.act==='rap'){ put(-1,2,1,4,'#bbb'); put(-2,1,2,2,'#333'); put(9,-4,2,2,'#e2c44c'); put(10,-7,1,4,'#e2c44c'); put(11,-7,2,1,'#e2c44c'); }
+      if(o.act==='guitar'){ put(-1,2,3,6,'#b5651d'); put(-1,4,3,1,'#5a3a22'); put(0,-4,1,6,'#5a3a22'); }
+      if(o.act==='bass'){ put(7,2,3,5,'#2f5fa8'); put(8,-4,1,6,'#5a3a22'); }
+      if(o.act==='dj'){ put(-4,3,4,3,'#222'); put(-3,4,2,1,'#e2c44c'); put(8,3,3,3,'#c8452f'); put(1,-2,6,1,'#222'); put(0,-1,1,2,'#222'); put(7,-1,1,2,'#222'); put(9,-4,2,2,'#e2c44c'); put(10,-7,1,4,'#e2c44c'); }
+      break; }
     case 'pillar': c.fillStyle='#a84b34'; c.fillRect(X+1,Y-2,6,9); hl(c,X+1,Y-2,6,'#d27b5f'); box(c,X+1,Y-2,6,9,PAL.ink); break;
     case 'stage': {
       const W=o.w*TW,H=o.h*TW; c.fillStyle='rgba(0,0,0,.3)'; c.fillRect(X+2,Y+3,W,H);
