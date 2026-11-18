@@ -244,11 +244,30 @@ nav button{font-size:13px;padding:9px 1px;letter-spacing:.3px}
 .swatches{display:flex;flex-wrap:wrap;gap:6px}
 .swatches button{width:26px;height:26px;padding:0;border-radius:50%;box-shadow:none;border:2px solid var(--ink)}
 .swatches button.sel{outline:3px solid var(--red);outline-offset:1px}
-.gate{position:fixed;inset:0;z-index:40;background:var(--bg);background-image:radial-gradient(rgba(255,255,255,.035) 1px,transparent 1px);background-size:4px 4px;display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto}
-.gbox{width:100%;max-width:380px}
-.gload{font-family:'Special Elite',monospace;color:var(--mut);margin-top:20px}
-.gNames{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-.gNames button:disabled{opacity:.3}
+.gate{position:fixed;inset:0;z-index:40;background:var(--bg);background-image:radial-gradient(rgba(255,255,255,.035) 1px,transparent 1px);background-size:4px 4px;display:flex;align-items:center;justify-content:center;padding:calc(24px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom));overflow:auto}
+.gbox{width:100%;max-width:360px;margin:auto}
+.gHead{text-align:center;margin-bottom:22px;position:relative}
+.gTape{display:inline-block;transform:rotate(-3deg);font-size:12px;margin-bottom:12px}
+.gLogo{font-size:clamp(60px,19vw,84px);text-align:center;line-height:.86}
+.gTag{font-family:'Special Elite',monospace;color:var(--mut);font-size:13px;margin:12px 0 0}
+.gCard{padding:22px 20px 20px;margin:0}
+.gH{font-family:Anton,Impact,sans-serif;font-size:26px;text-transform:uppercase;margin:0 0 14px;letter-spacing:.5px;line-height:1}
+.gLabel{display:block;font-size:11px;font-weight:700;letter-spacing:1px;color:#5d574b;margin-bottom:6px}
+.gP{font-family:'Special Elite',monospace;font-size:14px;line-height:1.45;color:#3d3830;margin:0 0 14px;word-break:break-word}
+.gInput{display:block;width:100%;height:52px;padding:0 14px;font-family:'Space Mono',monospace;font-size:16px;color:var(--ink);background:#fff8ea;border:2px solid var(--ink);border-radius:2px;outline:none;margin:0 0 12px}
+.gInput:focus{box-shadow:0 0 0 3px rgba(226,64,43,.35)}
+.gCode{text-align:center;font-size:26px;letter-spacing:10px;font-weight:700}
+.gBtn{display:block;width:100%;height:52px;font-size:20px;padding:0 12px}
+.gLink{display:block;margin:12px auto 0;background:none;border:none;box-shadow:none;font-family:'Space Mono',monospace;font-size:13px;text-transform:none;letter-spacing:0;color:#5d574b;text-decoration:underline;padding:4px}
+.gLink:active{transform:none;box-shadow:none}
+.gload{font-family:'Special Elite',monospace;color:#5d574b;text-align:center;padding:18px 0}
+.gMsg{margin-top:10px;font-size:13px;text-align:center}
+.gMsg:empty{display:none}
+.gNames{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.gNames button{height:48px;font-size:18px;padding:0;box-shadow:2px 2px 0 var(--red)}
+.gNames button:last-child:nth-child(odd){grid-column:1/-1}
+.gNames button:disabled{opacity:.3;box-shadow:none}
+.gFoot{font-family:'Special Elite',monospace;color:var(--mut);font-size:12px;text-align:center;margin:18px 0 0;line-height:1.5}
 body.gated{overflow:hidden}
 .acctBtn{position:absolute;right:0;top:52px}
 .syncDot{position:absolute;right:4px;top:92px;width:9px;height:9px;border-radius:50%;background:#7dff9a}
@@ -565,29 +584,39 @@ body.gated{overflow:hidden}
 
 <div class="gate" id="gate" hidden>
   <div class="gbox">
-    <h1 class="logo">Bandie<br>coot</h1>
-    <p class="tagline">Studio rahasia. Cuma buat 7 orang.</p>
-    <div id="gLoading" class="gload">Membuka pintu studio…</div>
-    <div id="gStepEmail" hidden>
-      <input type="email" id="gEmail" placeholder="email kamu" autocomplete="email" style="width:100%;margin:14px 0 10px">
-      <button class="big" id="gSend">Kirim link masuk</button>
-      <p class="hint" style="margin-top:10px">Belum diundang? Minta admin nambahin email kamu dulu.</p>
+    <div class="gHead">
+      <span class="tape gTape">7 kursi · no extras</span>
+      <h1 class="logo gLogo">Bandie<br>coot</h1>
+      <p class="gTag">Studio rahasia · Rumbai · Angkatan 2004</p>
     </div>
-    <div id="gStepCode" hidden>
-      <p class="sub" style="color:#c9c2b2">Cek email <b id="gSentTo"></b>. Tap link di email itu, atau ketik kodenya di sini:</p>
-      <input type="text" id="gCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" style="width:100%;font-size:24px;letter-spacing:6px;text-align:center;margin-bottom:10px">
-      <button class="big" id="gVerify">Masuk</button>
-      <button class="small" id="gBack" style="margin-top:10px">Ganti email</button>
+    <div class="panel gCard">
+      <div id="gLoading" class="gload">Membuka pintu studio…</div>
+      <div id="gStepEmail" hidden>
+        <h2 class="gH">Masuk</h2>
+        <label class="gLabel" for="gEmail">EMAIL</label>
+        <input type="email" id="gEmail" class="gInput" placeholder="nama@email.com" autocomplete="email">
+        <button class="gBtn" id="gSend">Kirim link masuk</button>
+      </div>
+      <div id="gStepCode" hidden>
+        <h2 class="gH">Cek email</h2>
+        <p class="gP">Link masuk dikirim ke <b id="gSentTo"></b>. Tap link-nya, atau ketik kodenya kalau ada:</p>
+        <input type="text" id="gCode" class="gInput gCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••">
+        <button class="gBtn" id="gVerify">Masuk</button>
+        <button class="gLink" id="gBack">← Ganti email</button>
+      </div>
+      <div id="gStepName" hidden>
+        <h2 class="gH">Kamu yang mana?</h2>
+        <p class="gP">Pilih sekali aja. Nama yang sudah diambil nggak bisa dipilih.</p>
+        <div class="gNames" id="gNames"></div>
+      </div>
+      <div id="gDenied" hidden>
+        <h2 class="gH">Belum diundang</h2>
+        <p class="gP">Email ini belum ada di daftar 7 orang Bandiecoot. Minta admin nambahin dulu.</p>
+        <button class="gBtn" id="gOut">Keluar</button>
+      </div>
+      <div class="msg gMsg" id="gMsg"></div>
     </div>
-    <div id="gStepName" hidden>
-      <p class="sub" style="color:#c9c2b2">Kamu yang mana?</p>
-      <div class="gNames" id="gNames"></div>
-    </div>
-    <div id="gDenied" hidden>
-      <p class="sub" style="color:#c9c2b2">Email ini belum ada di daftar 7 orang Bandiecoot.</p>
-      <button class="big" id="gOut">Keluar</button>
-    </div>
-    <div class="msg" id="gMsg"></div>
+    <p class="gFoot">Cuma buat 7 orang. Belum diundang? Minta admin nambahin email kamu.</p>
   </div>
 </div>
 
