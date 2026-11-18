@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Bandiecoot · Destruction Hip Core</title>
 <meta name="theme-color" content="#0f0e0c">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -346,6 +346,7 @@ nav button{flex:0 0 auto;padding:9px 11px}
 .flame{opacity:0}
 .garage.ride .flame{opacity:1}
 @keyframes flame{50%{opacity:.6}}
+html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 </style>
 </head>
 <body>
@@ -845,6 +846,10 @@ function unlock(){
   updateSnd();
 }
 ['touchend','click','keydown'].forEach(ev=>document.addEventListener(ev,unlock,{capture:true,passive:true}));
+// No pinch / double-tap zoom: iOS ignores user-scalable=no, so stop its gesture events too.
+['gesturestart','gesturechange','gestureend'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault(),{passive:false}));
+document.addEventListener('touchmove',e=>{ if(e.touches&&e.touches.length>1) e.preventDefault(); },{passive:false});
+let lastTouchEnd=0; document.addEventListener('touchend',e=>{ const n=Date.now(); if(n-lastTouchEnd<300&&!e.target.closest('input,textarea,select')) e.preventDefault(); lastTouchEnd=n; },{passive:false});
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&AC) unlock(); });
 function updateSnd(){ const b=document.getElementById('sndBanner'); if(b) b.hidden=!!(AC&&AC.state==='running'); }
 const NB=new WeakMap();
