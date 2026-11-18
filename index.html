@@ -1914,11 +1914,12 @@ function campWorld(){
   bld(W,22,1,3,3,'#c8452f'); bld(W,26,1,3,3,'#3f72c4'); bld(W,30,1,3,3,'#2f9e9a'); bld(W,34,1,3,3,plain);
   // Meranti / Hibrida row + practice garage
   bld(W,22,6,3,3,'#8a4fb3'); bld(W,26,6,3,3,plain); bld(W,30,6,3,3,'#e08a2e'); bld(W,34,6,3,3,plain);
-  // Umban Sari (outside the camp proper)
+  // Umban Sari (outside the camp proper) + Studio Scarlet
   bld(W,14,2,3,3,'#d4a72c');
+  bld(W,14,6,3,3,'#b3243a','note');
   // Tampan side
   bld(W,16,31,3,3,'#3aa35a'); bld(W,20,31,3,3,'#e2402b','note');
-  bld(W,24,31,3,3,'#b3243a','note'); bld(W,28,31,3,3,'#d9822b','note'); bld(W,32,31,3,3,'#4a5fc4','note');
+  bld(W,24,31,3,3,'#8c8478'); bld(W,28,31,3,3,'#d9822b','note'); bld(W,32,31,3,3,'#4a5fc4','note');
   // parked cars (2 tiles wide, nose to the right)
   const car=(x,y,type,col,extra)=>{ W.objs.push(Object.assign({k:'car2',x,y,type,col},extra||{})); W.solid[y][x]=true; W.solid[y][x+1]=true; };
   car(24,4,'mpv','#8e9196');            // Aries - grey Kijang
@@ -1944,7 +1945,7 @@ function campWorld(){
   lm(W,'Rumah Herru',17,34,'Rumah Herru · Tampan. Panther merah di depan, Studio Herru di sebelah. Paling jauh: nyebrang jembatan dulu.',17.5,32.1,'home');
   // places
   lm(W,'Studio Herru',21,34,'Studio Herru. Salah satu markas latihan Bandiecoot.',21.5,30.6,'studio');
-  lm(W,'Scarlet',25,34,'Studio Scarlet. Booking jam, patungan sewa, gas latihan.',25.5,32.1,'studio');
+  lm(W,'Scarlet',15,9,'Studio Scarlet · Umban Sari. Tetangganya Aad: booking jam, patungan sewa, gas latihan.',15.5,7.1,'studio');
   lm(W,'Gelora',29,34,'Studio Gelora. Nama paling pas buat lagu-lagu Rage.',29.5,30.6,'studio');
   lm(W,'Publica',33,34,'Studio Publica. Ada cerita apa di sini? Tulis di pin.',33.5,32.1,'studio');
   lm(W,'Lapangan Golf',7,11,'Lapangan golf camp. Bola nyasar = rezeki anak-anak.',6.5,5.5);
@@ -2622,7 +2623,7 @@ async function needSession(){
 }
 const authErr=e=>e&&(e.code==='42501'||/permission denied|JWT|401/i.test(e.message||''));
 async function signOut(){
-  try{ await sb.auth.signOut(); }catch(e){}
+  try{ await sb.auth.signOut({scope:'local'}); }catch(e){}
   try{ localStorage.removeItem(KEY); indexedDB.deleteDatabase('bandiecoot'); }catch(e){}
   location.reload();
 }
