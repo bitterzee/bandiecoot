@@ -2358,23 +2358,24 @@ let jbIdle=null;
 ['click','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,()=>{ clearTimeout(jbIdle); if(JB.key) jbIdle=setTimeout(jbLock,5*60*1000); },{passive:true}));
 
 /* =================== BAND CARICATURE (Studio) =================== */
+// layout follows the old studio photo: dark room, wood panel, poster on the wall
 const BAND_POS=[
-  {name:'Fanny',inst:'dj',x:42,y:158,s:.6,expr:'grin',role:'DJ'},
-  {name:'Ari',inst:'bass',x:104,y:214,s:.7,expr:'cool',role:'Bass'},
-  {name:'Aldo',inst:'drums',x:200,y:190,s:.7,expr:'focus',role:'Drum'},
-  {name:'Herru',inst:'keys',x:298,y:214,s:.7,expr:'rap',role:'Keys + Rap'},
-  {name:'Aries',inst:'rhythm',x:62,y:298,s:.8,expr:'grin',role:'Rhythm'},
-  {name:'Aad',inst:'scream',x:200,y:300,s:.84,expr:'scream',role:'Scream'},
-  {name:'Ferry',inst:'melody',x:338,y:298,s:.8,expr:'grin',role:'Melody'}
+  {name:'Aldo',inst:'drums',x:262,y:296,s:.72,expr:'cool',role:'Drum',ty:-4},
+  {name:'Aries',inst:'rhythm',x:196,y:276,s:.74,expr:'grin',role:'Rhythm',ty:-2},
+  {name:'Ari',inst:'bass',x:340,y:244,s:1.2,expr:'grin',role:'Bass',tx:-12},
+  {name:'Aad',inst:'scream',pose:'cross',x:58,y:322,s:1.3,expr:'cool',role:'Scream',ty:-16,tx:6},
+  {name:'Herru',inst:'keys',pose:'hold',tank:true,x:136,y:330,s:1.38,expr:'grin',role:'Keys + Rap',ty:24},
+  {name:'Ferry',inst:'melody',gtr:'roundel',x:326,y:346,s:1.3,expr:'grin',role:'Melody',ty:14,tx:6},
+  {name:'Fanny',inst:'dj',pose:'crouch',x:226,y:410,s:1.12,expr:'cool',role:'DJ',ty:-8}
 ];
 const AV_DEF={
-  Aldo:{hair:'spiky',hairColor:'#1d1712',skin:'#d9a273',shirt:'#1a1a1a',glasses:'none',fh:'none'},
-  Ari:{hair:'long',hairColor:'#2a1d14',skin:'#c68c5d',shirt:'#7a2b2b',glasses:'none',fh:'goatee'},
-  Herru:{hair:'cap',hairColor:'#1d1712',skin:'#d9a273',shirt:'#2f5fa0',glasses:'shades',fh:'none'},
-  Aries:{hair:'curly',hairColor:'#1d1712',skin:'#e3b08a',shirt:'#3d6b3a',glasses:'none',fh:'none'},
-  Aad:{hair:'messy',hairColor:'#120d0a',skin:'#c98f62',shirt:'#111111',glasses:'none',fh:'none'},
-  Ferry:{hair:'beanie',hairColor:'#1d1712',skin:'#deaa7f',shirt:'#8a4fb3',glasses:'glasses',fh:'none'},
-  Fanny:{hair:'short',hairColor:'#2a1d14',skin:'#e8b48e',shirt:'#f0c53a',glasses:'none',fh:'none'}
+  Aldo:{hair:'short',hairColor:'#1d1712',skin:'#d9a273',shirt:'#3a2a24',glasses:'none',fh:'none'},
+  Ari:{hair:'spiky',hairColor:'#1d1712',skin:'#c68c5d',shirt:'#ebe5d6',glasses:'none',fh:'none'},
+  Herru:{hair:'short',hairColor:'#1d1712',skin:'#d9a273',shirt:'#ebe5d6',glasses:'glasses',fh:'none'},
+  Aries:{hair:'short',hairColor:'#1d1712',skin:'#e3b08a',shirt:'#111111',glasses:'none',fh:'none'},
+  Aad:{hair:'short',hairColor:'#120d0a',skin:'#c98f62',shirt:'#ebe5d6',glasses:'none',fh:'none'},
+  Ferry:{hair:'short',hairColor:'#1d1712',skin:'#c68c5d',shirt:'#ebe5d6',glasses:'none',fh:'none'},
+  Fanny:{hair:'short',hairColor:'#2a1d14',skin:'#d9a273',shirt:'#f0c53a',glasses:'glasses',fh:'none'}
 };
 const AV_OPTS={
   hair:[['spiky','Jabrik'],['long','Gondrong'],['messy','Gondrong acak'],['curly','Keriting'],['short','Pendek'],['cap','Topi kebalik'],['beanie','Kupluk'],['bald','Botak']],
@@ -2434,22 +2435,36 @@ function headSVG(n,av,expr,uid){
   return h+hairSVG(av.hair,hc);
 }
 const armL=(x1,y1,x2,y2,sk,sh)=>`<line x1="${x1}" y1="${y1}" x2="${(x1+x2)/2}" y2="${(y1+y2)/2}" stroke="${sh}" stroke-width="10" stroke-linecap="round"/><line x1="${(x1+x2)/2}" y1="${(y1+y2)/2}" x2="${x2}" y2="${y2}" stroke="${sk}" stroke-width="8" stroke-linecap="round"/><circle cx="${x2}" cy="${y2}" r="5.5" fill="${sk}" stroke="#111" stroke-width="1.5"/>`;
-function guitarSVG(col,neck){
+function guitarSVG(col,neck,roundel){
   return `<g transform="rotate(-28 0 -56)"><rect x="4" y="-59" width="${neck}" height="6" fill="#6b4423" stroke="#111" stroke-width="1.5"/><rect x="${4+neck}" y="-61.5" width="13" height="11" rx="2" fill="#222"/>
     <path d="M-30,-56 Q-30,-70 -16,-69 Q-8,-72 -2,-66 Q6,-66 8,-56 Q6,-46 -2,-46 Q-8,-40 -16,-43 Q-30,-42 -30,-56Z" fill="${col}" stroke="#111" stroke-width="2"/>
-    <rect x="-14" y="-62" width="4" height="12" fill="#111"/><line x1="-10" y1="-58" x2="${4+neck}" y2="-58" stroke="#ddd" stroke-width=".6"/><line x1="-10" y1="-54" x2="${4+neck}" y2="-54" stroke="#ddd" stroke-width=".6"/></g>`;
+    ${roundel?`<circle cx="-15" cy="-56" r="11" fill="#c8452f"/><circle cx="-15" cy="-56" r="7.5" fill="#f4f0e2"/><circle cx="-15" cy="-56" r="4" fill="#2f5fa8"/>`:''}<rect x="-14" y="-62" width="4" height="12" fill="#111"/><line x1="-10" y1="-58" x2="${4+neck}" y2="-58" stroke="#ddd" stroke-width=".6"/><line x1="-10" y1="-54" x2="${4+neck}" y2="-54" stroke="#ddd" stroke-width=".6"/></g>`;
 }
 function charSVG(p,uid){
   const av=avOf(p.name), sk=av.skin, sh=av.shirt;
   const legs=`<rect x="-15" y="-42" width="12" height="40" rx="4" fill="#2c3e66" stroke="#111" stroke-width="1.5"/><rect x="3" y="-42" width="12" height="40" rx="4" fill="#2c3e66" stroke="#111" stroke-width="1.5"/><ellipse cx="-10" cy="-2" rx="10" ry="4.5" fill="#111"/><ellipse cx="10" cy="-2" rx="10" ry="4.5" fill="#111"/>`;
   let torso=`<rect x="-6" y="-92" width="12" height="10" fill="${sk}"/><rect x="-20" y="-85" width="40" height="47" rx="10" fill="${sh}" stroke="#111" stroke-width="2"/>`;
+  if(p.tank) torso=`<rect x="-6" y="-92" width="12" height="10" fill="${sk}"/><rect x="-22" y="-86" width="44" height="22" rx="10" fill="${sk}" stroke="#111" stroke-width="2"/><path d="M-14,-86 L-12,-74 Q-20,-70 -20,-60 L-20,-44 Q-20,-38 -14,-38 L14,-38 Q20,-38 20,-44 L20,-60 Q20,-70 12,-74 L14,-86 Q0,-78 -14,-86Z" fill="${sh}" stroke="#111" stroke-width="2"/><rect x="-6" y="-66" width="12" height="9" rx="2" fill="#3d6b3a"/>`;
+  if(p.pose==='cross'){
+    const arms=`<path d="M-20,-80 Q-28,-70 -18,-60 L18,-66" fill="none" stroke="${sh}" stroke-width="11" stroke-linecap="round"/><path d="M20,-80 Q28,-70 18,-60 L-16,-62" fill="none" stroke="${sh}" stroke-width="11" stroke-linecap="round"/><line x1="-14" y1="-61" x2="16" y2="-66" stroke="${sk}" stroke-width="9" stroke-linecap="round"/><line x1="14" y1="-61" x2="-14" y2="-63" stroke="${sk}" stroke-width="9" stroke-linecap="round"/><circle cx="18" cy="-66" r="5" fill="${sk}" stroke="#111" stroke-width="1.3"/><circle cx="-16" cy="-62" r="5" fill="${sk}" stroke="#111" stroke-width="1.3"/>`;
+    return `<g transform="translate(${p.x},${p.y}) scale(${p.s})">${legs}${torso}${arms}<g class="head">${headSVG(p.name,av,p.expr,uid)}</g></g>`;
+  }
+  if(p.pose==='hold'){
+    const arms=armL(-21,-80,-6,-62,sk,sk)+armL(21,-80,6,-62,sk,sk)+`<path d="M-6,-64 l12,0 l-6,7z" fill="#e2c44c" stroke="#111" stroke-width="1"/>`;
+    const shorts=`<path d="M-17,-42 L17,-42 L18,-14 L2,-14 L0,-26 L-2,-14 L-18,-14Z" fill="#2c3a2a" stroke="#111" stroke-width="1.5"/><g fill="#d8cfa6">${[[-12,-36],[6,-34],[-8,-22],[12,-22],[0,-38]].map(([a,b])=>`<circle cx="${a}" cy="${b}" r="2"/>`).join('')}</g><rect x="-14" y="-14" width="9" height="12" fill="${sk}"/><rect x="5" y="-14" width="9" height="12" fill="${sk}"/>`;
+    return `<g transform="translate(${p.x},${p.y}) scale(${p.s})">${shorts}${torso}${arms}<g class="head">${headSVG(p.name,av,p.expr,uid)}</g></g>`;
+  }
+  if(p.pose==='crouch'){
+    const arms=armL(-18,-78,-24,-44,sk,sh)+armL(18,-78,24,-44,sk,sh);
+    return `<g transform="translate(${p.x},${p.y}) scale(${p.s})">${torso}${arms}<g class="head">${headSVG(p.name,av,p.expr,uid)}</g></g>`;
+  }
   if(p.inst==='scream') torso+=`<text x="0" y="-55" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="16" fill="#e2402b">X</text>`;
   if(p.inst==='drums') torso+=`<text x="0" y="-57" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="10" fill="#f0c53a">BC</text>`;
   let back='', mid='', front='', arms='';
   const head=`<g class="head" style="animation-delay:${(BAND_POS.indexOf(p)%3)*.12}s">${headSVG(p.name,av,p.expr,uid)}</g>`;
   if(p.inst==='rhythm'||p.inst==='melody'||p.inst==='bass'){
-    const col=p.inst==='bass'?'#1f3f7a':p.inst==='melody'?'#c8452f':'#e9e2cf';
-    mid=guitarSVG(col,p.inst==='bass'?60:46);
+    const col=p.inst==='bass'?'#2f6b47':p.inst==='melody'?'#f4f0e2':'#e9e2cf';
+    mid=guitarSVG(col,p.inst==='bass'?60:46,p.gtr==='roundel');
     arms=armL(-17,-78,-12,-56,sk,sh)+armL(17,-78,p.inst==='bass'?40:33,p.inst==='bass'?-80:-76,sk,sh);
     return `<g transform="translate(${p.x},${p.y}) scale(${p.s})">${legs}${torso}${mid}<g class="strum">${arms}</g>${head}</g>`;
   }
@@ -2493,22 +2508,24 @@ function charSVG(p,uid){
 }
 function tagSVG(p){
   const t=`${p.name.toUpperCase()} · ${p.role.toUpperCase()}`, w=t.length*5.6+12;
-  const y=p.y-(p.inst==='drums'?165:178)*p.s;
-  return `<g transform="translate(${p.x},${y})"><rect x="${-w/2}" y="-9" width="${w}" height="13" rx="2" fill="#f0c53a" stroke="#111" stroke-width="1.2"/><text x="0" y="1" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="9" letter-spacing=".4" fill="#111">${esc(t)}</text></g>`;
+  const y=(p.pose==='crouch'?p.y-152*p.s-6:p.y-(p.inst==='drums'?165:178)*p.s)+(p.ty||0);
+  return `<g transform="translate(${p.x+(p.tx||0)},${y})"><rect x="${-w/2}" y="-9" width="${w}" height="13" rx="2" fill="#f0c53a" stroke="#111" stroke-width="1.2"/><text x="0" y="1" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="9" letter-spacing=".4" fill="#111">${esc(t)}</text></g>`;
 }
 function stageSVG(){
-  let bricks=''; for(let y=0;y<230;y+=14) for(let x=(y/14%2)*14-14;x<400;x+=28) bricks+=`<rect x="${x}" y="${y}" width="26" height="12" fill="#2a1f22"/>`;
-  let planks=''; for(let y=232;y<320;y+=11) planks+=`<line x1="0" y1="${y}" x2="400" y2="${y}" stroke="#4a2f1a" stroke-width="1"/>`;
-  const amp=x=>`<g transform="translate(${x},120)"><rect width="46" height="100" fill="#151515" stroke="#000" stroke-width="2"/><rect x="4" y="4" width="38" height="10" fill="#222"/><circle cx="10" cy="9" r="2" fill="#d9b44a"/><circle cx="18" cy="9" r="2" fill="#d9b44a"/><rect x="5" y="18" width="36" height="78" fill="#2a2a2a"/>${[0,1].map(i=>`<circle cx="23" cy="${38+i*38}" r="15" fill="#1b1b1b" stroke="#000"/>`).join('')}</g>`;
-  return `<defs><linearGradient id="bgG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a1214"/><stop offset="1" stop-color="#2b1d20"/></linearGradient>
-    <linearGradient id="spot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c4" stop-opacity=".55"/><stop offset="1" stop-color="#fff6c4" stop-opacity="0"/></linearGradient></defs>
-    <rect width="400" height="320" fill="url(#bgG)"/><g opacity=".55">${bricks}</g>
-    <g transform="translate(200,46) rotate(-2)"><rect x="-140" y="-32" width="280" height="62" fill="#111"/><rect x="-135" y="-27" width="270" height="52" fill="#f4f0e2"/><rect x="-132" y="-24" width="264" height="46" fill="#111"/><rect x="-130" y="-22" width="260" height="42" fill="#e2c44c"/>
-      <text x="0" y="6" text-anchor="middle" font-family="'Rubik Distressed',Anton,Impact,sans-serif" font-size="36" fill="#2e3274" stroke="#111" stroke-width=".8">BANDIECOOT</text>
-      <text x="118" y="16" text-anchor="end" font-family="Anton,Impact,sans-serif" font-size="8.5" letter-spacing="1.2" fill="#111">DESTRUCTION HIP CORE</text></g>
-    ${amp(2)}${amp(352)}
-    <rect y="226" width="400" height="94" fill="#6b4423"/>${planks}<rect y="224" width="400" height="5" fill="#2a1a10"/>
-    <g class="spots"><polygon points="70,0 92,0 140,320 20,320" fill="url(#spot)"/><polygon points="190,0 210,0 270,320 130,320" fill="url(#spot)"/><polygon points="308,0 330,0 380,320 260,320" fill="url(#spot)"/></g>`;
+  let panel=''; for(let x=0;x<400;x+=18) panel+=`<line x1="${x}" y1="196" x2="${x}" y2="320" stroke="#5e4630" stroke-width="1.2"/>`;
+  let sil=''; [[-20,40],[-4,34],[12,44],[26,38]].forEach(([dx,h])=>{ sil+=`<circle cx="${dx}" cy="${-h}" r="6" fill="#1d2d48"/><rect x="${dx-7}" y="${-h+6}" width="14" height="${h}" rx="5" fill="#1d2d48"/>`; });
+  return `<defs><radialGradient id="flash" cx=".45" cy=".45" r=".75"><stop offset="0" stop-color="#3a3a3f"/><stop offset=".6" stop-color="#232327"/><stop offset="1" stop-color="#121214"/></radialGradient>
+    <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a9875f"/><stop offset="1" stop-color="#6e5238"/></linearGradient>
+    <linearGradient id="spot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c4" stop-opacity=".35"/><stop offset="1" stop-color="#fff6c4" stop-opacity="0"/></linearGradient></defs>
+    <rect width="400" height="320" fill="url(#flash)"/>
+    <line x1="160" y1="0" x2="160" y2="196" stroke="#18181b" stroke-width="2"/>
+    <rect y="192" width="400" height="128" fill="url(#wood)"/>${panel}<rect y="190" width="400" height="5" fill="#4a3624"/>
+    <rect x="300" y="64" width="100" height="5" fill="#6e5238"/>
+    <g transform="translate(250,124) rotate(-1.5)"><rect x="-38" y="-54" width="76" height="110" fill="#e9e4d6" stroke="#111" stroke-width="1.5"/><rect x="-34" y="-50" width="68" height="86" fill="#7d9cc4"/><rect x="-34" y="0" width="68" height="36" fill="#5a7aa6"/>
+      <g transform="translate(0,30)">${sil}</g><rect x="-34" y="38" width="68" height="14" fill="#111"/>
+      <text x="0" y="48" text-anchor="middle" font-family="'Rubik Distressed',Anton,Impact,sans-serif" font-size="10" fill="#e2c44c">BANDIECOOT</text>
+      <text x="0" y="-38" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="6" letter-spacing="1" fill="#f4f0e2">DESTRUCTION HIP CORE</text></g>
+    <g class="spots"><polygon points="180,0 220,0 300,320 100,320" fill="url(#spot)"/></g>`;
 }
 async function renderBand(){
   await loadFaces();
