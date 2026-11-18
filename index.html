@@ -2089,8 +2089,11 @@ function campWorld(){
   fillT(W,'road',19,50,2,5,false); fillT(W,'road',0,55,40,2);
   fillT(W,'road',14,36,2,11,false);
   W.roadsH=[12,34,47,55]; W.roadsV=[19,14];
-  // golf
-  fillT(W,'golf',13,1,6,9); fillT(W,'bunker',14,3,2,1); fillT(W,'bunker',16,7,2,1); obj(W,'gflag',17,3,false);
+  // east of the school: DPR under its big tree, a side road meeting the main road in a T, the church across
+  fillT(W,'road',13,5,6,2,false);
+  fillT(W,'golf',16,1,3,4); obj(W,'gflag',17,2,false);
+  obj(W,'bigtree',13,1); for(let j=2;j<=4;j++) for(let i=13;i<=15;i++) if(j<4||i!==14) W.solid[j][i]=true;
+  bld(W,13,7,5,3,'#b9c4d4','church');
   // Umban Sari paths (below the main road, next to the bridge road)
   fillT(W,'path',5,14,1,4); fillT(W,'path',1,18,12,1); fillT(W,'path',5,19,1,4); fillT(W,'path',1,23,12,1);
   // housing paths
@@ -2147,9 +2150,11 @@ function campWorld(){
   lm(W,'Mie Pangsit Pakde',7,19,'Mie Pangsit Pakde. Gerobak dekat rumah Aad. Pangsit goreng tambah, kuah dipisah, ngutang dulu.',12.2,19.45);
   lm(W,'Gelora',17,19,'Studio Gelora · Rumbai. Nama paling pas buat lagu-lagu Rage.',17.5,17.1,'studio');
   lm(W,'Publica',33,34,'Studio Publica. Ada cerita apa di sini? Tulis di pin.',33.5,32.1,'studio');
-  lm(W,'Lapangan Golf',16,10,'Lapangan golf camp. Bola nyasar = rezeki anak-anak.',16,2);
+  lm(W,'Lapangan Golf',17,4,'Lapangan golf camp. Bola nyasar = rezeki anak-anak.',19.2,0.6);
+  lm(W,'DPR',14,4,'DPR: Di bawah Pohon Rindang. Markas abis pulang sekolah: duduk, ngerumpi, nunggu jemputan.',12.9,0.6);
+  lm(W,'Gereja',15,10,'Gereja di seberang DPR, pas di simpang T.',15.5,8.1);
   lm(W,'Sekolah Cendana',7,6,'Sekolah Cendana. Bel jam 7, telat = lari dari halte.',7.5,3.5);
-  lm(W,'Halte Bus',16,11,'Halte bus sekolah. Ketinggalan bus = jalan kaki panas-panasan.',17,9.2);
+  lm(W,'Halte Bus',16,11,'Halte bus sekolah. Ketinggalan bus = jalan kaki panas-panasan.',17.5,11.25);
   lm(W,'Commissary',25,19,'Commissary. Belanja bulanan sekalian cari jajan.',25.5,16.5);
   lm(W,'Country Club',34,18,'Country club & kolam renang. Berenang sampai mata merah.',34.5,16);
   lm(W,'Rumah Sakit',24,24,'Rumah sakit camp. Semoga jarang mampir.',24.5,22.2);
@@ -2169,7 +2174,6 @@ function campWorld(){
     if(!south&&(y===11||y===14||y>=24)) continue;
     if(R()<(south?.35:edge?.45:.07)) plantTree(W,x,y);
   }
-  [[18,1],[13,8],[18,5]].forEach(([x,y])=>{ if(W.t[y][x]==='golf') obj(W,'tree',x,y); });
   return W;
 }
 function schoolWorld(){
@@ -2254,6 +2258,7 @@ function drawBld(c,o){
   c.fillStyle=PAL.door; c.fillRect(cx-2,Y+H-6,4,6); c.fillStyle='#e8c060'; c.fillRect(cx+1,Y+H-3,1,1);
   box(c,X,Y,W,H,PAL.ink);
   const ry=Y+Math.floor(roofH/2);
+  if(o.extra==='church'){ c.fillStyle='#f4f0e2'; c.fillRect(cx-3,Y-6,6,roofH+4); c.fillStyle='#b9c4d4'; c.fillRect(cx-4,Y-8,8,3); c.fillStyle='#8a6a48'; c.fillRect(cx-1,Y-15,2,8); c.fillRect(cx-3,Y-13,6,2); c.fillStyle='#5a3a22'; c.fillRect(cx-1,Y-3,2,3); }
   if(o.extra==='cross'){ c.fillStyle='#d23b2b'; c.fillRect(cx-1,ry-3,3,7); c.fillRect(cx-3,ry-1,7,3); }
   if(o.extra==='hotel'){ for(let yy=Y+3;yy<Y+roofH-3;yy+=5) for(let xx=X+3;xx<X+W-4;xx+=5){ c.fillStyle=(xx+yy)%3?'#ffe68a':PAL.winL; c.fillRect(xx,yy,2,3); } c.fillStyle='#e2c44c'; c.fillRect(X+W/2-6,Y-3,12,3); }
   if(o.extra==='gor'){ c.fillStyle='rgba(255,255,255,.35)'; for(let xx=X+4;xx<X+W-3;xx+=6) c.fillRect(xx,Y+2,2,roofH-4); c.fillStyle=PAL.ink; c.fillRect(cx-1,ry-4,1,6); c.fillRect(cx,ry-4,2,1); c.fillRect(cx-3,ry+1,3,2); }
@@ -2265,6 +2270,17 @@ function drawObj(c,o){
   const X=o.x*TW,Y=o.y*TW;
   switch(o.k){
     case 'bld': drawBld(c,o); break;
+    case 'bigtree': {
+      c.fillStyle='rgba(0,0,0,.25)'; c.fillRect(X+2,Y+26,22,4);
+      c.fillStyle=PAL.trunk; c.fillRect(X+10,Y+16,5,13); c.fillRect(X+8,Y+27,9,2);
+      const rows=[[8,0,9],[5,1,15],[3,2,19],[2,3,21],[1,4,23],[0,5,24],[0,6,25],[0,7,25],[0,8,25],[0,9,25],[0,10,25],[0,11,24],[1,12,23],[2,13,21],[3,14,19],[5,15,15],[8,16,9]];
+      c.fillStyle=PAL.leaf; rows.forEach(([a,b,w])=>c.fillRect(X+a,Y+b-2,w,1));
+      c.fillStyle=PAL.leafL; [[7,1,4],[5,2,4],[4,3,3],[3,4,3],[12,3,3],[10,5,2]].forEach(([a,b,w])=>c.fillRect(X+a,Y+b-1,w,1));
+      c.fillStyle=PAL.leafD; [[17,9,5],[15,11,7],[13,12,8],[9,13,9],[19,7,4],[6,14,8]].forEach(([a,b,w])=>c.fillRect(X+a,Y+b,w,1));
+      // bench and a parked motor under it
+      c.fillStyle='#8b5a2b'; c.fillRect(X+1,Y+22,8,2); c.fillStyle=PAL.ink; c.fillRect(X+1,Y+24,1,2); c.fillRect(X+8,Y+24,1,2);
+      c.fillStyle='#d23b2b'; c.fillRect(X+17,Y+22,6,2); c.fillStyle=PAL.ink; c.fillRect(X+17,Y+24,2,2); c.fillRect(X+22,Y+24,2,2);
+      break; }
     case 'tree':
       c.fillStyle='rgba(0,0,0,.25)'; c.fillRect(X+1,Y+6,7,2);
       c.fillStyle=PAL.trunk; c.fillRect(X+3,Y+5,2,3);
