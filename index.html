@@ -166,6 +166,16 @@ textarea{font-family:'Special Elite',monospace;font-size:15px;width:100%;min-hei
 .mapBox img.pixel{image-rendering:pixelated;image-rendering:crisp-edges}
 #walkCv{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges;pointer-events:none}
 #mapLabels{position:absolute;inset:0;pointer-events:none}
+#mapLabels .mlabel[data-lm]{pointer-events:auto;cursor:pointer}
+.mlabel .cam{display:inline-block;margin-left:3px;font-size:7px;vertical-align:0}
+.plGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.plGrid button{padding:0;aspect-ratio:1;overflow:hidden;background:#d9d1bd;box-shadow:2px 2px 0 var(--navy);position:relative}
+.plGrid img{width:100%;height:100%;object-fit:cover;display:block}
+.plGrid .empty{grid-column:1/-1;font-size:13px;color:var(--mut);padding:14px;border:2px dashed #b9b09a;text-align:center}
+.plViewBox{max-width:520px;width:100%;text-align:center}
+.plViewBox img{max-width:100%;max-height:70vh;border:3px solid var(--paper);display:block;margin:0 auto 10px}
+.plViewCap{color:var(--paper);font-size:13px;margin:0 0 12px;line-height:1.5}
+.dlg em{display:block;font-style:normal;color:#2e3274;margin-top:6px;font-size:8px}
 .mlabel{position:absolute;transform:translate(-50%,-50%);font-family:'Press Start 2P',monospace;font-size:7px;line-height:1;background:#fff;color:#111;border:1px solid #111;padding:2px 3px 1px;white-space:nowrap;box-shadow:1px 1px 0 rgba(0,0,0,.5)}
 .mlabel.home{background:#ffe9a8;border-color:#7a4b12;color:#3a2410}
 .mlabel.studio{background:#e2402b;border-color:#111;color:#fff}
@@ -816,6 +826,32 @@ html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adju
       <button class="dark small" id="pinDel">Hapus</button>
       <span class="spacer"></span>
       <button class="small" id="pinCancel">Batal</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="placeOverlay" hidden>
+  <div class="panel pinPanel">
+    <span class="tape corner">foto asli</span>
+    <h2 id="plName"></h2>
+    <p class="sub" id="plText" style="margin:2px 0 10px"></p>
+    <div class="plGrid" id="plGrid"></div>
+    <input type="text" id="plCap" maxlength="80" placeholder="Keterangan (opsional), mis. 2003 abis latihan" style="width:100%;margin:10px 0 8px">
+    <div class="row">
+      <label class="btnlike">+ Tambah foto<input type="file" id="plFile" accept="image/*" multiple hidden></label>
+      <span class="spacer"></span>
+      <button class="small" id="plClose">Tutup</button>
+    </div>
+    <div class="msg" id="plMsg"></div>
+  </div>
+</div>
+<div class="overlay" id="plView" hidden>
+  <div class="plViewBox">
+    <img id="plImg" alt="">
+    <div class="plViewCap" id="plViewCap"></div>
+    <div class="row" style="justify-content:center">
+      <button class="small dark" id="plDel">Hapus foto</button>
+      <button class="small" id="plViewClose">Tutup</button>
     </div>
   </div>
 </div>
@@ -1832,7 +1868,7 @@ async function renderNostalgia(){
   }
   const W=world(NOS.map);
   $('#mapLabels').innerHTML=(view==='game'&&NOS.labels&&!WALK.on)?
-    W.lms.filter(l=>l.lx!=null).map(l=>`<span class="mlabel ${l.kind||''}" style="left:${l.lx/GW*100}%;top:${l.ly/W.gh*100}%">${esc(l.kind==='home'?l.name.replace('Rumah ',''):l.name)}</span>`).join('')+
+    W.lms.filter(l=>l.lx!=null).map(l=>{ const n=placePics(NOS.map+':'+l.name).length; return `<span class="mlabel ${l.kind||''}" data-lm="${esc(l.name)}" style="left:${l.lx/GW*100}%;top:${l.ly/W.gh*100}%">${esc(l.kind==='home'?l.name.replace('Rumah ',''):l.name)}${n?`<span class="cam">📷${n}</span>`:''}</span>`; }).join('')+
     W.areas.map(a=>`<span class="mlabel area" style="left:${a.lx/GW*100}%;top:${a.ly/W.gh*100}%">${esc(a.name)}</span>`).join(''):'';
   $('#labelBtn').hidden=view!=='game'||WALK.on; $('#labelBtn').textContent=NOS.labels?'Label: on':'Label: off';
   $('#walkBtn').hidden=view!=='game'||WALK.on;
@@ -1862,6 +1898,7 @@ $('#quick').addEventListener('click',e=>{
 });
 $('#mapBox').addEventListener('click',e=>{
   if(WALK.on) return;
+  const lab=e.target.closest('[data-lm]'); if(lab&&!NOS.pinMode){ const L=world(NOS.map).lms.find(l=>l.name===lab.dataset.lm); if(L) openPlace(NOS.map+':'+L.name,L.name,L.text); return; }
   const pin=e.target.closest('.pin'); if(pin){ openPin(pin.dataset.pin,false); return; }
   if(!NOS.pinMode) return;
   const r=$('#mapBox').getBoundingClientRect();
@@ -1894,7 +1931,9 @@ function openPin(id,isNew){
   $('#pinStory').value=p.story;
   $('#pinWho').innerHTML=whoChips(NOS.who);
   const ms=S.moments.filter(m=>m.place===NOS.map+':'+p.id);
-  $('#pinMoments').innerHTML=ms.length?`<button class="small" id="pinSeeMoments">Lihat ${ms.length} momen di sini</button>`:(isNew?'':'<span class="hint">Belum ada momen di sini. Tambah dari halaman Momen.</span>');
+  const np=placePics(NOS.map+':pin-'+p.id).length;
+  $('#pinMoments').innerHTML=(ms.length?`<button class="small" id="pinSeeMoments">Lihat ${ms.length} momen di sini</button>`:(isNew?'':'<span class="hint">Belum ada momen di sini. Tambah dari halaman Momen.</span>'))
+    +(isNew?'':` <button class="small" id="pinPhotos">📷 Foto asli${np?` (${np})`:''}</button>`);
   const del=$('#pinDel'); del.textContent='Hapus'; delete del.dataset.confirm; del.hidden=isNew;
   $('#pinOverlay').hidden=false;
   if(isNew) setTimeout(()=>{ try{ $('#pinTitle').focus(); }catch(_){} },60);
@@ -1917,9 +1956,50 @@ $('#pinDel').onclick=e=>{
   if(NOS.edit) removePin(NOS.edit); closePin();
 };
 $('#pinMoments').addEventListener('click',e=>{
+  if(e.target.id==='pinPhotos'&&NOS.edit){ const p=NOS.edit; openPlace(NOS.map+':pin-'+p.id,p.title||'Tempat ini',p.story||''); return; }
   if(e.target.id!=='pinSeeMoments'||!NOS.edit) return;
   MOM.filter={k:'place',v:NOS.map+':'+NOS.edit.id}; $('#pinOverlay').hidden=true; NOS.edit=null; switchTab('moments');
 });
+
+/* =================== FOTO ASLI (real photos of places on the map) =================== */
+if(!S.ppics) S.ppics={};
+const PL={id:null,name:'',text:'',view:null};
+const placePics=id=>Object.entries(S.ppics||{}).filter(([,v])=>v.place===id).map(([k,v])=>Object.assign({id:k},v)).sort((a,b)=>String(a.at).localeCompare(String(b.at)));
+function openPlace(id,name,text){ PL.id=id; PL.name=name; PL.text=text||''; $('#plMsg').textContent=''; $('#plCap').value=''; renderPlace(); $('#placeOverlay').hidden=false; }
+function renderPlace(){
+  $('#plName').textContent=PL.name; $('#plText').textContent=PL.text;
+  const ps=placePics(PL.id);
+  $('#plGrid').innerHTML=ps.length?ps.map(p=>`<button data-pp="${p.id}"><img data-img="${esc(p.k)}" alt=""></button>`).join('')
+    :`<div class="empty">Belum ada foto asli tempat ini.<br>Ada foto lama, atau mampir pas pulang kampung? Upload di sini.</div>`;
+  loadImgs($('#plGrid'));
+}
+$('#plFile').onchange=async e=>{
+  const fs=[...e.target.files].slice(0,8); e.target.value=''; if(!fs.length) return;
+  const msg=$('#plMsg'), cap=$('#plCap').value.trim().slice(0,80);
+  try{
+    for(let i=0;i<fs.length;i++){
+      msg.textContent=`Upload ${i+1}/${fs.length}…`;
+      const d=await compress(fs[i],1400,.82), id='pp'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), k='place:'+id;
+      await imgSet(k,d); S.ppics[id]={place:PL.id,k,cap,by:ME&&ME.name||'',at:new Date().toISOString()}; save();
+    }
+    msg.textContent=''; $('#plCap').value=''; renderPlace(); renderNostalgia();
+  }catch(err){ msg.textContent=err.message||'Upload gagal.'; }
+};
+$('#plGrid').addEventListener('click',async e=>{
+  const b=e.target.closest('[data-pp]'); if(!b) return; const p=S.ppics[b.dataset.pp]; if(!p) return;
+  PL.view=b.dataset.pp; $('#plImg').src=(await imgGet(p.k))||'';
+  const d=new Date(p.at);
+  $('#plViewCap').innerHTML=`${p.cap?`<b>${esc(p.cap)}</b><br>`:''}${esc(p.by||'?')} · ${d.getDate()} ${BULAN[d.getMonth()]} ${d.getFullYear()}`;
+  const del=$('#plDel'); del.textContent='Hapus foto'; delete del.dataset.confirm;
+  $('#plView').hidden=false;
+});
+$('#plDel').onclick=e=>{
+  const b=e.target; if(!b.dataset.confirm){ b.dataset.confirm='1'; b.textContent='Yakin hapus?'; return; }
+  const p=S.ppics[PL.view]; if(p){ imgDel(p.k); delete S.ppics[PL.view]; save(); }
+  $('#plView').hidden=true; PL.view=null; renderPlace(); renderNostalgia();
+};
+$('#plViewClose').onclick=()=>{ $('#plView').hidden=true; PL.view=null; };
+$('#plClose').onclick=()=>{ $('#placeOverlay').hidden=true; PL.id=null; if(NOS.edit) openPin(NOS.edit.id,false); };
 
 /* =================== PIXEL WORLDS (retro RPG-style maps, illustrative) =================== */
 const TW=8, GW=40, GH=30;
@@ -1984,6 +2064,8 @@ function campWorld(){
   bld(W,15,51,3,4,'#e08a2e','batagor');
   bld(W,2,50,5,5,'#b0563a'); bld(W,8,50,5,5,'#8a4fb3'); bld(W,31,50,5,5,'#6b6f8a');
   obj(W,'car',8,48,true,{col:'#2f5fa8'}); obj(W,'car',33,47,true,{col:'#c0302a'}); obj(W,'motor',26,56,true,{col:'#d23b2b'});
+  // Mie Pangsit Pakde: gerobak parked a few steps from Aad's house
+  obj(W,'gerobak',6,5,true); W.solid[5][7]=true;
   // Studio Gelora, Rumbai side
   bld(W,16,16,3,3,'#d9822b','note');
   // camp facilities
@@ -2003,9 +2085,10 @@ function campWorld(){
   // places
   lm(W,'Studio Herru',21,34,'Studio Herru. Salah satu markas latihan Bandiecoot.',21.5,30.6,'studio');
   lm(W,'Scarlet',3,9,'Studio Scarlet · Umban Sari. Tetangganya Aad: booking jam, patungan sewa, gas latihan.',3.5,7.1,'studio');
+  lm(W,'Mie Pangsit Pakde',7,5,'Mie Pangsit Pakde. Gerobak dekat rumah Aad. Pangsit goreng tambah, kuah dipisah, ngutang dulu.',12.4,5.45);
   lm(W,'Gelora',17,19,'Studio Gelora · Rumbai. Nama paling pas buat lagu-lagu Rage.',17.5,17.1,'studio');
   lm(W,'Publica',33,34,'Studio Publica. Ada cerita apa di sini? Tulis di pin.',33.5,32.1,'studio');
-  lm(W,'Lapangan Golf',16,10,'Lapangan golf camp. Bola nyasar = rezeki anak-anak.',16,5.5);
+  lm(W,'Lapangan Golf',16,10,'Lapangan golf camp. Bola nyasar = rezeki anak-anak.',16,2);
   lm(W,'Sekolah Cendana',7,19,'Sekolah Cendana. Bel jam 7, telat = lari dari halte.',7.5,16.5);
   lm(W,'Halte Bus',16,11,'Halte bus sekolah. Ketinggalan bus = jalan kaki panas-panasan.',17,9.2);
   lm(W,'Commissary',25,19,'Commissary. Belanja bulanan sekalian cari jajan.',25.5,16.5);
@@ -2167,6 +2250,18 @@ function drawObj(c,o){
       if(o.act==='bass'){ put(7,2,3,5,'#2f5fa8'); put(8,-4,1,6,'#5a3a22'); }
       if(o.act==='dj'){ put(-4,3,4,3,'#222'); put(-3,4,2,1,'#e2c44c'); put(8,3,3,3,'#c8452f'); put(1,-2,6,1,'#222'); put(0,-1,1,2,'#222'); put(7,-1,1,2,'#222'); put(9,-4,2,2,'#e2c44c'); put(10,-7,1,4,'#e2c44c'); }
       break; }
+    case 'gerobak': {
+      c.fillStyle='rgba(0,0,0,.28)'; c.fillRect(X+1,Y+7,15,1);
+      c.fillStyle='#7a5230'; c.fillRect(X+1,Y+3,13,4); c.fillStyle='#a8743f'; c.fillRect(X+1,Y+3,13,1);
+      c.fillStyle='#cfe6f0'; c.fillRect(X+2,Y-2,9,5); c.fillStyle='#fff'; c.fillRect(X+3,Y-1,2,1);
+      c.fillStyle='#f0e0b0'; c.fillRect(X+4,Y+1,2,1); c.fillRect(X+7,Y+1,2,1);
+      box(c,X+2,Y-2,9,5,PAL.ink);
+      c.fillStyle='#d23b2b'; c.fillRect(X+1,Y-5,12,2); c.fillStyle='#fff'; for(let i=1;i<13;i+=3) c.fillRect(X+i,Y-5,1,2);
+      vl(c,X+1,Y-4,7,PAL.ink); vl(c,X+12,Y-4,7,PAL.ink);
+      c.fillStyle='#c0c0c0'; c.fillRect(X+11,Y,3,3); c.fillStyle='#888'; c.fillRect(X+12,Y-1,1,1);
+      hl(c,X+14,Y+4,2,PAL.ink);
+      c.fillStyle=PAL.ink; c.fillRect(X+3,Y+6,3,2); c.fillRect(X+9,Y+6,3,2);
+      box(c,X+1,Y+3,13,4,PAL.ink); break; }
     case 'pillar': c.fillStyle='#a84b34'; c.fillRect(X+1,Y-2,6,9); hl(c,X+1,Y-2,6,'#d27b5f'); box(c,X+1,Y-2,6,9,PAL.ink); break;
     case 'stage': {
       const W=o.w*TW,H=o.h*TW; c.fillStyle='rgba(0,0,0,.3)'; c.fillRect(X+2,Y+3,W,H);
@@ -2253,11 +2348,13 @@ function onArrive(){
 function showDialog(L){
   const d=$('#dlg'); clearInterval(WALK.typer);
   if(!L){ d.hidden=true; return; }
-  d.hidden=false; d.innerHTML=`<b>${esc(L.name)}</b><span></span><i>▼</i>`;
+  const np=placePics(NOS.map+':'+L.name).length;
+  d.hidden=false; d.innerHTML=`<b>${esc(L.name)}</b><span></span><em>${np?`📷 ${np} foto asli · ketuk buat lihat`:'📷 Ketuk buat tambah foto asli'}</em><i>▼</i>`;
   const sp=d.querySelector('span'); let n=0;
   WALK.typer=setInterval(()=>{ n+=2; sp.textContent=L.text.slice(0,n); if(n>=L.text.length) clearInterval(WALK.typer); },30);
 }
 $('#walkBtn').onclick=()=>{ ac(); startWalk(); };
+$('#dlg').addEventListener('click',e=>{ e.stopPropagation(); const L=WALK.lm; if(L) openPlace(NOS.map+':'+L.name,L.name,L.text); });
 $('#dpad').addEventListener('pointerdown',e=>{
   const b=e.target.closest('[data-d]'); if(!b) return; e.preventDefault();
   WALK.hold=b.dataset.d; tryMove(b.dataset.d); try{ b.setPointerCapture(e.pointerId); }catch(_){}
@@ -2615,7 +2712,8 @@ const COLLS={
   jbstory:{get:()=>S.jbs||{}, set:m=>{ S.jbs=m; }},
   bike:{get:()=>S.bike?{kereta:S.bike}:{}, set:m=>{ S.bike=m.kereta||null; }},
   quiz:{get:()=>S.quiz||{}, set:m=>{ S.quiz=m; }},
-  quizres:{get:()=>S.qres||{}, set:m=>{ S.qres=m; }}
+  quizres:{get:()=>S.qres||{}, set:m=>{ S.qres=m; }},
+  placepic:{get:()=>S.ppics||{}, set:m=>{ S.ppics=m; }}
 };
 function snapOf(c){ const o={}; for(const [id,v] of Object.entries(COLLS[c].get())) o[id]=JSON.stringify(v); return o; }
 async function pullAll(){
@@ -2666,7 +2764,8 @@ async function refreshAfterRemote(){
   if(t==='james'&&!JB.key&&cs.has('jbmeta')) renderJames();
   if(t==='relay'&&paint===null){ if(cs.has('relay')||cs.has('lineup')||cs.has('song')) renderRelay(); if(cs.has('avatar')) renderBand(); }
   if(t==='moments'&&(cs.has('moment')||cs.has('pin'))&&!busyInput) renderMoments();
-  if(t==='nostalgia'&&(cs.has('pin')||cs.has('map')||cs.has('moment'))&&$('#pinOverlay').hidden&&!WALK.on) renderNostalgia();
+  if(t==='nostalgia'&&(cs.has('pin')||cs.has('map')||cs.has('moment')||cs.has('placepic'))&&$('#pinOverlay').hidden&&!WALK.on) renderNostalgia();
+  if(cs.has('placepic')&&PL.id&&!$('#placeOverlay').hidden) renderPlace();
   if(t==='game'&&cs.has('song')&&!G.running) renderGameSetup();
   if(t==='kereta'&&cs.has('bike')&&document.activeElement!==$('#bkPrompt')) renderKereta();
   if(t==='kuis'&&(cs.has('quiz')||cs.has('quizres'))&&!QZ.play) renderKuis();
