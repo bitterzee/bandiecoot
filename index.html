@@ -2784,14 +2784,21 @@ function scenerySVG(){
   </svg>`;
 }
 function riderSVG(name,x,i,driver){
-  const av=avOf(name), sh=av.shirt, sk=av.skin;
-  const legs=`<path d="M${x+4},96 Q${x-10},112 ${x-26},118 L${x-30},150" stroke="#2c3e66" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="${x-34}" cy="152" rx="10" ry="5" fill="#111"/>`;
-  const torso=`<path d="M${x-14},${96} L${x-10},${44} Q${x},${36} ${x+12},${44} L${x+16},${96} Z" fill="${sh}" stroke="#111" stroke-width="2.5"/>`;
-  const arm=driver?`<path d="M${x-6},52 Q${x-30},60 202,27" stroke="${sh}" stroke-width="9" fill="none" stroke-linecap="round"/><circle cx="202" cy="27" r="5" fill="${sk}" stroke="#111" stroke-width="1.5"/>`
-                  :`<path d="M${x-6},54 Q${x-24},66 ${x-44},64" stroke="${sh}" stroke-width="9" fill="none" stroke-linecap="round"/><circle cx="${x-46}" cy="64" r="5" fill="${sk}" stroke="#111" stroke-width="1.5"/>`;
-  const helmet=`<g><circle cx="${x}" cy="18" r="21" fill="#e2c44c" stroke="#111" stroke-width="2.5"/><path d="M${x-21},16 Q${x-20},26 ${x-6},28 L${x-6},12 Q${x-16},10 ${x-21},16Z" fill="#1a1a1a"/><rect x="${x-2}" y="10" width="20" height="8" fill="#2e3274" stroke="#111" stroke-width="1"/><circle cx="${x+10}" cy="4" r="3" fill="#fff" opacity=".6"/></g>`;
+  // sized against the 17" wheels: seated rider about 1.3 wheels tall above the seat, feet on the pegs
+  const av=avOf(name), sh=av.shirt, sk=av.skin, pants='#2c3e66', L=x-6;
+  const kx=x-38, ky=102, fx=x-30, fy=200;
+  const legs=`<path d="M${x+6},94 L${kx},${ky}" stroke="#111" stroke-width="19" stroke-linecap="round"/><path d="M${x+6},94 L${kx},${ky}" stroke="${pants}" stroke-width="15" stroke-linecap="round"/>
+    <path d="M${kx},${ky} L${fx},${fy}" stroke="#111" stroke-width="16" stroke-linecap="round"/><path d="M${kx},${ky} L${fx},${fy}" stroke="${pants}" stroke-width="12" stroke-linecap="round"/>
+    <path d="M${fx-16},${fy+3} Q${fx-14},${fy-6} ${fx+2},${fy-5} L${fx+8},${fy+4} Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>`;
+  const torso=`<path d="M${x-20},98 L${L-17},30 Q${L},18 ${L+19},28 L${x+20},98 Q${x},104 ${x-20},98Z" fill="${sh}" stroke="#111" stroke-width="2.5"/>
+    <path d="M${L-4},22 L${L+6},22 L${L+5},30 L${L-3},30Z" fill="${sk}" stroke="#111" stroke-width="1.5"/>`;
+  const arm=driver
+    ? `<path d="M${L-10},36 Q${L-26},62 214,52 L200,30" stroke="#111" stroke-width="14" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M${L-10},36 Q${L-26},62 214,52 L200,30" stroke="${sh}" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="200" cy="28" r="6.5" fill="${sk}" stroke="#111" stroke-width="1.5"/>`
+    : `<path d="M${L-10},38 Q${L-22},66 ${x-50},66" stroke="#111" stroke-width="14" fill="none" stroke-linecap="round"/><path d="M${L-10},38 Q${L-22},66 ${x-50},66" stroke="${sh}" stroke-width="10" fill="none" stroke-linecap="round"/><circle cx="${x-52}" cy="66" r="6.5" fill="${sk}" stroke="#111" stroke-width="1.5"/>`;
+  const hx=L, hy=0;
+  const helmet=`<g><circle cx="${hx}" cy="${hy}" r="24" fill="#e2c44c" stroke="#111" stroke-width="2.5"/><path d="M${hx-24},${hy-2} Q${hx-23},${hy+10} ${hx-7},${hy+12} L${hx-7},${hy-6} Q${hx-18},${hy-8} ${hx-24},${hy-2}Z" fill="#1a1a1a"/><rect x="${hx-3}" y="${hy-9}" width="23" height="9" fill="#2e3274" stroke="#111" stroke-width="1"/><circle cx="${hx+11}" cy="${hy-15}" r="3.5" fill="#fff" opacity=".6"/></g>`;
   const t=name.toUpperCase(), w=t.length*6.4+12;
-  const tag=`<g transform="translate(${x},-14)"><rect x="${-w/2}" y="-9" width="${w}" height="14" rx="2" fill="#f0c53a" stroke="#111" stroke-width="1.2"/><text x="0" y="2" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="10" fill="#111">${esc(t)}${driver?' 🏍':''}</text></g>`;
+  const tag=`<g transform="translate(${hx},-38)"><rect x="${-w/2}" y="-9" width="${w}" height="14" rx="2" fill="#f0c53a" stroke="#111" stroke-width="1.2"/><text x="0" y="2" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="10" fill="#111">${esc(t)}${driver?' 🏍':''}</text></g>`;
   return `<g class="rider" style="animation-delay:${i*.07}s">${legs}${torso}${arm}${helmet}${tag}</g>`;
 }
 const BIKE_DEFAULT={body:'#161618',shield:'#f6f6f3',seat:'#1f1f22',stripe1:'#20a35c',stripe2:'#d42a2a',rims:'#dfe2e5',exhaust:'standar',headlight:'standar',stance:'standar',extras:[],plate:'BM 2004 DHC'};
@@ -2813,7 +2820,7 @@ function bikeSVG(riders,B){
   const spokeC=shade(B.rims,-28);
   const spokes=(cx,cy)=>{ let s=''; for(let i=0;i<12;i++){ const a=i*Math.PI/6; s+=`<line x1="${cx}" y1="${cy}" x2="${(cx+Math.cos(a)*34).toFixed(1)}" y2="${(cy+Math.sin(a)*34).toFixed(1)}" stroke="${spokeC}" stroke-width="1.6"/>`; } return s; };
   const wheel=(cx,cy)=>`<g class="wheel" style="transform-origin:${cx}px ${cy}px"><circle cx="${cx}" cy="${cy}" r="44" fill="none" stroke="#1a1a1a" stroke-width="${knob?16:13}" ${knob?'stroke-dasharray="7 4"':''}/>${knob?`<circle cx="${cx}" cy="${cy}" r="42" fill="none" stroke="#1a1a1a" stroke-width="9"/>`:''}<circle cx="${cx}" cy="${cy}" r="37" fill="none" stroke="${B.rims}" stroke-width="3"/>${spokes(cx,cy)}<circle cx="${cx}" cy="${cy}" r="10" fill="#cfd3d6" stroke="#111" stroke-width="2"/><circle cx="${cx}" cy="${cy}" r="3" fill="#555"/><path d="M${cx-31},${cy-31} a44,44 0 0 1 24,-12" stroke="#4a4a4a" stroke-width="3" fill="none"/></g>`;
-  const rs=riders.slice(0,3), xs=[248,300,348];
+  const rs=riders.slice(0,3), xs=[252,306,358];
   const exhaust=B.exhaust==='standar'
     ? `<path d="M248,238 Q300,244 362,236 L408,230 Q418,230 418,237 L413,244 L362,247 Q300,252 248,248Z" fill="#dcdfe2" stroke="#111" stroke-width="2.5"/><path d="M300,240 L362,236 L364,244 L300,248Z" fill="#2b2b2b"/>`
     : `<path d="M248,238 Q290,242 334,226 L338,234 Q292,252 248,248Z" fill="#cfd3d6" stroke="#111" stroke-width="2.5"/><g transform="rotate(-14 368 220)"><rect x="332" y="208" width="74" height="22" rx="10" fill="#26262a" stroke="#111" stroke-width="2.5"/><path d="M346,212 L392,212" stroke="#55555c" stroke-width="2"/><rect x="398" y="211" width="12" height="16" rx="3" fill="#cfd3d6" stroke="#111" stroke-width="1.5"/></g>`;
