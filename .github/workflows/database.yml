@@ -1,0 +1,34 @@
+# Applies supabase/migrations to the Bandiecoot project with the Supabase CLI,
+# so every database change is tracked and runs exactly once (on merge to main).
+# Needs repository secrets: SUPABASE_ACCESS_TOKEN, PRODUCTION_DB_PASSWORD.
+name: Database
+
+on:
+  push:
+    branches: [main]
+    paths: ['supabase/migrations/**']
+  workflow_dispatch:
+
+concurrency:
+  group: database-production
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      REF: meagwjmfqhdcigqodaas
+      PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 3.0.0
+      - name: Record migrations that were applied by hand before this workflow existed
+        run: supabase migration repair --status applied 20261118000000 20261118000100 --remote="$REF" --password "$PASSWORD" --yes
+      - name: Show pending
+        run: supabase migration list --remote="$REF" --password "$PASSWORD" --yes
+      - name: Apply
+        run: supabase db push --remote="$REF" --password "$PASSWORD" --yes
