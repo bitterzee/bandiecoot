@@ -3277,7 +3277,7 @@ async function qzFetch(){
   QZ.busy=true; QZ.msg=''; renderKuis();
   try{
     const r=await fetch('/api/quiz',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+data.session.access_token},body:'{}'});
-    const j=await r.json().catch(()=>({error:'Kuis lagi error.'}));
+    const j=await r.json().catch(()=>({error:r.status===504?'Pak guru kelamaan nulis soal (timeout). Coba sekali lagi.':'Kuis lagi error (HTTP '+r.status+').'}));
     if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
     S.quiz[j.quiz.week]=j.quiz; (SNAP.quiz=SNAP.quiz||{})[j.quiz.week]=JSON.stringify(j.quiz); save();
   }catch(e){ QZ.msg=e.message; }

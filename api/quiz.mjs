@@ -59,7 +59,7 @@ const TOOL = {
     type: 'object',
     properties: {
       questions: {
-        type: 'array', minItems: 10, maxItems: 10,
+        type: 'array', minItems: 12, maxItems: 12,
         items: {
           type: 'object',
           properties: {
@@ -77,7 +77,7 @@ const TOOL = {
 };
 
 const system = (subject) => [
-  `Write a 10-question multiple-choice quiz on SMA (Indonesian senior high school) ${subject}, for 7 old friends who graduated in 2004 from SMA Cendana Rumbai, Pekanbaru, and now compete every week for fun.`,
+  `Write a 12-question multiple-choice quiz (the best 10 get used) on SMA (Indonesian senior high school) ${subject}, for 7 old friends who graduated in 2004 from SMA Cendana Rumbai, Pekanbaru, and now compete every week for fun.`,
   'Level: what a kelas 1–3 SMA student learned in the KBK/Kurikulum 1994 era. Mix easy, medium and a few hard ones, ordered roughly easy to hard.',
   'Each question has exactly one correct answer and three plausible wrong ones. Double-check every fact and every calculation; if a question could be argued two ways, replace it.',
   'Keep questions short enough to read on a phone. For calculations, use numbers that work out cleanly without a calculator.',
@@ -107,26 +107,32 @@ export default async function handler(req, res) {
 
   const subject = subjectFor(week);
   try {
-    let quiz = null;
-    for (let attempt = 0; attempt < 2 && !quiz; attempt++) {
-      const r = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-        body: JSON.stringify({
-          model: process.env.QUIZ_MODEL || 'claude-sonnet-5-5',
-          max_tokens: 4000,
-          system: system(subject),
-          tools: [TOOL],
-          tool_choice: { type: 'tool', name: TOOL.name },
-          messages: [{ role: 'user', content: `Quiz for week ${week}. Subject: ${subject}.` }],
-        }),
-      });
-      if (!r.ok) throw new Error(`claude ${r.status}: ${(await r.text()).slice(0, 200)}`);
-      const j = await r.json();
-      const call = (j.content || []).find((c) => c.type === 'tool_use' && c.name === TOOL.name);
-      quiz = cleanQuiz(call?.input, week, subject);
+    // one call, well inside Vercel's 60 s limit; fall back to Haiku if the main model is unavailable or slow
+    const models = [...new Set([process.env.QUIZ_MODEL || 'claude-sonnet-5-5', 'claude-haiku-5-5'])];
+    const started = Date.now();
+    let quiz = null, why = '';
+    for (const model of models) {
+      if (quiz || Date.now() - started > 25000) break;
+      const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 50000 - (Date.now() - started));
+      try {
+        const r = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST', signal: ctl.signal,
+          headers: { 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+          body: JSON.stringify({
+            model, max_tokens: 3500, system: system(subject),
+            tools: [TOOL], tool_choice: { type: 'tool', name: TOOL.name },
+            messages: [{ role: 'user', content: `Quiz for week ${week}. Subject: ${subject}.` }],
+          }),
+        });
+        if (!r.ok) { why = `Claude ${r.status} (${model}): ${(await r.text()).slice(0, 160)}`; console.error('quiz', why); continue; }
+        const j = await r.json();
+        const call = (j.content || []).find((c) => c.type === 'tool_use' && c.name === TOOL.name);
+        quiz = cleanQuiz(call?.input, week, subject);
+        if (!quiz) why = `soal dari ${model} nggak lolos cek (${(call?.input?.questions || []).length} soal, stop: ${j.stop_reason})`;
+      } catch (e) { why = e.name === 'AbortError' ? `${model} kelamaan` : String(e.message || e); console.error('quiz', why); }
+      finally { clearTimeout(timer); }
     }
-    if (!quiz) return res.status(502).json({ error: 'Soalnya belum jadi. Coba lagi sebentar.' });
+    if (!quiz) return res.status(502).json({ error: `Soalnya belum jadi. Coba lagi sebentar. [${why}]` });
 
     // Someone else may have made it at the same moment: keep whichever landed first.
     await fetch(`${SB}/rest/v1/items?on_conflict=coll,id`, {
@@ -136,6 +142,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ quiz: (await stored(H, week)) || quiz });
   } catch (e) {
     console.error('quiz', e);
-    return res.status(502).json({ error: 'Pak guru lagi error. Coba lagi sebentar.' });
+    return res.status(502).json({ error: `Pak guru lagi error. Coba lagi sebentar. [${String(e.message || e).slice(0, 160)}]` });
   }
 }
