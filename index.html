@@ -406,6 +406,46 @@ body.tekaked .wrap,body.tekaked>*:not(.overlay){animation:shake .45s ease-in-out
 .tekakToast b{display:block;font-family:'Rubik Distressed',Anton,Impact,sans-serif;font-size:34px;line-height:1;color:var(--navy)}
 .tekakToast span{display:block;font-size:13px;margin:6px 0 10px}
 @keyframes pop{from{transform:translateX(-50%) rotate(-3deg) scale(.6);opacity:0}}
+/* full-screen walk mode with a handheld-style controller */
+body.gaming{overflow:hidden}
+#gameScreen{position:fixed;inset:0;z-index:28;background:#c9c6bd;display:flex;flex-direction:column;touch-action:none;user-select:none;-webkit-user-select:none;
+  padding:calc(10px + env(safe-area-inset-top)) 12px calc(10px + env(safe-area-inset-bottom))}
+#gameScreen[hidden]{display:none}
+.gbBezel{flex:1;min-height:0;display:flex;flex-direction:column;background:#55576a;border-radius:10px 10px 38px 10px;padding:8px 16px 18px}
+.gbTop{display:flex;align-items:center;gap:8px;font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.6px;color:#b9bcd0;padding:2px 2px 7px;white-space:nowrap;overflow:hidden}
+.gbTop span{border-top:2px solid #8a2c63;border-bottom:2px solid #2e3274;padding:1px 0}
+.gbLed{width:8px;height:8px;border-radius:50%;background:#e2402b;box-shadow:0 0 6px #ff6a50;flex:none}
+.gbView{flex:1;min-height:0;position:relative;overflow:hidden;background:#1d2018;border-radius:3px;box-shadow:inset 0 0 0 3px #2b2d38}
+.gbView .mapBox{position:absolute;left:0;top:0;margin:0;border:0;transform-origin:0 0;will-change:transform}
+.gbView .dlg{position:absolute;z-index:3}
+.gbPad{flex:none;position:relative;padding:12px 6px 0}
+.gbBrand{font-family:Anton,Impact,sans-serif;font-style:italic;color:#2e3274;font-size:17px;letter-spacing:.5px;margin:0 0 10px 4px}
+.gbBrand b{font-family:'Rubik Distressed',Anton,Impact,sans-serif;font-style:normal;font-weight:400;font-size:20px;margin-left:4px}
+.gbBrand sup{font-size:8px}
+.gbRow{display:flex;justify-content:space-between;align-items:center;padding:0 6px}
+.gbCross{position:relative;width:132px;height:132px}
+.gbCross button,.gbCross .cc{position:absolute;width:44px;height:44px;background:#26272d;border:0;border-radius:4px;padding:0;box-shadow:0 3px 0 #0f1013;touch-action:none}
+.gbCross button:active,.gbCross button.on{transform:translateY(2px);box-shadow:0 1px 0 #0f1013;background:#33343c}
+.gbCross .cu{left:44px;top:0;border-radius:4px 4px 0 0}.gbCross .cd{left:44px;top:88px;border-radius:0 0 4px 4px}
+.gbCross .cl{left:0;top:44px;border-radius:4px 0 0 4px}.gbCross .cr{left:88px;top:44px;border-radius:0 4px 4px 0}
+.gbCross .cc{left:44px;top:44px;border-radius:0;box-shadow:0 3px 0 #0f1013}
+.gbCross .cc::after{content:'';position:absolute;inset:13px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#3a3b44,#1b1c21)}
+.gbCross button::after{content:'';position:absolute;left:50%;top:50%;border:7px solid transparent;transform:translate(-50%,-50%)}
+.gbCross .cu::after{border-bottom-color:#4a4c56;margin-top:-4px}.gbCross .cd::after{border-top-color:#4a4c56;margin-top:4px}
+.gbCross .cl::after{border-right-color:#4a4c56;margin-left:-4px}.gbCross .cr::after{border-left-color:#4a4c56;margin-left:4px}
+.gbAB{display:flex;gap:16px;transform:rotate(-25deg);margin-right:4px}
+.gbBtn{display:flex;flex-direction:column;align-items:center;gap:6px}
+.gbBtn.b{margin-top:30px}
+.gbBtn button{width:58px;height:58px;border-radius:50%;border:0;padding:0;background:radial-gradient(circle at 38% 32%,#c23c7a,#8a1f52);box-shadow:0 4px 0 #561033,0 0 0 3px #b9b5aa}
+.gbBtn button:active{transform:translateY(3px);box-shadow:0 1px 0 #561033,0 0 0 3px #b9b5aa}
+.gbBtn span{font-family:Anton,Impact,sans-serif;color:#2e3274;font-size:15px;letter-spacing:1px}
+.gbSS{display:flex;justify-content:center;gap:28px;margin:14px 0 2px;transform:translateX(-14px)}
+.gbSS div{display:flex;flex-direction:column;align-items:center;gap:4px;transform:rotate(-25deg)}
+.gbSS button{width:44px;height:12px;border-radius:7px;border:0;padding:0;background:#7f7d78;box-shadow:0 2px 0 #55534f,0 0 0 2px #b0ada4}
+.gbSS button:active{transform:translateY(2px);box-shadow:none}
+.gbSS span{font-family:Anton,Impact,sans-serif;font-size:10px;letter-spacing:1px;color:#2e3274}
+.gbHint{text-align:center;font-size:10px;color:#6b6860;margin-top:6px}
+@media (max-height:700px){.gbCross{transform:scale(.85);margin:-10px}.gbBtn button{width:50px;height:50px}.gbBrand{margin-bottom:4px}.gbHint{display:none}}
 </style>
 </head>
 <body>
@@ -883,6 +923,34 @@ body.tekaked .wrap,body.tekaked>*:not(.overlay){animation:shake .45s ease-in-out
       <span class="spacer"></span>
       <button class="small" id="pinCancel">Batal</button>
     </div>
+  </div>
+</div>
+
+<div id="gameScreen" hidden>
+  <div class="gbBezel">
+    <div class="gbTop"><i class="gbLed"></i><span>DESTRUCTION HIP CORE · DOT MATRIX WITH DISTORTION</span></div>
+    <div class="gbView" id="gbView"></div>
+  </div>
+  <div class="gbPad">
+    <div class="gbBrand">Bandiecoot <b>GAME KID</b><sup>™</sup></div>
+    <div class="gbRow">
+      <div class="gbCross" id="gbCross">
+        <button data-d="u" class="cu" aria-label="Atas"></button>
+        <button data-d="l" class="cl" aria-label="Kiri"></button>
+        <span class="cc"></span>
+        <button data-d="r" class="cr" aria-label="Kanan"></button>
+        <button data-d="d" class="cd" aria-label="Bawah"></button>
+      </div>
+      <div class="gbAB">
+        <div class="gbBtn b"><button id="gbB" aria-label="B: keluar"></button><span>B</span></div>
+        <div class="gbBtn a"><button id="gbA" aria-label="A: lihat foto"></button><span>A</span></div>
+      </div>
+    </div>
+    <div class="gbSS">
+      <div><button id="gbSelect" aria-label="Select: label"></button><span>SELECT</span></div>
+      <div><button id="gbStart" aria-label="Start: keluar"></button><span>START</span></div>
+    </div>
+    <div class="gbHint">A: foto tempat · B / START: keluar · SELECT: label</div>
   </div>
 </div>
 
@@ -1939,12 +2007,12 @@ async function renderNostalgia(){
     if(v){ img.src=v; img.hidden=false; $('#mapPh').hidden=true; } else { img.hidden=true; img.removeAttribute('src'); $('#mapPh').hidden=false; }
   }
   const W=world(NOS.map);
-  $('#mapLabels').innerHTML=(view==='game'&&NOS.labels&&!WALK.on)?
+  $('#mapLabels').innerHTML=(view==='game'&&(WALK.on?NOS.walkLabels:NOS.labels))?
     W.lms.filter(l=>l.lx!=null).map(l=>{ const n=placePics(NOS.map+':'+l.name).length; return `<span class="mlabel ${l.kind||''}" data-lm="${esc(l.name)}" style="left:${l.lx/GW*100}%;top:${l.ly/W.gh*100}%">${esc(l.short||(l.kind==='home'?l.name.replace('Rumah ',''):l.name))}${n?`<span class="cam">📷${n}</span>`:''}</span>`; }).join('')+
     W.areas.map(a=>`<span class="mlabel area" style="left:${a.lx/GW*100}%;top:${a.ly/W.gh*100}%">${esc(a.name)}</span>`).join(''):'';
   $('#labelBtn').hidden=view!=='game'||WALK.on; $('#labelBtn').textContent=NOS.labels?'Label: on':'Label: off';
   $('#walkBtn').hidden=view!=='game'||WALK.on;
-  $('#walkCv').hidden=!WALK.on; $('#dpad').hidden=!WALK.on; $('#pins').hidden=WALK.on;
+  $('#walkCv').hidden=!WALK.on; $('#dpad').hidden=true; $('#pins').hidden=WALK.on;
   $('#mapTools').hidden=WALK.on;
   const pins=M.pins.filter(p=>pinView(p,M)===view);
   $('#pins').innerHTML=pins.map((p,i)=>`<button class="pin ${NOS.focus===p.id?'focus':''}" data-pin="${p.id}" style="left:${p.x}%;top:${p.y}%;--pc:${PIN_TYPES[p.type].c}">${i+1}</button>`).join('');
@@ -2440,10 +2508,45 @@ const WALK={on:false,x:0,y:0,from:null,t0:0,moving:false,dir:'d',hold:null,lm:nu
 function startWalk(){
   const W=world(NOS.map); const wc=$('#walkCv'); wc.width=GW*TW; wc.height=W.gh*TW; Object.assign(WALK,{on:true,x:W.spawn[0],y:W.spawn[1],moving:false,dir:'u',hold:null,lm:null});
   NOS.pinMode=false; NOS.preset=null; showDialog(null);
-  renderNostalgia(); $('#mapBox').scrollIntoView({block:'center',behavior:'smooth'});
+  renderNostalgia(); enterGameScreen();
   requestAnimationFrame(walkLoop);
 }
-function stopWalk(){ WALK.on=false; WALK.hold=null; showDialog(null); renderNostalgia(); }
+function stopWalk(){ WALK.on=false; WALK.hold=null; showDialog(null); leaveGameScreen(); renderNostalgia(); }
+// full screen: the map moves into the handheld's screen, zoomed in, and the camera follows you
+const GBS={home:null,dlgHome:null};
+function enterGameScreen(){
+  const box=$('#mapBox'), dlg=$('#dlg'), view=$('#gbView');
+  if(!GBS.home){ GBS.home=document.createComment('mapBox'); box.parentNode.insertBefore(GBS.home,box); }
+  view.appendChild(box); view.appendChild(dlg);
+  $('#gameScreen').hidden=false; document.body.classList.add('gaming');
+  sizeGameMap(); window.scrollTo(0,0);
+}
+function leaveGameScreen(){
+  if(!GBS.home) return;
+  const box=$('#mapBox'), dlg=$('#dlg');
+  GBS.home.parentNode.insertBefore(box,GBS.home); box.appendChild(dlg);
+  box.style.width=''; box.style.transform='';
+  $('#gameScreen').hidden=true; document.body.classList.remove('gaming');
+  $('#gbCross').querySelectorAll('.on').forEach(b=>b.classList.remove('on'));
+  setTimeout(()=>box.scrollIntoView({block:'center'}),30);
+}
+function sizeGameMap(){
+  const view=$('#gbView'), box=$('#mapBox'); if(!view||!WALK.on) return;
+  const vw=view.clientWidth, vh=view.clientHeight, W=world(NOS.map);
+  // about 15 tiles across, but never so zoomed that less than ~13 rows fit
+  const tile=Math.max(vw/15, Math.min(vw/13, vh/13));
+  box.style.width=Math.round(tile*GW)+'px';
+  GBS.vw=vw; GBS.vh=vh; GBS.tile=box.offsetWidth/GW; GBS.bh=GBS.tile*W.gh;
+}
+window.addEventListener('resize',()=>{ if(WALK.on) sizeGameMap(); });
+function gameCamera(fx,fy){
+  if(!WALK.on||!GBS.tile) return;
+  const t=GBS.tile, bw=t*GW, bh=GBS.bh, vw=GBS.vw, vh=GBS.vh;
+  const cl=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+  const tx=bw<=vw?(vw-bw)/2:cl(vw/2-(fx+.5)*t,vw-bw,0);
+  const ty=bh<=vh?(vh-bh)/2:cl(vh/2-(fy+.5)*t,vh-bh,0);
+  $('#mapBox').style.transform=`translate(${Math.round(tx)}px,${Math.round(ty)}px)`;
+}
 function tryMove(dir){
   if(!WALK.on||WALK.moving) return;
   const W=world(NOS.map), d={u:[0,-1],d:[0,1],l:[-1,0],r:[1,0]}[dir]; WALK.dir=dir;
@@ -2462,6 +2565,7 @@ function walkLoop(now){
   }
   if(!WALK.moving&&WALK.hold) tryMove(WALK.hold);
   drawSprite(c,Math.round(fx*TW),Math.round(fy*TW),WALK.dir,WALK.moving?((now/110|0)%2):0);
+  gameCamera(fx,fy);
   if(WALK.lm&&!WALK.moving){ c.fillStyle='#fff'; c.fillRect(Math.round(fx*TW)+3,Math.round(fy*TW)-8,2,4); c.fillRect(Math.round(fx*TW)+3,Math.round(fy*TW)-3,2,1); }
   requestAnimationFrame(walkLoop);
 }
@@ -2487,6 +2591,15 @@ $('#dpad').addEventListener('pointerdown',e=>{
 });
 ['pointerup','pointercancel','pointerleave'].forEach(ev=>$('#dpad').addEventListener(ev,()=>{ WALK.hold=null; }));
 $('#walkExit').onclick=stopWalk;
+// handheld controller
+$('#gbCross').addEventListener('pointerdown',e=>{
+  const b=e.target.closest('[data-d]'); if(!b) return; e.preventDefault(); ac();
+  b.classList.add('on'); WALK.hold=b.dataset.d; tryMove(b.dataset.d); try{ b.setPointerCapture(e.pointerId); }catch(_){}
+});
+['pointerup','pointercancel','pointerleave'].forEach(ev=>$('#gbCross').addEventListener(ev,e=>{ WALK.hold=null; $('#gbCross').querySelectorAll('.on').forEach(b=>b.classList.remove('on')); }));
+$('#gbA').onclick=()=>{ const L=WALK.lm; if(L) openPlace(NOS.map+':'+L.name,L.name,L.text); };
+$('#gbB').onclick=stopWalk; $('#gbStart').onclick=stopWalk;
+$('#gbSelect').onclick=()=>{ NOS.walkLabels=!NOS.walkLabels; renderNostalgia(); };
 const KEYDIR={ArrowUp:'u',ArrowDown:'d',ArrowLeft:'l',ArrowRight:'r',w:'u',s:'d',a:'l',d:'r'};
 window.addEventListener('keydown',e=>{ if(!WALK.on) return; const k=KEYDIR[e.key]||KEYDIR[e.key.toLowerCase()]; if(k){ e.preventDefault(); WALK.hold=k; tryMove(k); } if(e.key==='Escape') stopWalk(); });
 window.addEventListener('keyup',e=>{ if(!WALK.on) return; const k=KEYDIR[e.key]||KEYDIR[e.key.toLowerCase()]; if(k&&WALK.hold===k) WALK.hold=null; });
