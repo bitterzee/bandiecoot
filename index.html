@@ -2091,7 +2091,6 @@ function campWorld(){
   W.roadsH=[12,34,47,55]; W.roadsV=[19,14];
   // east of the school: DPR under its big tree, a side road meeting the main road in a T, the church across
   fillT(W,'road',13,5,6,2,false);
-  obj(W,'bigtree',13,1); for(let j=2;j<=4;j++) for(let i=13;i<=15;i++) if(j<4||i!==14) W.solid[j][i]=true;
   bld(W,13,7,5,3,'#b9c4d4','church');
   // Umban Sari paths (below the main road, next to the bridge road)
   fillT(W,'path',5,14,1,4); fillT(W,'path',1,18,12,1); fillT(W,'path',5,19,1,4); fillT(W,'path',1,23,12,1);
@@ -2129,8 +2128,9 @@ function campWorld(){
   obj(W,'car',8,48,true,{col:'#2f5fa8'}); obj(W,'car',33,47,true,{col:'#c0302a'}); obj(W,'motor',26,56,true,{col:'#d23b2b'});
   // Mie Pangsit Pakde: gerobak parked a few steps from Aad's house
   obj(W,'gerobak',6,19,true); W.solid[19][7]=true;
-  // Studio Gelora, Rumbai side
-  bld(W,16,16,3,3,'#d9822b','note');
+  // DPR under the big tree, right above Studio Gelora (Rumbai side)
+  obj(W,'bigtree',16,15); for(let j=16;j<=18;j++) for(let i=16;i<=18;i++) if(j<18||i!==17) W.solid[j][i]=true;
+  bld(W,16,20,3,3,'#d9822b','note');
   // camp facilities
   bld(W,2,2,11,4,'#3f72c4'); fillT(W,'field',2,7,11,4); W.fields.push({x:2,y:7,w:11,h:4});
   obj(W,'bus',16,10); W.solid[10][17]=true;
@@ -2149,11 +2149,11 @@ function campWorld(){
   lm(W,'Studio Herru',21,34,'Studio Herru. Salah satu markas latihan Bandiecoot.',21.5,30.6,'studio');
   lm(W,'Scarlet',3,23,'Studio Scarlet · Umban Sari. Tetangganya Aad: booking jam, patungan sewa, gas latihan.',3.5,21.1,'studio');
   lm(W,'Mie Pangsit Pakde',7,19,'Mie Pangsit Pakde. Gerobak dekat rumah Aad. Pangsit goreng tambah, kuah dipisah, ngutang dulu.',12.2,19.45);
-  lm(W,'Gelora',17,19,'Studio Gelora · Rumbai. Nama paling pas buat lagu-lagu Rage.',17.5,17.1,'studio');
+  lm(W,'Gelora',17,23,'Studio Gelora · Rumbai. Nama paling pas buat lagu-lagu Rage.',17.5,21.1,'studio');
   lm(W,'Publica',33,34,'Studio Publica. Ada cerita apa di sini? Tulis di pin.',33.5,32.1,'studio');
   lm(W,'Lapangan Golf',35,11,'Lapangan golf camp, di atas country club. Bola nyasar = rezeki anak-anak.',35.6,10.4);
-  lm(W,'DPR',14,4,'DPR: Di bawah Pohon Rindang. Markas abis pulang sekolah: duduk, ngerumpi, nunggu jemputan.',12.9,0.6);
-  lm(W,'Gereja',15,10,'Gereja di seberang DPR, pas di simpang T.',15.5,8.1);
+  lm(W,'DPR',17,18,'DPR: Di bawah Pohon Rindang. Markas abis pulang sekolah: duduk, ngerumpi, nunggu jemputan.',17.5,14.65);
+  lm(W,'Gereja',15,10,'Gereja di simpang T, sebelah sekolah.',15.5,8.1);
   lm(W,'Sekolah Cendana',7,6,'Sekolah Cendana. Bel jam 7, telat = lari dari halte.',7.5,3.5);
   lm(W,'Halte Bus',16,11,'Halte bus sekolah. Ketinggalan bus = jalan kaki panas-panasan.',17.5,11.25);
   lm(W,'Commissary',25,19,'Commissary. Belanja bulanan sekalian cari jajan.',25.5,16.5);
