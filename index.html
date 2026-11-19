@@ -2774,7 +2774,16 @@ async function renderBand(){
 }
 $('#bandStage').addEventListener('click',e=>{ const g=e.target.closest('[data-av]'); if(g) openAv(g.dataset.av); });
 $('#bandLegend').addEventListener('click',e=>{ const g=e.target.closest('[data-av]'); if(g) openAv(g.dataset.av); });
-$('#bandPlay').onclick=()=>{ const song=S.archive[0]||demoSong(); toggleSeq('band',()=>song.layers,()=>song.bpm); };
+// the stage plays the jam session as it stands right now (locked parts plus what's being written, unless it's blind);
+// before anyone has played anything it falls back to the last finished song, then the demo
+function liveSessionLayers(){
+  const R=S.relay; if(R.blind) return relayLayers().filter(hasNotes);
+  return R.order.map((mi,idx)=>idx<=R.turn&&!R.mutes[mi]?R.layers[mi]:null).filter(hasNotes);
+}
+$('#bandPlay').onclick=()=>{
+  if(liveSessionLayers().length) return toggleSeq('band',liveSessionLayers,()=>S.relay.bpm);
+  const song=S.archive[0]||demoSong(); toggleSeq('band',()=>song.layers,()=>song.bpm);
+};
 
 // avatar editor
 const AVE={name:null,draft:null,faceData:undefined};
