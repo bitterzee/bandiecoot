@@ -452,6 +452,10 @@ body.gaming{overflow:hidden}
 .gbSS button{width:44px;height:12px;border-radius:7px;border:0;padding:0;background:#7f7d78;box-shadow:0 2px 0 #55534f,0 0 0 2px #b0ada4}
 .gbSS button:active{transform:translateY(2px);box-shadow:none}
 .gbSS span{font-family:Anton,Impact,sans-serif;font-size:10px;letter-spacing:1px;color:#2e3274}
+.gbBrand{position:relative}
+.gbSolid{position:absolute;right:2px;top:-10px;transform:rotate(4deg);background:var(--mustard);color:var(--navy);border:2px solid var(--navy);box-shadow:2px 2px 0 var(--navy);font-family:'Rubik Distressed',Anton,Impact,sans-serif;font-style:normal;font-size:15px;letter-spacing:1px;padding:3px 8px 2px}
+.gbGrill{position:absolute;right:18px;bottom:30px;display:flex;gap:6px;transform:rotate(-25deg);pointer-events:none}
+.gbGrill i{width:6px;height:40px;border-radius:3px;background:#a9a69d;box-shadow:inset 1px 1px 0 #8f8c84}
 .gbHint{text-align:center;font-size:10px;color:#6b6860;margin-top:6px}
 @media (max-height:700px){.gbCross{transform:scale(.85);margin:-10px}.gbBtn button{width:50px;height:50px}.gbBrand{margin-bottom:4px}.gbHint{display:none}}
 </style>
@@ -942,7 +946,7 @@ body.gaming{overflow:hidden}
     <div class="gbView" id="gbView"></div>
   </div>
   <div class="gbPad">
-    <div class="gbBrand">Bandiecoot <b>GAME KID</b><sup>™</sup></div>
+    <div class="gbBrand">Bandiecoot <b>GAME KID</b><sup>™</sup><span class="gbSolid">TETAP SOLID</span></div>
     <div class="gbRow">
       <div class="gbCross" id="gbCross">
         <button data-d="u" class="cu" aria-label="Atas"></button>
@@ -960,6 +964,7 @@ body.gaming{overflow:hidden}
       <div><button id="gbSelect" aria-label="Select: label"></button><span>SELECT</span></div>
       <div><button id="gbStart" aria-label="Start: keluar"></button><span>START</span></div>
     </div>
+    <div class="gbGrill"><i></i><i></i><i></i><i></i><i></i></div>
     <div class="gbHint">A: sapa teman / foto tempat · B / START: keluar · SELECT: label</div>
   </div>
 </div>
