@@ -2616,8 +2616,8 @@ function leaveGameScreen(){
 function sizeGameMap(){
   const view=$('#gbView'), box=$('#mapBox'); if(!view||!WALK.on) return;
   const vw=view.clientWidth, vh=view.clientHeight, W=world(NOS.map);
-  // about 20 tiles across (smaller pixels, more of the map), but at least ~17 rows tall
-  const tile=Math.max(vw/20, Math.min(vw/17, vh/17));
+  // about 28 tiles across (most of the map's width), but at least ~24 rows tall
+  const tile=Math.max(vw/28, Math.min(vw/24, vh/24));
   box.style.width=Math.round(tile*GW)+'px';
   GBS.vw=vw; GBS.vh=vh; GBS.tile=box.offsetWidth/GW; GBS.bh=GBS.tile*W.gh;
 }
