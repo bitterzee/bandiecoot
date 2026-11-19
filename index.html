@@ -406,6 +406,14 @@ body.tekaked .wrap,body.tekaked>*:not(.overlay){animation:shake .45s ease-in-out
 .tekakToast b{display:block;font-family:'Rubik Distressed',Anton,Impact,sans-serif;font-size:34px;line-height:1;color:var(--navy)}
 .tekakToast span{display:block;font-size:13px;margin:6px 0 10px}
 @keyframes pop{from{transform:translateX(-50%) rotate(-3deg) scale(.6);opacity:0}}
+#mpTags{position:absolute;inset:0;pointer-events:none;z-index:2}
+.mpTag{position:absolute;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;gap:1px}
+.mpTag b{font-family:'Press Start 2P',monospace;font-size:7px;font-weight:400;background:rgba(17,17,17,.75);color:#fff;padding:2px 3px;border-radius:2px;white-space:nowrap}
+.mpTag i{font-style:normal;font-size:16px;line-height:1;min-height:0;animation:pop2 .25s ease-out}
+.mpTag i:empty{display:none}
+@keyframes pop2{from{transform:scale(.3)}}
+.walkers{background:var(--navy);color:var(--mustard);font-size:13px;padding:8px 10px;margin:4px 0 8px;line-height:1.6;box-shadow:3px 3px 0 var(--ink)}
+.walkers b{color:#fff}.walkers button{margin-left:6px;padding:3px 9px;font-size:12px}
 /* full-screen walk mode with a handheld-style controller */
 body.gaming{overflow:hidden}
 #gameScreen{position:fixed;inset:0;z-index:28;background:#c9c6bd;display:flex;flex-direction:column;touch-action:none;user-select:none;-webkit-user-select:none;
@@ -768,6 +776,7 @@ body.gaming{overflow:hidden}
         <button data-map="school">SMA Cendana</button>
       </div>
       <p class="sub" id="mapInfo" style="margin:12px 0 4px"></p>
+      <div class="walkers" id="walkers" hidden></div>
       <div class="seg" id="viewSeg" hidden style="margin-bottom:6px">
         <button data-v="game" class="small">Peta game</button>
         <button data-v="photo" class="small">Foto udara</button>
@@ -776,6 +785,7 @@ body.gaming{overflow:hidden}
         <img id="mapImg" alt="" hidden>
         <div id="mapLabels"></div>
         <canvas id="walkCv" width="320" height="240" hidden></canvas>
+        <div id="mpTags"></div>
         <div class="dlg" id="dlg" hidden></div>
         <div class="mapPh" id="mapPh">
           <b>Belum ada peta</b>
@@ -950,7 +960,7 @@ body.gaming{overflow:hidden}
       <div><button id="gbSelect" aria-label="Select: label"></button><span>SELECT</span></div>
       <div><button id="gbStart" aria-label="Start: keluar"></button><span>START</span></div>
     </div>
-    <div class="gbHint">A: foto tempat · B / START: keluar · SELECT: label</div>
+    <div class="gbHint">A: sapa teman / foto tempat · B / START: keluar · SELECT: label</div>
   </div>
 </div>
 
@@ -2496,22 +2506,90 @@ const SPR={
   r:['..rrrr..','..rrrrrr','..ssss..','..sssk..','..bbbb..','..bbsb..','..dddd..','..k..k..']
 };
 const SPR_COL={r:'#d23b2b',s:'#f2c69b',k:'#1a1a1a',b:'#2b2b2b',d:'#3b5fa0'};
-function drawSprite(c,X,Y,dir,step){
+function drawSprite(c,X,Y,dir,step,cols=SPR_COL){
   const rows=SPR[dir==='l'?'r':dir]||SPR.d, flip=dir==='l';
   c.fillStyle='rgba(0,0,0,.3)'; c.fillRect(X+1,Y+7,6,1);
   rows.forEach((row,j)=>{
     let r=row; if(j===7&&step) r=dir==='d'||dir==='u'?'.k....k.':'.k...k..';
-    for(let i=0;i<8;i++){ const ch=r[i]; if(ch==='.') continue; c.fillStyle=SPR_COL[ch]; c.fillRect(X+(flip?7-i:i),Y+j-1,1,1); }
+    for(let i=0;i<8;i++){ const ch=r[i]; if(ch==='.') continue; c.fillStyle=cols[ch]; c.fillRect(X+(flip?7-i:i),Y+j-1,1,1); }
   });
 }
 const WALK={on:false,x:0,y:0,from:null,t0:0,moving:false,dir:'d',hold:null,lm:null,typer:null};
 function startWalk(){
   const W=world(NOS.map); const wc=$('#walkCv'); wc.width=GW*TW; wc.height=W.gh*TW; Object.assign(WALK,{on:true,x:W.spawn[0],y:W.spawn[1],moving:false,dir:'u',hold:null,lm:null});
   NOS.pinMode=false; NOS.preset=null; showDialog(null);
-  renderNostalgia(); enterGameScreen();
+  renderNostalgia(); enterGameScreen(); mpSend(true);
   requestAnimationFrame(walkLoop);
 }
-function stopWalk(){ WALK.on=false; WALK.hold=null; showDialog(null); leaveGameScreen(); renderNostalgia(); }
+function stopWalk(){ WALK.on=false; WALK.hold=null; showDialog(null); leaveGameScreen(); renderNostalgia(); mpSend(true); mpTags(); }
+
+/* ---- Jalan bareng: see each other walking, live (Supabase Realtime presence + broadcast, nothing saved) ---- */
+const MP={ch:null,others:{},me:null,lastTrack:0,emotes:{},nextEmote:0};
+function spriteCols(name){ let sh='#2b2b2b'; try{ sh=avOf(name).shirt||sh; }catch(e){} const cap=(typeof HELM!=='undefined'&&HELM[name]&&HELM[name][1])||'#d23b2b'; return Object.assign({},SPR_COL,{r:cap,b:sh}); }
+function mpState(){ return WALK.on?{name:MP.me,map:NOS.map,x:WALK.x,y:WALK.y,dir:WALK.dir,walking:true}:{name:MP.me,walking:false}; }
+function mpJoin(){
+  if(MP.ch||!CLOUD||!ME||!ME.name) return;
+  MP.me=ME.name;
+  MP.ch=sb.channel('jalan-bareng',{config:{presence:{key:ME.name},broadcast:{self:false}}});
+  MP.ch.on('broadcast',{event:'pos'},({payload})=>mpPos(payload))
+    .on('broadcast',{event:'emote'},({payload})=>mpEmote(payload))
+    .on('presence',{event:'sync'},mpSync)
+    .subscribe(st=>{ if(st==='SUBSCRIBED') MP.ch.track(mpState()).catch(()=>{}); });
+}
+function mpSend(force){
+  if(!MP.ch) return; const st=mpState();
+  try{ MP.ch.send({type:'broadcast',event:'pos',payload:st}); }catch(e){}
+  if(force||Date.now()-MP.lastTrack>2000){ MP.lastTrack=Date.now(); MP.ch.track(st).catch(()=>{}); }
+}
+function mpSync(){
+  const st=MP.ch.presenceState(), seen=new Set();
+  Object.values(st).forEach(arr=>{ const p=arr[arr.length-1]; if(!p||p.name===MP.me) return; seen.add(p.name);
+    if(!p.walking) delete MP.others[p.name];
+    else if(!MP.others[p.name]) MP.others[p.name]=Object.assign({},p,{from:[p.x,p.y],t0:0,moving:false}); });
+  Object.keys(MP.others).forEach(n=>{ if(!seen.has(n)) delete MP.others[n]; });
+  mpNote();
+}
+function mpPos(p){
+  if(!p||p.name===MP.me) return;
+  if(!p.walking){ delete MP.others[p.name]; mpNote(); return; }
+  const o=MP.others[p.name], wasNew=!o;
+  if(!o||o.map!==p.map||Math.abs(o.x-p.x)+Math.abs(o.y-p.y)>1) MP.others[p.name]=Object.assign({},p,{from:[p.x,p.y],t0:0,moving:false});
+  else { o.from=[o.x,o.y]; Object.assign(o,p); o.t0=performance.now(); o.moving=true; }
+  if(wasNew) mpNote();
+}
+function mpEmote(p){ if(!p||!p.name) return; MP.emotes[p.name]={e:p.e,until:Date.now()+2600}; if(p.name!==MP.me&&WALK.on&&MP.others[p.name]&&MP.others[p.name].map===NOS.map) blip(); }
+function blip(){ try{ const ctx=ac(), t=ctx.currentTime, o=ctx.createOscillator(), g=ctx.createGain(); o.type='square'; o.frequency.setValueAtTime(880,t); o.frequency.setValueAtTime(1320,t+.07); g.gain.setValueAtTime(.08,t); g.gain.exponentialRampToValueAtTime(.0001,t+.18); o.connect(g).connect(MASTER); o.start(t); o.stop(t+.2); }catch(e){} }
+function mpNear(){ return Object.values(MP.others).find(o=>o.map===NOS.map&&Math.max(Math.abs(o.x-WALK.x),Math.abs(o.y-WALK.y))<=2); }
+function mpWave(){
+  if(Date.now()<MP.nextEmote) return; MP.nextEmote=Date.now()+700;
+  const e=MP.lastE==='👋'?'🤘':'👋'; MP.lastE=e;
+  const p={name:MP.me,e}; mpEmote(p); blip(); if(MP.ch) try{ MP.ch.send({type:'broadcast',event:'emote',payload:p}); }catch(_){}
+}
+// name tags and emote bubbles as HTML over the map, so they stay sharp at any zoom
+function mpTags(fxy){
+  const box=$('#mpTags'); if(!box) return;
+  if(!WALK.on){ box.innerHTML=''; return; }
+  const W=world(NOS.map), now=Date.now(), want={};
+  Object.values(MP.others).forEach(o=>{ if(o.map===NOS.map) want[o.name]=[o.fx??o.x,o.fy??o.y]; });
+  if(fxy&&MP.me) want[MP.me]=fxy;
+  [...box.children].forEach(el=>{ if(!want[el.dataset.n]) el.remove(); });
+  Object.entries(want).forEach(([n,[x,y]])=>{
+    let el=box.querySelector(`[data-n="${CSS.escape(n)}"]`);
+    if(!el){ el=document.createElement('div'); el.className='mpTag'+(n===MP.me?' me':''); el.dataset.n=n; el.innerHTML=`<i></i><b>${esc(n)}</b>`; box.appendChild(el); }
+    el.style.left=((x+.5)/GW*100)+'%'; el.style.top=(y/W.gh*100)+'%';
+    const em=MP.emotes[n]; el.querySelector('i').textContent=em&&em.until>now?em.e:'';
+    el.querySelector('b').hidden=n===MP.me;
+  });
+}
+function mpNote(){
+  const el=$('#walkers'); if(!el) return;
+  const ws=Object.values(MP.others);
+  if(!ws.length){ el.hidden=true; return; }
+  el.hidden=false;
+  el.innerHTML=ws.map(o=>`👀 <b>${esc(o.name)}</b> lagi jalan-jalan di ${esc((MAPDEF[o.map]||{}).short||o.map)}`).join('<br>')
+    +(WALK.on?'':` <button class="small" id="walkJoin">Susul</button>`);
+}
+document.addEventListener('click',e=>{ if(e.target.id!=='walkJoin') return; const o=Object.values(MP.others)[0]; if(!o) return; if(o.map!==NOS.map){ NOS.map=o.map; } ac(); startWalk(); });
 // full screen: the map moves into the handheld's screen, zoomed in, and the camera follows you
 const GBS={home:null,dlgHome:null};
 function enterGameScreen(){
@@ -2533,8 +2611,8 @@ function leaveGameScreen(){
 function sizeGameMap(){
   const view=$('#gbView'), box=$('#mapBox'); if(!view||!WALK.on) return;
   const vw=view.clientWidth, vh=view.clientHeight, W=world(NOS.map);
-  // about 15 tiles across, but never so zoomed that less than ~13 rows fit
-  const tile=Math.max(vw/15, Math.min(vw/13, vh/13));
+  // about 20 tiles across (smaller pixels, more of the map), but at least ~17 rows tall
+  const tile=Math.max(vw/20, Math.min(vw/17, vh/17));
   box.style.width=Math.round(tile*GW)+'px';
   GBS.vw=vw; GBS.vh=vh; GBS.tile=box.offsetWidth/GW; GBS.bh=GBS.tile*W.gh;
 }
@@ -2552,7 +2630,7 @@ function tryMove(dir){
   const W=world(NOS.map), d={u:[0,-1],d:[0,1],l:[-1,0],r:[1,0]}[dir]; WALK.dir=dir;
   const nx=WALK.x+d[0], ny=WALK.y+d[1];
   if(nx<0||ny<0||nx>=GW||ny>=W.gh||W.solid[ny][nx]) return;
-  WALK.from=[WALK.x,WALK.y]; WALK.x=nx; WALK.y=ny; WALK.moving=true; WALK.t0=performance.now();
+  WALK.from=[WALK.x,WALK.y]; WALK.x=nx; WALK.y=ny; WALK.moving=true; WALK.t0=performance.now(); mpSend();
 }
 function walkLoop(now){
   if(!WALK.on) return;
@@ -2564,8 +2642,15 @@ function walkLoop(now){
     if(k>=1){ WALK.moving=false; onArrive(); }
   }
   if(!WALK.moving&&WALK.hold) tryMove(WALK.hold);
-  drawSprite(c,Math.round(fx*TW),Math.round(fy*TW),WALK.dir,WALK.moving?((now/110|0)%2):0);
-  gameCamera(fx,fy);
+  Object.values(MP.others).forEach(o=>{
+    if(o.map!==NOS.map) return;
+    let ox=o.x, oy=o.y;
+    if(o.moving){ const k=Math.min(1,(now-o.t0)/140); ox=o.from[0]+(o.x-o.from[0])*k; oy=o.from[1]+(o.y-o.from[1])*k; if(k>=1) o.moving=false; }
+    o.fx=ox; o.fy=oy;
+    drawSprite(c,Math.round(ox*TW),Math.round(oy*TW),o.dir||'d',o.moving?((now/110|0)%2):0,spriteCols(o.name));
+  });
+  drawSprite(c,Math.round(fx*TW),Math.round(fy*TW),WALK.dir,WALK.moving?((now/110|0)%2):0,MP.me?spriteCols(MP.me):SPR_COL);
+  gameCamera(fx,fy); mpTags([fx,fy]);
   if(WALK.lm&&!WALK.moving){ c.fillStyle='#fff'; c.fillRect(Math.round(fx*TW)+3,Math.round(fy*TW)-8,2,4); c.fillRect(Math.round(fx*TW)+3,Math.round(fy*TW)-3,2,1); }
   requestAnimationFrame(walkLoop);
 }
@@ -2597,7 +2682,7 @@ $('#gbCross').addEventListener('pointerdown',e=>{
   b.classList.add('on'); WALK.hold=b.dataset.d; tryMove(b.dataset.d); try{ b.setPointerCapture(e.pointerId); }catch(_){}
 });
 ['pointerup','pointercancel','pointerleave'].forEach(ev=>$('#gbCross').addEventListener(ev,e=>{ WALK.hold=null; $('#gbCross').querySelectorAll('.on').forEach(b=>b.classList.remove('on')); }));
-$('#gbA').onclick=()=>{ const L=WALK.lm; if(L) openPlace(NOS.map+':'+L.name,L.name,L.text); };
+$('#gbA').onclick=()=>{ if(mpNear()) return mpWave(); const L=WALK.lm; if(L) openPlace(NOS.map+':'+L.name,L.name,L.text); };
 $('#gbB').onclick=stopWalk; $('#gbStart').onclick=stopWalk;
 $('#gbSelect').onclick=()=>{ NOS.walkLabels=!NOS.walkLabels; renderNostalgia(); };
 const KEYDIR={ArrowUp:'u',ArrowDown:'d',ArrowLeft:'l',ArrowRight:'r',w:'u',s:'d',a:'l',d:'r'};
@@ -3076,6 +3161,7 @@ async function enterApp(){
   CLOUD=true; schedulePush();
   if(!entered){ entered=true;
     sb.channel('items').on('postgres_changes',{event:'*',schema:'public',table:'items'},onRemote).subscribe();
+    setTimeout(mpJoin,500);
   }
   const i=BAND.indexOf(ME.name); if(i>=0){ JB.from=String(i); MOM.who=new Set([i]); }
   $('#acctBtn').hidden=false; $('#acctBtn').textContent=ME.name||'Akun';
