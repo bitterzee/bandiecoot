@@ -1150,7 +1150,7 @@ function randomGrid(role){
 /* =================== STATE =================== */
 const ROLE_NAME={'Drum':'Aldo','Bass':'Ari','Gitar 1':'Aries','Gitar 2':'Ferry','DJ':'Fanny','Rap':'Herru','Vokal':'Aad'};
 const DEFAULT_MEMBERS=['Drum','Bass','Gitar 1','Gitar 2','DJ','Rap','Vokal'].map(r=>({role:r,name:ROLE_NAME[r]}));
-function newRelay(bpm){ return {bpm:bpm||100,order:[0,1,2,3,4,5,6],turn:0,layers:{},blind:false,mutes:{}}; }
+function newRelay(bpm){ return {bpm:bpm||100,order:[0,1,2,3,5,6,4],turn:0,layers:{},blind:false,mutes:{}}; }
 function fresh(){ return {members:DEFAULT_MEMBERS.map(m=>({...m})),relay:newRelay(),archive:[],best:{}}; }
 function load(){ try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s&&s.members&&s.relay&&s.archive) { s.best=s.best||{}; return s; } }catch(e){} return null; }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} try{ schedulePush(); }catch(e){} }
