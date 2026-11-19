@@ -451,10 +451,10 @@ body.tekaked .wrap,body.tekaked>*:not(.overlay){animation:shake .45s ease-in-out
     <div class="panel" id="relayPanel">
       <span class="tape corner">2 bar · loop</span>
       <div class="seg" id="modeSeg" style="margin-bottom:14px">
-        <button data-m="relay" class="sel">Estafet</button>
+        <button data-m="relay" class="sel">Jam Session</button>
         <button data-m="jam">Jam Bebas</button>
       </div>
-      <h2 id="studioTitle">Estafet Riff</h2>
+      <h2 id="studioTitle">Jam Session</h2>
       <p class="sub" id="studioSub">7 orang, 7 layer, 1 lagu. Isi bagianmu, kunci, oper ke yang berikutnya. Nggak ada yang tahu lagunya bakal jadi apa.</p>
       <div class="turnbar relayOnly" id="turnBar"></div>
       <div class="instChips jamOnly" id="instChips"></div>
@@ -504,26 +504,26 @@ body.tekaked .wrap,body.tekaked>*:not(.overlay){animation:shake .45s ease-in-out
       <div class="credits" id="revealCredits"></div>
       <div class="row">
         <button class="small" id="revealPlay" data-play="">▶ Putar</button>
-        <button class="small dark" id="revealClose">Estafet baru</button>
+        <button class="small dark" id="revealClose">Jam session baru</button>
       </div>
     </div>
 
     <details class="panel" id="lineupPanel">
       <summary style="cursor:pointer"><h2 style="display:inline">Lineup</h2> <span class="hint">nama, posisi, urutan</span></summary>
-      <p class="sub" style="margin-top:10px">Urutan estafet ikut daftar ini. Posisi nentuin alat yang dipegang.</p>
+      <p class="sub" style="margin-top:10px">Urutan jam session ikut daftar ini. Posisi nentuin alat yang dipegang.</p>
       <div class="members" id="members"></div>
       <div class="row">
         <button class="small" id="shuffleOrder">Acak urutan</button>
         <button class="small" id="autoFill">Isi sisa otomatis (demo)</button>
         <span class="spacer"></span>
-        <button class="small dark" id="resetRelay">Reset estafet</button>
+        <button class="small dark" id="resetRelay">Reset jam session</button>
       </div>
       <div class="msg" id="lineupMsg"></div>
     </details>
 
     <div class="panel">
       <h2>Arsip Kaset</h2>
-      <p class="sub">Semua lagu hasil estafet.</p>
+      <p class="sub">Semua lagu hasil jam session.</p>
       <div id="archive"></div>
     </div>
   </section>
@@ -659,7 +659,7 @@ body.tekaked .wrap,body.tekaked>*:not(.overlay){animation:shake .45s ease-in-out
         <input type="file" id="fileIn" accept="audio/*,.mp3,.wav,.m4a,.ogg,.aac">
       </label>
       <div class="srcbox" id="srcSongBox">
-        <div class="h">Atau lagu dari Estafet Riff</div>
+        <div class="h">Atau lagu dari Jam Session</div>
         <div class="hint">Not-nya diambil langsung dari bagian masing-masing personel.</div>
         <select id="songSel" style="width:100%;margin-top:8px"></select>
       </div>
@@ -1397,7 +1397,7 @@ $('#revealClose').onclick=()=>{ stopSeq(); $('#revealPanel').hidden=true; render
 
 function renderArchive(){
   const box=$('#archive');
-  if(!S.archive.length){ box.innerHTML='<p class="sub" style="margin:0">Masih kosong. Selesaikan satu estafet dulu.</p>'; return; }
+  if(!S.archive.length){ box.innerHTML='<p class="sub" style="margin:0">Masih kosong. Selesaikan satu jam session dulu.</p>'; return; }
   box.innerHTML=S.archive.map(s=>{
     const d=new Date(s.created);
     return `<div class="song">
@@ -1429,9 +1429,9 @@ function applyMode(){
   document.querySelectorAll('.jamOnly').forEach(e=>e.hidden=MODE!=='jam');
   document.querySelectorAll('#modeSeg button').forEach(b=>b.classList.toggle('sel',b.dataset.m===MODE));
   $('#playRelay').dataset.play=MODE;
-  $('#studioTitle').textContent=MODE==='jam'?'Jam Bebas':'Estafet Riff';
+  $('#studioTitle').textContent=MODE==='jam'?'Jam Bebas':'Jam Session';
   $('#studioSub').textContent=MODE==='jam'
-    ?'Pegang semua alat sendiri. Pilih alat, isi kotaknya, semua bunyi bareng. Cocok buat coba-coba sebelum estafet.'
+    ?'Pegang semua alat sendiri. Pilih alat, isi kotaknya, semua bunyi bareng. Cocok buat coba-coba sebelum jam session.'
     :'7 orang, 7 layer, 1 lagu. Isi bagianmu, kunci, oper ke yang berikutnya. Nggak ada yang tahu lagunya bakal jadi apa.';
   updatePlayBtns();
 }
@@ -1476,7 +1476,7 @@ $('#members').addEventListener('input',e=>{
 });
 $('#shuffleOrder').onclick=()=>{
   const msg=$('#lineupMsg');
-  if(S.relay.turn>0){ msg.textContent='Urutan cuma bisa diacak sebelum estafet mulai.'; return; }
+  if(S.relay.turn>0){ msg.textContent='Urutan cuma bisa diacak sebelum jam session mulai.'; return; }
   const o=S.relay.order; for(let i=o.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [o[i],o[j]]=[o[j],o[i]]; }
   msg.textContent=''; save(); renderRelay();
 };
@@ -1487,8 +1487,8 @@ $('#autoFill').onclick=()=>{
 };
 $('#resetRelay').onclick=e=>{
   const b=e.target;
-  if(!b.dataset.confirm){ b.dataset.confirm='1'; b.textContent='Yakin reset?'; setTimeout(()=>{ delete b.dataset.confirm; b.textContent='Reset estafet'; },2500); return; }
-  delete b.dataset.confirm; b.textContent='Reset estafet';
+  if(!b.dataset.confirm){ b.dataset.confirm='1'; b.textContent='Yakin reset?'; setTimeout(()=>{ delete b.dataset.confirm; b.textContent='Reset jam session'; },2500); return; }
+  delete b.dataset.confirm; b.textContent='Reset jam session';
   stopSeq(); S.relay=newRelay(S.relay.bpm); BAR=0; save(); renderRelay();
 };
 
@@ -3375,7 +3375,7 @@ function chatIncoming(m){
 }
 
 /* =================== TABS =================== */
-const TABS={cito:['#tabCito','#tabCitoBtn','cito'],kuis:['#tabKuis','#tabKuisBtn','kuis'],kereta:['#tabKereta','#tabKeretaBtn','kereta'],james:['#tabJames','#tabJamesBtn','jamesbon'],relay:['#tabRelay','#tabRelayBtn','estafet'],moments:['#tabMoments','#tabMomBtn','momen'],nostalgia:['#tabNostalgia','#tabNosBtn','nostalgia']};
+const TABS={cito:['#tabCito','#tabCitoBtn','cito'],kuis:['#tabKuis','#tabKuisBtn','kuis'],kereta:['#tabKereta','#tabKeretaBtn','kereta'],james:['#tabJames','#tabJamesBtn','jamesbon'],relay:['#tabRelay','#tabRelayBtn','jam'],moments:['#tabMoments','#tabMomBtn','momen'],nostalgia:['#tabNostalgia','#tabNosBtn','nostalgia']};
 const TAB_GROUP={nostalgia:'kenangan',moments:'kenangan',kereta:'seru',relay:'seru',kuis:'seru',cito:'ngobrol',james:'ngobrol'};
 const LAST_IN_GROUP={kenangan:'nostalgia',seru:'relay',ngobrol:'cito'};
 function switchTab(t){
@@ -3399,7 +3399,7 @@ function switchTab(t){
   try{ history.replaceState(null,'','#'+TABS[t][2]); }catch(e){}
   window.scrollTo({top:0});
 }
-const tabFromHash=()=>({'#cito':'cito','#kuis':'kuis','#kereta':'kereta','#jamesbon':'james','#estafet':'relay','#momen':'moments'})[location.hash]||'nostalgia';
+const tabFromHash=()=>({'#cito':'cito','#kuis':'kuis','#kereta':'kereta','#jamesbon':'james','#estafet':'relay','#jam':'relay','#momen':'moments'})[location.hash]||'nostalgia';
 $('#tabRelayBtn').onclick=()=>switchTab('relay');
 $('#tabMomBtn').onclick=()=>switchTab('moments');
 $('#tabNosBtn').onclick=()=>switchTab('nostalgia');
