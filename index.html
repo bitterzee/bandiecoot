@@ -175,6 +175,8 @@ textarea{font-family:'Special Elite',monospace;font-size:15px;width:100%;min-hei
 .plGrid img{width:100%;height:100%;object-fit:cover;display:block}
 .plGrid .empty{grid-column:1/-1;font-size:13px;color:var(--mut);padding:14px;border:2px dashed #b9b09a;text-align:center}
 .plViewBox{max-width:520px;width:100%;text-align:center}
+.plViewBox video{max-width:100%;max-height:70vh;border:3px solid var(--paper);display:block;margin:0 auto 10px;background:#000}
+.plGrid .play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;text-shadow:0 1px 4px #000;pointer-events:none}
 .plViewBox img{max-width:100%;max-height:70vh;border:3px solid var(--paper);display:block;margin:0 auto 10px}
 .plViewCap{color:var(--paper);font-size:13px;margin:0 0 12px;line-height:1.5}
 .dlg em{display:block;font-style:normal;color:#2e3274;margin-top:6px;font-size:8px}
@@ -892,7 +894,7 @@ body.tekaked .wrap,body.tekaked>*:not(.overlay){animation:shake .45s ease-in-out
     <div class="plGrid" id="plGrid"></div>
     <input type="text" id="plCap" maxlength="80" placeholder="Keterangan (opsional), mis. 2003 abis latihan" style="width:100%;margin:10px 0 8px">
     <div class="row">
-      <label class="btnlike">+ Tambah foto<input type="file" id="plFile" accept="image/*" multiple hidden></label>
+      <label class="btnlike">+ Foto / video<input type="file" id="plFile" accept="image/*,video/*" multiple hidden></label>
       <span class="spacer"></span>
       <button class="small" id="plClose">Tutup</button>
     </div>
@@ -902,6 +904,7 @@ body.tekaked .wrap,body.tekaked>*:not(.overlay){animation:shake .45s ease-in-out
 <div class="overlay" id="plView" hidden>
   <div class="plViewBox">
     <img id="plImg" alt="">
+    <video id="plVid" controls playsinline preload="metadata" hidden></video>
     <div class="plViewCap" id="plViewCap"></div>
     <div class="row" style="justify-content:center">
       <button class="small dark" id="plDel">Hapus foto</button>
@@ -1992,7 +1995,7 @@ function openPin(id,isNew){
   const ms=S.moments.filter(m=>m.place===NOS.map+':'+p.id);
   const np=placePics(NOS.map+':pin-'+p.id).length;
   $('#pinMoments').innerHTML=(ms.length?`<button class="small" id="pinSeeMoments">Lihat ${ms.length} momen di sini</button>`:(isNew?'':'<span class="hint">Belum ada momen di sini. Tambah dari halaman Momen.</span>'))
-    +(isNew?'':` <button class="small" id="pinPhotos">📷 Foto asli${np?` (${np})`:''}</button>`);
+    +(isNew?'':` <button class="small" id="pinPhotos">📷 Foto / video${np?` (${np})`:''}</button>`);
   const del=$('#pinDel'); del.textContent='Hapus'; delete del.dataset.confirm; del.hidden=isNew;
   $('#pinOverlay').hidden=false;
   if(isNew) setTimeout(()=>{ try{ $('#pinTitle').focus(); }catch(_){} },60);
@@ -2028,8 +2031,8 @@ function openPlace(id,name,text){ PL.id=id; PL.name=name; PL.text=text||''; $('#
 function renderPlace(){
   $('#plName').textContent=PL.name; $('#plText').textContent=PL.text;
   const ps=placePics(PL.id);
-  $('#plGrid').innerHTML=ps.length?ps.map(p=>`<button data-pp="${p.id}"><img data-img="${esc(p.k)}" alt=""></button>`).join('')
-    :`<div class="empty">Belum ada foto asli tempat ini.<br>Ada foto lama, atau mampir pas pulang kampung? Upload di sini.</div>`;
+  $('#plGrid').innerHTML=ps.length?ps.map(p=>`<button data-pp="${p.id}"><img data-img="${esc(p.k)}" alt="">${p.kind==='video'?'<span class="play">▶</span>':''}</button>`).join('')
+    :`<div class="empty">Belum ada foto atau video tempat ini.<br>Ada foto lama, atau mampir pas pulang kampung? Upload di sini (video maks 10 MB).</div>`;
   loadImgs($('#plGrid'));
 }
 $('#plFile').onchange=async e=>{
@@ -2038,15 +2041,32 @@ $('#plFile').onchange=async e=>{
   try{
     for(let i=0;i<fs.length;i++){
       msg.textContent=`Upload ${i+1}/${fs.length}…`;
-      const d=await compress(fs[i],1400,.82), id='pp'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), k='place:'+id;
-      await imgSet(k,d); S.ppics[id]={place:PL.id,k,cap,by:ME&&ME.name||'',at:new Date().toISOString()}; save();
+      const f=fs[i], id='pp'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), k='place:'+id, base={place:PL.id,cap,by:ME&&ME.name||'',at:new Date().toISOString()};
+      if(/^video\//.test(f.type)||/\.(mov|mp4|m4v|webm)$/i.test(f.name)){
+        if(f.size>10*1024*1024) throw new Error(`Video "${f.name}" ${(f.size/1048576).toFixed(1)} MB. Maksimal 10 MB: potong dulu atau kirim versi lebih kecil.`);
+        if(!CLOUD) throw new Error('Upload video butuh online (masuk dulu).');
+        const mime=f.type||(/\.mov$/i.test(f.name)?'video/quicktime':/\.webm$/i.test(f.name)?'video/webm':'video/mp4');
+        const ext=mime==='video/quicktime'?'mov':mime==='video/webm'?'webm':'mp4', vpath=`place/${id}.${ext}`;
+        msg.textContent=`Upload video ${i+1}/${fs.length} (${(f.size/1048576).toFixed(1)} MB)…`;
+        const {error}=await sb.storage.from('media').upload(vpath,f,{contentType:mime,upsert:true}); if(error) throw error;
+        await imgSet(k,await videoThumb(f));
+        S.ppics[id]=Object.assign(base,{k,kind:'video',vpath,mime});
+      } else {
+        await imgSet(k,await compress(f,1400,.82)); S.ppics[id]=Object.assign(base,{k});
+      }
+      save();
     }
     msg.textContent=''; $('#plCap').value=''; renderPlace(); renderNostalgia();
   }catch(err){ msg.textContent=err.message||'Upload gagal.'; }
 };
 $('#plGrid').addEventListener('click',async e=>{
   const b=e.target.closest('[data-pp]'); if(!b) return; const p=S.ppics[b.dataset.pp]; if(!p) return;
-  PL.view=b.dataset.pp; $('#plImg').src=(await imgGet(p.k))||'';
+  PL.view=b.dataset.pp; const vid=$('#plVid'), img=$('#plImg');
+  if(p.kind==='video'){
+    img.hidden=true; vid.hidden=false; vid.poster=(await imgGet(p.k))||'';
+    const {data}=await sb.storage.from('media').createSignedUrl(p.vpath,3600).catch(()=>({data:null}));
+    vid.src=data&&data.signedUrl||''; if(!vid.src) $('#plViewCap').textContent='Video nggak bisa dibuka (perlu online).';
+  } else { vid.hidden=true; vid.removeAttribute('src'); img.hidden=false; img.src=(await imgGet(p.k))||''; }
   const d=new Date(p.at);
   $('#plViewCap').innerHTML=`${p.cap?`<b>${esc(p.cap)}</b><br>`:''}${esc(p.by||'?')} · ${d.getDate()} ${BULAN[d.getMonth()]} ${d.getFullYear()}`;
   const del=$('#plDel'); del.textContent='Hapus foto'; delete del.dataset.confirm;
@@ -2054,10 +2074,22 @@ $('#plGrid').addEventListener('click',async e=>{
 });
 $('#plDel').onclick=e=>{
   const b=e.target; if(!b.dataset.confirm){ b.dataset.confirm='1'; b.textContent='Yakin hapus?'; return; }
-  const p=S.ppics[PL.view]; if(p){ imgDel(p.k); delete S.ppics[PL.view]; save(); }
+  const p=S.ppics[PL.view]; if(p){ imgDel(p.k); if(p.vpath&&CLOUD) sb.storage.from('media').remove([p.vpath]).catch(()=>{}); delete S.ppics[PL.view]; save(); }
+  const v=$('#plVid'); v.pause(); v.removeAttribute('src');
   $('#plView').hidden=true; PL.view=null; renderPlace(); renderNostalgia();
 };
-$('#plViewClose').onclick=()=>{ $('#plView').hidden=true; PL.view=null; };
+$('#plViewClose').onclick=()=>{ const v=$('#plVid'); v.pause(); v.removeAttribute('src'); v.load(); $('#plView').hidden=true; PL.view=null; };
+// first frame of a video as a jpeg thumbnail; plain dark tile if the phone can't decode it
+function videoThumb(f){
+  return new Promise(res=>{
+    const v=document.createElement('video'), url=URL.createObjectURL(f); let done=false;
+    const fallback=()=>{ if(done) return; done=true; URL.revokeObjectURL(url); const c=document.createElement('canvas'); c.width=320; c.height=320; const x=c.getContext('2d'); x.fillStyle='#2e3274'; x.fillRect(0,0,320,320); x.fillStyle='#e2c44c'; x.font='bold 40px sans-serif'; x.textAlign='center'; x.fillText('VIDEO',160,175); res(c.toDataURL('image/jpeg',.8)); };
+    v.muted=true; v.playsInline=true; v.preload='auto'; v.src=url;
+    v.onloadeddata=()=>{ try{ v.currentTime=Math.min(1,(v.duration||2)/3); }catch(e){ fallback(); } };
+    v.onseeked=()=>{ if(done) return; try{ const sc=Math.min(1,480/Math.max(v.videoWidth,v.videoHeight)), c=document.createElement('canvas'); c.width=Math.round(v.videoWidth*sc)||320; c.height=Math.round(v.videoHeight*sc)||320; c.getContext('2d').drawImage(v,0,0,c.width,c.height); done=true; URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg',.8)); }catch(e){ fallback(); } };
+    v.onerror=fallback; setTimeout(fallback,6000);
+  });
+}
 $('#plClose').onclick=()=>{ $('#placeOverlay').hidden=true; PL.id=null; if(NOS.edit) openPin(NOS.edit.id,false); };
 
 /* =================== PIXEL WORLDS (retro RPG-style maps, illustrative) =================== */
@@ -2433,7 +2465,7 @@ function showDialog(L){
   const d=$('#dlg'); clearInterval(WALK.typer);
   if(!L){ d.hidden=true; return; }
   const np=placePics(NOS.map+':'+L.name).length;
-  d.hidden=false; d.innerHTML=`<b>${esc(L.name)}</b><span></span><em>${np?`📷 ${np} foto asli · ketuk buat lihat`:'📷 Ketuk buat tambah foto asli'}</em><i>▼</i>`;
+  d.hidden=false; d.innerHTML=`<b>${esc(L.name)}</b><span></span><em>${np?`📷 ${np} foto/video · ketuk buat lihat`:'📷 Ketuk buat tambah foto/video'}</em><i>▼</i>`;
   const sp=d.querySelector('span'); let n=0;
   WALK.typer=setInterval(()=>{ n+=2; sp.textContent=L.text.slice(0,n); if(n>=L.text.length) clearInterval(WALK.typer); },30);
 }
