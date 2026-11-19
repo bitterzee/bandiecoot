@@ -1927,7 +1927,7 @@ async function renderNostalgia(){
   }
   const W=world(NOS.map);
   $('#mapLabels').innerHTML=(view==='game'&&NOS.labels&&!WALK.on)?
-    W.lms.filter(l=>l.lx!=null).map(l=>{ const n=placePics(NOS.map+':'+l.name).length; return `<span class="mlabel ${l.kind||''}" data-lm="${esc(l.name)}" style="left:${l.lx/GW*100}%;top:${l.ly/W.gh*100}%">${esc(l.kind==='home'?l.name.replace('Rumah ',''):l.name)}${n?`<span class="cam">📷${n}</span>`:''}</span>`; }).join('')+
+    W.lms.filter(l=>l.lx!=null).map(l=>{ const n=placePics(NOS.map+':'+l.name).length; return `<span class="mlabel ${l.kind||''}" data-lm="${esc(l.name)}" style="left:${l.lx/GW*100}%;top:${l.ly/W.gh*100}%">${esc(l.short||(l.kind==='home'?l.name.replace('Rumah ',''):l.name))}${n?`<span class="cam">📷${n}</span>`:''}</span>`; }).join('')+
     W.areas.map(a=>`<span class="mlabel area" style="left:${a.lx/GW*100}%;top:${a.ly/W.gh*100}%">${esc(a.name)}</span>`).join(''):'';
   $('#labelBtn').hidden=view!=='game'||WALK.on; $('#labelBtn').textContent=NOS.labels?'Label: on':'Label: off';
   $('#walkBtn').hidden=view!=='game'||WALK.on;
@@ -2153,7 +2153,7 @@ function campWorld(){
   lm(W,'Mie Pangsit Pakde',7,19,'Mie Pangsit Pakde. Gerobak dekat rumah Aad. Pangsit goreng tambah, kuah dipisah, ngutang dulu.',12.2,19.45);
   lm(W,'Gelora',17,23,'Studio Gelora · Rumbai. Nama paling pas buat lagu-lagu Rage.',17.5,21.1,'studio');
   lm(W,'Publica',33,34,'Studio Publica. Ada cerita apa di sini? Tulis di pin.',33.5,32.1,'studio');
-  lm(W,'Lapangan Voli',36,4,'Lapangan voli. Sore-sore main voli, yang kalah traktir es.',36.5,0.6);
+  lm(W,'Lapangan Voli',36,4,'Lapangan voli. Sore-sore main voli, yang kalah traktir es.',36.5,2.2); W.lms[W.lms.length-1].short='Lap. Voli';
   lm(W,'Lapangan Golf',35,11,'Lapangan golf camp, di atas country club. Bola nyasar = rezeki anak-anak.',35.6,10.4);
   lm(W,'DPR',17,18,'DPR: Di bawah Pohon Rindang. Markas abis pulang sekolah: duduk, ngerumpi, nunggu jemputan.',17.5,14.65);
   lm(W,'Gereja',15,10,'Gereja di simpang T, sebelah sekolah.',15.5,8.1);
