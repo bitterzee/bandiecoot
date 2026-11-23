@@ -459,7 +459,7 @@ body.gaming{overflow:hidden}
 .gbHint{text-align:center;font-size:10px;color:#6b6860;margin-top:6px}
 @media (max-height:700px){.gbCross{transform:scale(.85);margin:-10px}.gbBtn button{width:50px;height:50px}.gbBrand{margin-bottom:4px}.gbHint{display:none}}
 .tmTop{display:flex;gap:14px;align-items:center;margin:6px 0 12px}
-.tmCarSvg{width:130px;height:134px;flex:none;background:#3a6b3a;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--navy)}
+.tmCarSvg{width:120px;height:186px;flex:none;background:#3a6b3a;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--navy)}
 .tmStats{flex:1;min-width:0}
 .tmStat{display:flex;align-items:center;gap:8px;font-size:11px;margin:0 0 7px}
 .tmStat span{width:74px;flex:none}.tmStat i{flex:1;height:10px;background:#d9d1bd;border:2px solid var(--ink)}.tmStat b{display:block;height:100%}
@@ -3685,7 +3685,7 @@ const TM={
 };
 const tmMe=()=>ME&&ME.name||'Aku';
 function tmDefault(n){ let c='#d23b2b'; try{ c=avOf(n).shirt||c; }catch(e){} return {body:'shadow',color:c,motor:'std',bat:'alk',tire:'keras',roll:4,w:0,nick:(n||'').toUpperCase()}; }
-function tmCar(n){ return Object.assign(tmDefault(n),S.tamiya[n]||{}); }
+function tmCar(n){ return Object.assign(tmDefault(n),S.tamiya[n]||{},{owner:n}); }
 function tmStats(c){
   const b=TM.body[c.body]||TM.body.shadow, m=TM.motor[c.motor]||TM.motor.std, t=TM.tire[c.tire]||TM.tire.keras, r=TM.roll[c.roll]||TM.roll[4], w=TM.w[c.w]||TM.w[0], bt=TM.bat[c.bat]||TM.bat.alk;
   const vmax=m.v*b.spd*t.spd*r.spd*w.spd*bt.k;
@@ -3693,7 +3693,17 @@ function tmStats(c){
 }
 // track: a stadium loop, 3 lanes, a jump on the right straight
 const TK={S:260,R:100,lx:80,rx:280,ty:160,by:420,lanes:[-48,-32,-16,0,16,32,48]};
-TK.L=2*TK.S+2*Math.PI*TK.R; TK.jumpS=TK.S+Math.PI*TK.R+TK.S/2;
+TK.L=2*TK.S+2*Math.PI*TK.R; TK.jumpS=TK.S+Math.PI*TK.R+TK.S/2; TK.b0=TK.S*.3; TK.b1=TK.S*.7;
+// lane-change bridge on the left straight: every lap each car moves one lane over (the outermost jumps to the inside),
+// like a real Mini 4WD track. Distance is measured on the centre line, so every lane is the same length.
+function tkLane(k,s){
+  const n=TK.lanes.length, lap=Math.floor(s/TK.L), u=s-lap*TK.L, i0=(k.lane0+lap)%n, i1=(k.lane0+lap+1)%n;
+  if(u<TK.b0) return {d:TK.lanes[i0],up:0};
+  if(u>TK.b1) return {d:TK.lanes[i1],up:0};
+  const t=(u-TK.b0)/(TK.b1-TK.b0), e=t*t*(3-2*t), far=Math.abs(i1-i0)>1;
+  return {d:TK.lanes[i0]+(TK.lanes[i1]-TK.lanes[i0])*e, up:far?Math.sin(t*Math.PI):Math.sin(t*Math.PI)*.15};
+}
+function tkCarPos(k,s){ const L=tkLane(k,s), p=tkPos(s,L.d), q=tkPos(s+2,tkLane(k,s+2).d); return {x:p.x,y:p.y,a:Math.atan2(q.y-p.y,q.x-p.x),sec:p.sec,up:L.up}; }
 function tkPos(s,d){
   const {S,R,lx,rx,ty,by}=TK; s=((s%TK.L)+TK.L)%TK.L;
   if(s<S) return {x:lx-d,y:by-s,a:-Math.PI/2,sec:0};
@@ -3715,6 +3725,14 @@ function tkBackground(){
   [-56,56].forEach(d=>{ tkStadium(c,d); c.strokeStyle='#2f5fa8'; c.lineWidth=4; c.stroke(); });
   // start line
   for(let i=0;i<14;i++) for(let j=0;j<2;j++){ c.fillStyle=(i+j)%2?'#fff':'#111'; c.fillRect(TK.lx-56+i*8,TK.by-6+j*5,8,5); }
+  // lane-change bridge
+  { const y0=TK.by-TK.b1, y1=TK.by-TK.b0, x0=TK.lx-56, x1=TK.lx+56;
+    c.fillStyle='rgba(46,50,116,.28)'; c.fillRect(x0,y0,x1-x0,y1-y0);
+    c.strokeStyle='rgba(255,255,255,.55)'; c.lineWidth=1.5; c.setLineDash([5,5]);
+    for(let i=0;i<6;i++){ const d=TK.lanes[i], e=TK.lanes[i+1]; c.beginPath(); c.moveTo(TK.lx-d,y1); c.bezierCurveTo(TK.lx-d,(y0+y1)/2,TK.lx-e,(y0+y1)/2,TK.lx-e,y0); c.stroke(); }
+    c.setLineDash([]); c.strokeStyle='#e2c44c'; c.lineWidth=5; c.beginPath(); c.moveTo(TK.lx+48,y1); c.bezierCurveTo(TK.lx+48,(y0+y1)/2-10,TK.lx-48,(y0+y1)/2+10,TK.lx-48,y0); c.stroke();
+    c.strokeStyle='#1d1d1d'; c.lineWidth=1; c.stroke();
+    c.save(); c.translate(TK.lx-67,(y0+y1)/2); c.rotate(-Math.PI/2); c.font='10px Anton, Impact, sans-serif'; c.fillStyle='#e2c44c'; c.textAlign='center'; c.fillText('PINDAH JALUR',0,0); c.restore(); }
   // jump ramp
   const jy=TK.ty+TK.S/2; c.save(); c.translate(TK.rx,jy);
   for(let i=0;i<14;i++){ c.fillStyle=i%2?'#e2c44c':'#1d1d1d'; c.fillRect(-56+i*8,-14,8,28); }
@@ -3724,21 +3742,46 @@ function tkBackground(){
   c.save(); c.translate(180,150); c.fillStyle='rgba(0,0,0,.25)'; c.font='15px Anton, Impact, sans-serif'; c.fillText('BANDIECOOT',0,0); c.fillText('CUP 2004',0,18); c.restore();
   return TKBG=cv;
 }
+// Mini 4WD seen from above (nose up, 100 units long): chassis with front bumper and rear stay carrying the rollers,
+// spoked wheels outside the body, a clear canopy, a rear wing, racing stripes and a number sticker
+const TMSHAPE={
+  shadow:'M0,-47 C7,-46 12,-40 14,-30 L16,-12 C19,-10 19,-2 17,0 L17,28 C17,35 13,38 8,39 L-8,39 C-13,38 -17,35 -17,28 L-17,0 C-19,-2 -19,-10 -16,-12 L-14,-30 C-12,-40 -7,-46 0,-47 Z',
+  bulldog:'M-12,-46 L12,-46 L17,-40 L18,-14 L20,-10 L20,30 L16,38 L-16,38 L-20,30 L-20,-10 L-18,-14 L-17,-40 Z',
+  kilat:'M0,-50 L6,-40 L12,-26 L21,-14 L21,26 L17,36 L-17,36 L-21,26 L-21,-14 L-12,-26 L-6,-40 Z'
+};
+const TMRIM={keras:'#f4f0e2',lunak:'#e2c44c',besar:'#c9c9c9'};
+function tmLook(car){
+  const big=car.tire==='besar', light=car.color==='#f4f0e2'||car.color==='#e2c44c';
+  return {big, tw:big?12:9, tl:big?24:20, wx:big?29:26, stripe:light?'#2e3274':'#f4f0e2', trim:light?'#1d1d1d':'#e2c44c', num:String((BAND.indexOf(car.owner||'')+1)||7)};
+}
+function tmRollers(car){
+  const r=+car.roll||4, front=[[-25,-50],[25,-50]], rear=[[-26,47],[26,47]];
+  return {front, rear, dblRear:r>=6, dblFront:r>=8, gold:r>=8};
+}
 function tmDrawCar(c,car,x,y,a,scale,alpha){
-  c.save(); c.translate(x,y); c.rotate(a+Math.PI/2); c.scale(scale,scale); c.globalAlpha=alpha;
-  const big=car.tire==='besar';
-  c.fillStyle='rgba(0,0,0,.35)'; c.fillRect(-7,-12,16,28);
-  c.fillStyle='#111'; const tw=big?5:4, th=big?8:7; [[-9,-11],[9-tw,-11],[-9,7],[9-tw,7]].forEach(([u,v])=>c.fillRect(u,v,tw,th));
-  c.fillStyle=car.color; c.strokeStyle='#111'; c.lineWidth=1;
-  c.beginPath();
-  if(car.body==='bulldog'){ c.rect(-7,-13,14,27); }
-  else if(car.body==='kilat'){ c.moveTo(0,-15); c.lineTo(6,-6); c.lineTo(6,13); c.lineTo(-6,13); c.lineTo(-6,-6); c.closePath(); }
-  else { c.moveTo(-4,-14); c.lineTo(4,-14); c.lineTo(7,-4); c.lineTo(7,13); c.lineTo(-7,13); c.lineTo(-7,-4); c.closePath(); }
-  c.fill(); c.stroke();
-  c.fillStyle='rgba(20,30,60,.75)'; c.fillRect(-4,-5,8,6);
-  c.fillStyle=car.color==='#f4f0e2'||car.color==='#e2c44c'?'#2e3274':'#f4f0e2'; c.fillRect(-1,-13,2,25);
-  c.fillStyle='#e8e8e8'; const rl=[[-9,-15],[8,-15],[-9,14],[8,14]]; if(+car.roll>=6) rl.push([-10,-2],[9,-2]); if(+car.roll>=8) rl.push([-10,5],[9,5]);
-  rl.forEach(([u,v])=>{ c.beginPath(); c.arc(u+.5,v,1.8,0,7); c.fill(); });
+  const L=tmLook(car), R=tmRollers(car);
+  c.save(); c.translate(x,y); c.rotate(a+Math.PI/2); c.scale(.3*scale,.3*scale); c.globalAlpha=alpha; c.lineJoin='round';
+  c.fillStyle='rgba(0,0,0,.3)'; c.fillRect(-26,-44,56,98);
+  // chassis, front bumper, rear stay
+  c.fillStyle='#3a3d44'; c.fillRect(-15,-44,30,88);
+  c.fillStyle='#2a2c31'; c.beginPath(); c.moveTo(-28,-52); c.lineTo(28,-52); c.lineTo(22,-44); c.lineTo(-22,-44); c.closePath(); c.fill();
+  c.fillRect(-28,44,56,6);
+  // wheels
+  [[-1,-32],[1,-32],[-1,30],[1,30]].forEach(([sx,wy])=>{ const wx=sx<0?-L.wx:L.wx-L.tw; c.fillStyle='#141414'; c.fillRect(wx,wy-L.tl/2,L.tw,L.tl); c.fillStyle=TMRIM[car.tire]||'#f4f0e2'; c.fillRect(wx+(sx<0?L.tw-4:0),wy-L.tl/2+3,4,L.tl-6); });
+  // rollers
+  const roll=(px,py,dbl)=>{ c.fillStyle=R.gold?'#d8b24a':'#e9e9e9'; c.strokeStyle='#111'; c.lineWidth=1.5; c.beginPath(); c.arc(px,py,5,0,7); c.fill(); c.stroke(); if(dbl){ c.beginPath(); c.arc(px,py,2.2,0,7); c.stroke(); } };
+  R.front.forEach(([px,py])=>roll(px,py,R.dblFront)); R.rear.forEach(([px,py])=>roll(px,py,R.dblRear));
+  // body
+  const body=new Path2D(TMSHAPE[car.body]||TMSHAPE.shadow);
+  c.fillStyle=car.color; c.fill(body); c.strokeStyle='#111'; c.lineWidth=2.5; c.stroke(body);
+  c.fillStyle=L.stripe; c.fillRect(-6,-44,3,82); c.fillRect(3,-44,3,82);
+  c.fillStyle='rgba(18,28,52,.9)'; c.beginPath(); c.ellipse(0,-6,7.5,12,0,0,7); c.fill();
+  c.fillStyle='rgba(255,255,255,.45)'; c.beginPath(); c.ellipse(-2.5,-11,2,5,0,0,7); c.fill();
+  // rear wing with endplates
+  c.fillStyle=L.trim; c.strokeStyle='#111'; c.lineWidth=2; c.fillRect(-21,33,42,7); c.strokeRect(-21,33,42,7);
+  c.fillStyle='#111'; c.fillRect(-23,30,3,12); c.fillRect(20,30,3,12);
+  // mass dampers
+  for(let i=0;i<(+car.w||0);i++){ c.fillStyle='#9a9a9a'; c.fillRect(i?17:-23,10,6,12); c.strokeRect(i?17:-23,10,6,12); }
   c.restore();
 }
 const TAM={running:false,raf:0,cars:[],t:0,result:null,mode:null,opp:[],snd:null};
@@ -3747,11 +3790,11 @@ function tmStart(mode){
   if(TAM.running) return;
   const me=tmMe(); const who=mode==='tt'?[me]:[me,...BAND.filter(n=>n!==me)].slice(0,7);
   const rnd=tmRng(Date.now());
-  TAM.cars=who.map((n,i)=>{ const car=tmCar(n), st=tmStats(car); st.vmax*=1+(rnd()-.5)*.02; return {n,car,st,lane:TK.lanes[mode==='tt'?3:i],s:0,v:0,bat:1,lap:0,out:false,done:false,time:0,lastSec:0,coT:0,coX:0,coY:0,coA:0,air:0}; });
+  TAM.cars=who.map((n,i)=>{ const car=tmCar(n), st=tmStats(car); st.vmax*=1+(rnd()-.5)*.02; return {n,car,st,lane0:mode==='tt'?3:i,s:0,v:0,bat:1,lap:0,out:false,done:false,time:0,lastSec:0,coT:0,coX:0,coY:0,coA:0,air:0}; });
   TAM.rnd=rnd; TAM.t=-1.2; TAM.mode=mode; TAM.running=true; TAM.result=null; TAM.last=performance.now();
   tmSound(true); renderTamiya(); TAM.raf=requestAnimationFrame(tmLoop);
 }
-function tmCO(car,why){ car.out=true; car.coWhy=why; const p=tkPos(car.s,car.lane); car.coX=p.x; car.coY=p.y; car.coA=p.a; car.coT=0; }
+function tmCO(car,why){ car.out=true; car.coWhy=why; const p=tkCarPos(car,car.s); car.coX=p.x; car.coY=p.y; car.coA=p.a; car.coT=0; }
 function tmLoop(now){
   const dt=Math.min(.05,(now-TAM.last)/1000); TAM.last=now; TAM.t+=dt;
   const LAPS=3;
@@ -3759,7 +3802,7 @@ function tmLoop(now){
     if(k.out){ k.coT+=dt; return; } if(k.done) return;
     const vt=k.st.vmax*k.bat; k.v=Math.min(vt,k.v+k.st.acc*dt);
     const prevS=k.s; k.s+=k.v*dt; k.time+=dt;
-    const p=tkPos(k.s,k.lane);
+    const p=tkPos(k.s,0);
     if(p.sec!==k.lastSec&&(p.sec===1||p.sec===3)){ const r=k.v/k.st.corner; if(r>1&&TAM.rnd()<Math.min(.97,(r-1)*1.6)) return tmCO(k,'tikungan'); }
     k.lastSec=p.sec;
     const js=TK.jumpS, lapPrev=Math.floor(prevS/TK.L), base=lapPrev*TK.L;
@@ -3784,7 +3827,7 @@ function tmDraw(){
       c.font='14px Anton, Impact, sans-serif'; c.textAlign='center'; c.fillStyle='#e2402b'; c.strokeStyle='#fff'; c.lineWidth=3; c.strokeText('CO!',x,y-18); c.fillText('CO!',x,y-18);
       return;
     }
-    const p=tkPos(k.s,k.lane); tmDrawCar(c,k.car,p.x,p.y,p.a,(k.air>0?1+Math.sin(k.air/.35*Math.PI)*.35:1)*.8,1);
+    const p=tkCarPos(k,k.s); tmDrawCar(c,k.car,p.x,p.y,p.a,(k.air>0?1+Math.sin(k.air/.35*Math.PI)*.35:1)*(1+p.up*.4)*.8,1);
   });
   // HUD
   c.fillStyle='rgba(17,17,17,.8)'; c.fillRect(138,196,84,190);
@@ -3820,10 +3863,24 @@ function tmFinish(){
 function tmSetupLine(c){ return [TM.motor[c.motor].name,TM.tire[c.tire].name,TM.roll[c.roll].name,+c.w?TM.w[c.w].name:''].filter(Boolean).join(', '); }
 function tmBar(label,val,max,col){ const p=Math.max(4,Math.min(100,val/max*100)); return `<div class="tmStat"><span>${label}</span><i><b style="width:${p}%;background:${col}"></b></i></div>`; }
 function tmCarSVG(car){
-  const big=car.tire==='besar', body=car.body==='bulldog'?'<rect x="-21" y="-39" width="42" height="81" rx="4"/>':car.body==='kilat'?'<path d="M0,-45 L18,-18 L18,39 L-18,39 L-18,-18 Z"/>':'<path d="M-12,-42 L12,-42 L21,-12 L21,39 L-21,39 L-21,-12 Z"/>';
-  const rl=[[-27,-45],[24,-45],[-27,42],[24,42]].concat(+car.roll>=6?[[-30,-6],[27,-6]]:[]).concat(+car.roll>=8?[[-30,15],[27,15]]:[]);
-  const tw=big?15:12, th=big?24:21, stripe=car.color==='#f4f0e2'||car.color==='#e2c44c'?'#2e3274':'#f4f0e2';
-  return `<svg viewBox="-60 -62 120 124" class="tmCarSvg" role="img" aria-label="Mobil kamu dari atas"><g fill="#111">${[[-27,-33],[27-tw,-33],[-27,21],[27-tw,21]].map(([x,y])=>`<rect x="${x}" y="${y}" width="${tw}" height="${th}" rx="3"/>`).join('')}</g><g fill="${car.color}" stroke="#111" stroke-width="2.5">${body}</g><rect x="-12" y="-15" width="24" height="18" rx="3" fill="#1d2b4a" opacity=".85"/><rect x="-3" y="-39" width="6" height="75" fill="${stripe}"/>${+car.w?`<g fill="#9a9a9a" stroke="#111">${Array.from({length:+car.w},(_,i)=>`<rect x="${-8+i*9}" y="24" width="7" height="10"/>`).join('')}</g>`:''}<g fill="#e8e8e8" stroke="#111" stroke-width="1.2">${rl.map(([x,y])=>`<circle cx="${x+1.5}" cy="${y}" r="5"/>`).join('')}</g><text x="0" y="56" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="10" fill="#111">${esc((car.nick||'').slice(0,12))}</text></svg>`;
+  const L=tmLook(car), R=tmRollers(car), wheels=[[-1,-32],[1,-32],[-1,30],[1,30]];
+  const roller=([px,py],dbl)=>`<circle cx="${px}" cy="${py}" r="5" fill="${R.gold?'#d8b24a':'#e9e9e9'}" stroke="#111" stroke-width="1.4"/>${dbl?`<circle cx="${px}" cy="${py}" r="2.2" fill="none" stroke="#111" stroke-width="1.2"/>`:''}`;
+  return `<svg viewBox="-40 -62 80 124" class="tmCarSvg" role="img" aria-label="Mobil kamu dari atas">
+    <rect x="-26" y="-44" width="56" height="98" fill="rgba(0,0,0,.28)"/>
+    <rect x="-15" y="-44" width="30" height="88" fill="#3a3d44"/>
+    <path d="M-28,-52 L28,-52 L22,-44 L-22,-44 Z" fill="#2a2c31"/><rect x="-28" y="44" width="56" height="6" fill="#2a2c31"/>
+    ${wheels.map(([sx,wy])=>{ const wx=sx<0?-L.wx:L.wx-L.tw, rx=wx+(sx<0?L.tw-4:0); return `<rect x="${wx}" y="${wy-L.tl/2}" width="${L.tw}" height="${L.tl}" rx="2" fill="#141414"/><rect x="${rx}" y="${wy-L.tl/2+3}" width="4" height="${L.tl-6}" fill="${TMRIM[car.tire]||'#f4f0e2'}"/><path d="M${rx} ${wy-3}h4M${rx} ${wy+3}h4" stroke="#555" stroke-width="1"/>`; }).join('')}
+    ${R.front.map(p=>roller(p,R.dblFront)).join('')}${R.rear.map(p=>roller(p,R.dblRear)).join('')}
+    <path d="${TMSHAPE[car.body]||TMSHAPE.shadow}" fill="${car.color}" stroke="#111" stroke-width="2.2" stroke-linejoin="round"/>
+    <rect x="-6" y="-44" width="3" height="82" fill="${L.stripe}"/><rect x="3" y="-44" width="3" height="82" fill="${L.stripe}"/>
+    ${car.body==='bulldog'?`<path d="M-10 -42h20M-10 -39h20M-10 -36h20" stroke="#111" stroke-width="1.2"/>`:car.body==='kilat'?`<path d="M-19 -6l6 3M-19 0l6 3M19 -6l-6 3M19 0l-6 3" stroke="#111" stroke-width="1.5"/>`:`<path d="M-15 -4l-3 2M15 -4l3 2" stroke="#111" stroke-width="1.5"/>`}
+    <ellipse cx="0" cy="-6" rx="7.5" ry="12" fill="#121c34" opacity=".92"/><ellipse cx="-2.5" cy="-11" rx="2" ry="5" fill="#fff" opacity=".45"/>
+    <circle cx="0" cy="-30" r="6.5" fill="#f4f0e2" stroke="#111" stroke-width="1.2"/><text x="0" y="-27" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="8" fill="#111">${L.num}</text>
+    ${+car.w?Array.from({length:+car.w},(_,i)=>`<rect x="${i?17:-23}" y="10" width="6" height="12" fill="#9a9a9a" stroke="#111" stroke-width="1"/>`).join(''):''}
+    <rect x="-21" y="33" width="42" height="7" fill="${L.trim}" stroke="#111" stroke-width="1.6"/><rect x="-23" y="30" width="3" height="12" fill="#111"/><rect x="20" y="30" width="3" height="12" fill="#111"/>
+    <text x="0" y="22" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="6.5" fill="${L.stripe}" letter-spacing=".5">${esc((car.nick||'').slice(0,10))}</text>
+    <text x="0" y="60" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="7" fill="#e2c44c">MINI 4WD · ${esc((TM.body[car.body]||TM.body.shadow).name.toUpperCase())}</text>
+  </svg>`;
 }
 function renderTamiya(){
   const me=tmMe(), car=tmCar(me), st=tmStats(car);
