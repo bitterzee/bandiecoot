@@ -3730,7 +3730,7 @@ function tkBackground(){
     c.fillStyle='rgba(46,50,116,.28)'; c.fillRect(x0,y0,x1-x0,y1-y0);
     c.strokeStyle='rgba(255,255,255,.55)'; c.lineWidth=1.5; c.setLineDash([5,5]);
     for(let i=0;i<6;i++){ const d=TK.lanes[i], e=TK.lanes[i+1]; c.beginPath(); c.moveTo(TK.lx-d,y1); c.bezierCurveTo(TK.lx-d,(y0+y1)/2,TK.lx-e,(y0+y1)/2,TK.lx-e,y0); c.stroke(); }
-    c.setLineDash([]); c.strokeStyle='#e2c44c'; c.lineWidth=5; c.beginPath(); c.moveTo(TK.lx+48,y1); c.bezierCurveTo(TK.lx+48,(y0+y1)/2-10,TK.lx-48,(y0+y1)/2+10,TK.lx-48,y0); c.stroke();
+    c.setLineDash([]); c.strokeStyle='#e2c44c'; c.lineWidth=5; c.beginPath(); c.moveTo(TK.lx-48,y1); c.bezierCurveTo(TK.lx-48,(y0+y1)/2+10,TK.lx+48,(y0+y1)/2-10,TK.lx+48,y0); c.stroke();
     c.strokeStyle='#1d1d1d'; c.lineWidth=1; c.stroke();
     c.save(); c.translate(TK.lx-67,(y0+y1)/2); c.rotate(-Math.PI/2); c.font='10px Anton, Impact, sans-serif'; c.fillStyle='#e2c44c'; c.textAlign='center'; c.fillText('PINDAH JALUR',0,0); c.restore(); }
   // jump ramp
