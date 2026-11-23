@@ -458,6 +458,22 @@ body.gaming{overflow:hidden}
 .gbGrill i{width:6px;height:40px;border-radius:3px;background:#a9a69d;box-shadow:inset 1px 1px 0 #8f8c84}
 .gbHint{text-align:center;font-size:10px;color:#6b6860;margin-top:6px}
 @media (max-height:700px){.gbCross{transform:scale(.85);margin:-10px}.gbBtn button{width:50px;height:50px}.gbBrand{margin-bottom:4px}.gbHint{display:none}}
+.tmTop{display:flex;gap:14px;align-items:center;margin:6px 0 12px}
+.tmCarSvg{width:130px;height:134px;flex:none;background:#3a6b3a;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--navy)}
+.tmStats{flex:1;min-width:0}
+.tmStat{display:flex;align-items:center;gap:8px;font-size:11px;margin:0 0 7px}
+.tmStat span{width:74px;flex:none}.tmStat i{flex:1;height:10px;background:#d9d1bd;border:2px solid var(--ink)}.tmStat b{display:block;height:100%}
+.tmHint{font-size:11px;color:#6b6556;margin-top:4px;line-height:1.4}
+.tmRow{display:flex;gap:8px;align-items:flex-start;margin:0 0 9px}
+.tmLbl{width:74px;flex:none;font-family:Anton,Impact,sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:.5px;padding-top:6px}
+.tmChips{display:flex;flex-wrap:wrap;gap:6px;flex:1}
+.tmChips button{font-size:12px;padding:5px 8px;text-transform:none;font-family:'Space Mono',monospace;letter-spacing:0}
+.tmChips button.sel{background:var(--navy);color:var(--mustard)}
+.tmSw{width:30px;height:30px;padding:0;border:2px solid var(--ink);border-radius:50%}
+.tmSw.sel{box-shadow:0 0 0 3px var(--mustard),0 0 0 5px var(--ink)}
+#tmNick{flex:1;font-family:'Space Mono',monospace;font-size:14px;padding:6px 8px;border:2px solid var(--ink);background:#fff8ea;text-transform:uppercase}
+.tmTrack{background:#3a6b3a;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--navy);max-width:360px;margin:8px auto 0}
+.tmTrack canvas{display:block;width:100%;height:auto}
 </style>
 </head>
 <body>
@@ -484,7 +500,7 @@ body.gaming{overflow:hidden}
     <div class="snav" data-g="seru" hidden>
       <button id="tabRelayBtn">Studio</button>
       <button id="tabKuisBtn">Kuis</button>
-      <button id="tabKeretaBtn">Kereta Den</button>
+      <button id="tabTamiyaBtn">Tamiya</button>
     </div>
     <div class="snav" data-g="ngobrol" hidden>
       <button id="tabCitoBtn">Cito Bongak<span class="nbadge" id="chatBadge" hidden></span></button>
@@ -604,6 +620,28 @@ body.gaming{overflow:hidden}
       <h2>Kuis Mingguan</h2>
       <p class="sub">Tiap Senin pelajaran baru, diacak. 10 soal, 20 detik per soal, satu kali coba. Nyontek? Kita udah 40-an.</p>
       <div id="kuisBox"></div>
+    </div>
+  </section>
+
+  <section id="tabTamiya" hidden>
+    <div class="panel">
+      <span class="tape corner">mini 4WD · Bandiecoot Cup</span>
+      <h2>Tamiya</h2>
+      <p class="sub">Rakit, setel, adu di lintasan 3 jalur. Kenceng tapi CO? Percuma.</p>
+      <div id="tmGarage"></div>
+    </div>
+    <div class="panel">
+      <span class="tape corner">3 lap</span>
+      <h2>Lintasan</h2>
+      <div class="tmTrack"><canvas id="tmCv" width="360" height="590"></canvas></div>
+      <div class="tmRow" style="margin-top:12px"><div class="tmLbl">Lawan</div><div class="tmChips" id="tmOpp"></div></div>
+      <div class="row" style="margin-top:10px;gap:10px">
+        <button class="big" id="tmRace" style="flex:1">Balapan</button>
+        <button class="big" id="tmTT" style="flex:1;background:var(--paper);color:#111">Time trial</button>
+      </div>
+      <div id="tmResult"></div>
+      <div class="qzH3">Rekor time trial</div>
+      <div id="tmBoard"></div>
     </div>
   </section>
 
@@ -3051,6 +3089,7 @@ const COLLS={
   bike:{get:()=>S.bike?{kereta:S.bike}:{}, set:m=>{ S.bike=m.kereta||null; }},
   quiz:{get:()=>S.quiz||{}, set:m=>{ S.quiz=m; }},
   quizres:{get:()=>S.qres||{}, set:m=>{ S.qres=m; }},
+  tamiya:{get:()=>S.tamiya||{}, set:m=>{ S.tamiya=m; }},
   placepic:{get:()=>S.ppics||{}, set:m=>{ S.ppics=m; }},
   chat:{get:()=>S.chat||{}, set:m=>{ S.chat=m; }}
 };
@@ -3108,6 +3147,7 @@ async function refreshAfterRemote(){
   if(cs.has('placepic')&&PL.id&&!$('#placeOverlay').hidden) renderPlace();
   if(t==='game'&&cs.has('song')&&!G.running) renderGameSetup();
   if(t==='kereta'&&cs.has('bike')&&document.activeElement!==$('#bkPrompt')) renderKereta();
+  if(t==='tamiya'&&cs.has('tamiya')&&!TAM.running&&document.activeElement!==$('#tmNick')) renderTamiya();
   if(t==='kuis'&&(cs.has('quiz')||cs.has('quizres'))&&!QZ.play) renderKuis();
   if(cs.has('chat')){ if(t==='cito') renderCito(); else chatBadge(); }
 }
@@ -3629,14 +3669,198 @@ function chatIncoming(m){
   document.body.appendChild(d); setTimeout(()=>d.remove(),9000);
 }
 
+/* =================== TAMIYA (Mini 4WD) =================== */
+if(!S.tamiya) S.tamiya={};
+const TM={
+  body:{shadow:{name:'Shadow',spd:1.02,jump:1.0},bulldog:{name:'Bulldog',spd:.98,jump:1.12},kilat:{name:'Kilat',spd:1.05,jump:.88}},
+  motor:{std:{name:'Standar',v:260,a:300,drain:.01},torsi:{name:'Torsi',v:282,a:440,drain:.012},speed:{name:'Speed',v:330,a:260,drain:.015},dash:{name:'Dash',v:385,a:320,drain:.024}},
+  bat:{biasa:{name:'Biasa',k:.93,drain:1.4},alk:{name:'Alkaline',k:1,drain:1},cas:{name:'Cas (Ni-Cd)',k:1.06,drain:1.15}},
+  tire:{keras:{name:'Karet keras',spd:1.03,grip:.9,jump:1},lunak:{name:'Karet lunak',spd:.97,grip:1.12,jump:1},besar:{name:'Ban besar',spd:1.06,grip:.86,jump:.92}},
+  roll:{4:{name:'4 roller',spd:1,st:1},6:{name:'6 roller',spd:.98,st:1.14},8:{name:'8 bearing',spd:.965,st:1.25}},
+  w:{0:{name:'Tanpa',spd:1,st:1},1:{name:'1 pemberat',spd:.97,st:1.05},2:{name:'2 pemberat',spd:.94,st:1.1}},
+  colors:['#d23b2b','#2e3274','#e2c44c','#1d1d1d','#f4f0e2','#2f8f45','#e08a2e','#8a4fb3','#2f9e9a']
+};
+const tmMe=()=>ME&&ME.name||'Aku';
+function tmDefault(n){ let c='#d23b2b'; try{ c=avOf(n).shirt||c; }catch(e){} return {body:'shadow',color:c,motor:'std',bat:'alk',tire:'keras',roll:4,w:0,nick:(n||'').toUpperCase()}; }
+function tmCar(n){ return Object.assign(tmDefault(n),S.tamiya[n]||{}); }
+function tmStats(c){
+  const b=TM.body[c.body]||TM.body.shadow, m=TM.motor[c.motor]||TM.motor.std, t=TM.tire[c.tire]||TM.tire.keras, r=TM.roll[c.roll]||TM.roll[4], w=TM.w[c.w]||TM.w[0], bt=TM.bat[c.bat]||TM.bat.alk;
+  const vmax=m.v*b.spd*t.spd*r.spd*w.spd*bt.k;
+  return {vmax, acc:m.a*(c.w?1-.06*c.w:1), drain:m.drain*bt.drain, corner:320*r.st*t.grip*w.st, jump:360*b.jump*t.jump*(1+.15*(+c.w||0))};
+}
+// track: a stadium loop, 3 lanes, a jump on the right straight
+const TK={S:280,R:100,lx:80,rx:280,ty:150,by:430,lanes:[-24,0,24]};
+TK.L=2*TK.S+2*Math.PI*TK.R; TK.jumpS=TK.S+Math.PI*TK.R+TK.S/2;
+function tkPos(s,d){
+  const {S,R,lx,rx,ty,by}=TK; s=((s%TK.L)+TK.L)%TK.L;
+  if(s<S) return {x:lx-d,y:by-s,a:-Math.PI/2,sec:0};
+  s-=S; if(s<Math.PI*R){ const th=Math.PI+s/R; return {x:(lx+rx)/2+(R+d)*Math.cos(th),y:ty+(R+d)*Math.sin(th),a:th+Math.PI/2,sec:1}; }
+  s-=Math.PI*R; if(s<S) return {x:rx+d,y:ty+s,a:Math.PI/2,sec:2};
+  s-=S; const th=s/R; return {x:(lx+rx)/2+(R+d)*Math.cos(th),y:by+(R+d)*Math.sin(th),a:th+Math.PI/2,sec:3};
+}
+function tkStadium(c,d){ const {R,lx,rx,ty,by}=TK, cx=(lx+rx)/2; c.beginPath(); c.moveTo(lx-d,by); c.lineTo(lx-d,ty); c.arc(cx,ty,R+d,Math.PI,0); c.lineTo(rx+d,by); c.arc(cx,by,R+d,0,Math.PI); c.closePath(); }
+let TKBG=null;
+function tkBackground(){
+  if(TKBG) return TKBG;
+  const cv=document.createElement('canvas'); cv.width=360; cv.height=590; const c=cv.getContext('2d');
+  c.fillStyle='#3a6b3a'; c.fillRect(0,0,360,590);
+  for(let i=0;i<260;i++){ c.fillStyle=i%2?'#447a44':'#335f33'; c.fillRect((i*137)%360,(i*89)%590,2,2); }
+  c.lineJoin='round';
+  tkStadium(c,0); c.strokeStyle='#1f3f7a'; c.lineWidth=86; c.stroke();
+  tkStadium(c,0); c.strokeStyle='#d9d6cc'; c.lineWidth=76; c.stroke();
+  [-12,12].forEach(d=>{ tkStadium(c,d); c.strokeStyle='#2f5fa8'; c.lineWidth=3; c.stroke(); });
+  [-38,38].forEach(d=>{ tkStadium(c,d); c.strokeStyle='#2f5fa8'; c.lineWidth=4; c.stroke(); });
+  // start line
+  c.fillStyle='#fff'; for(let i=0;i<8;i++) for(let j=0;j<2;j++) if((i+j)%2) c.fillRect(TK.lx-38+i*9.5,TK.by-6+j*5,9.5,5);
+  c.fillStyle='#111'; for(let i=0;i<8;i++) for(let j=0;j<2;j++) if(!((i+j)%2)) c.fillRect(TK.lx-38+i*9.5,TK.by-6+j*5,9.5,5);
+  // jump ramp
+  const jy=TK.ty+TK.S/2; c.save(); c.translate(TK.rx,jy);
+  for(let i=0;i<10;i++){ c.fillStyle=i%2?'#e2c44c':'#1d1d1d'; c.fillRect(-38+i*7.6,-14,7.6,28); }
+  c.fillStyle='rgba(255,255,255,.25)'; c.fillRect(-38,-14,76,6); c.restore();
+  c.font='bold 11px Anton, Impact, sans-serif'; c.fillStyle='#e2c44c'; c.textAlign='center';
+  c.fillText('TANJAKAN',TK.rx,jy+30);
+  c.save(); c.translate(180,290); c.fillStyle='rgba(0,0,0,.25)'; c.font='26px Anton, Impact, sans-serif'; c.fillText('BANDIECOOT',0,-10); c.font='16px Anton, Impact, sans-serif'; c.fillText('CUP 2004',0,14); c.restore();
+  return TKBG=cv;
+}
+function tmDrawCar(c,car,x,y,a,scale,alpha){
+  c.save(); c.translate(x,y); c.rotate(a+Math.PI/2); c.scale(scale,scale); c.globalAlpha=alpha;
+  const big=car.tire==='besar';
+  c.fillStyle='rgba(0,0,0,.35)'; c.fillRect(-7,-12,16,28);
+  c.fillStyle='#111'; const tw=big?5:4, th=big?8:7; [[-9,-11],[9-tw,-11],[-9,7],[9-tw,7]].forEach(([u,v])=>c.fillRect(u,v,tw,th));
+  c.fillStyle=car.color; c.strokeStyle='#111'; c.lineWidth=1;
+  c.beginPath();
+  if(car.body==='bulldog'){ c.rect(-7,-13,14,27); }
+  else if(car.body==='kilat'){ c.moveTo(0,-15); c.lineTo(6,-6); c.lineTo(6,13); c.lineTo(-6,13); c.lineTo(-6,-6); c.closePath(); }
+  else { c.moveTo(-4,-14); c.lineTo(4,-14); c.lineTo(7,-4); c.lineTo(7,13); c.lineTo(-7,13); c.lineTo(-7,-4); c.closePath(); }
+  c.fill(); c.stroke();
+  c.fillStyle='rgba(20,30,60,.75)'; c.fillRect(-4,-5,8,6);
+  c.fillStyle=car.color==='#f4f0e2'||car.color==='#e2c44c'?'#2e3274':'#f4f0e2'; c.fillRect(-1,-13,2,25);
+  c.fillStyle='#e8e8e8'; const rl=[[-9,-15],[8,-15],[-9,14],[8,14]]; if(+car.roll>=6) rl.push([-10,-2],[9,-2]); if(+car.roll>=8) rl.push([-10,5],[9,5]);
+  rl.forEach(([u,v])=>{ c.beginPath(); c.arc(u+.5,v,1.8,0,7); c.fill(); });
+  c.restore();
+}
+const TAM={running:false,raf:0,cars:[],t:0,result:null,mode:null,opp:[],snd:null};
+function tmRng(seed){ let s=seed>>>0||1; return ()=>((s=Math.imul(s^(s>>>15),2246822507)+0x9e3779b9>>>0)/4294967296); }
+function tmStart(mode){
+  if(TAM.running) return;
+  const me=tmMe(); const who=mode==='tt'?[me]:[me,...TAM.opp].slice(0,3);
+  const rnd=tmRng(Date.now());
+  TAM.cars=who.map((n,i)=>{ const car=tmCar(n), st=tmStats(car); return {n,car,st,lane:TK.lanes[mode==='tt'?1:i],s:0,v:0,bat:1,lap:0,out:false,done:false,time:0,lastSec:0,coT:0,coX:0,coY:0,coA:0,air:0}; });
+  TAM.rnd=rnd; TAM.t=-1.2; TAM.mode=mode; TAM.running=true; TAM.result=null; TAM.last=performance.now();
+  tmSound(true); renderTamiya(); TAM.raf=requestAnimationFrame(tmLoop);
+}
+function tmCO(car,why){ car.out=true; car.coWhy=why; const p=tkPos(car.s,car.lane); car.coX=p.x; car.coY=p.y; car.coA=p.a; car.coT=0; }
+function tmLoop(now){
+  const dt=Math.min(.05,(now-TAM.last)/1000); TAM.last=now; TAM.t+=dt;
+  const LAPS=3;
+  if(TAM.t>0) TAM.cars.forEach(k=>{
+    if(k.out){ k.coT+=dt; return; } if(k.done) return;
+    const vt=k.st.vmax*k.bat; k.v=Math.min(vt,k.v+k.st.acc*dt);
+    const prevS=k.s; k.s+=k.v*dt; k.time+=dt;
+    const p=tkPos(k.s,k.lane);
+    if(p.sec!==k.lastSec&&(p.sec===1||p.sec===3)){ const r=k.v/k.st.corner; if(r>1&&TAM.rnd()<Math.min(.97,(r-1)*1.6)) return tmCO(k,'tikungan'); }
+    k.lastSec=p.sec;
+    const js=TK.jumpS, lapPrev=Math.floor(prevS/TK.L), base=lapPrev*TK.L;
+    if(prevS<base+js&&k.s>=base+js){ k.air=.35; const r=k.v/k.st.jump; if(r>1&&TAM.rnd()<Math.min(.97,(r-1)*1.8)) return tmCO(k,'tanjakan'); }
+    if(k.air>0) k.air-=dt;
+    const lap=Math.floor(k.s/TK.L); if(lap>k.lap){ k.lap=lap; k.bat=Math.max(.75,k.bat-k.st.drain); }
+    if(k.s>=LAPS*TK.L){ k.done=true; k.time=+k.time.toFixed(2); }
+  });
+  tmDraw();
+  tmSound();
+  const over=TAM.cars.every(k=>k.done||(k.out&&k.coT>1.2));
+  if(over){ TAM.running=false; tmSound(false); tmFinish(); return; }
+  TAM.raf=requestAnimationFrame(tmLoop);
+}
+function tmDraw(){
+  const cv=$('#tmCv'); if(!cv) return; const c=cv.getContext('2d');
+  c.drawImage(tkBackground(),0,0);
+  TAM.cars.forEach(k=>{
+    if(k.out){
+      const f=Math.min(1,k.coT/1.1), dist=k.v*.55*k.coT, x=k.coX+Math.cos(k.coA)*dist, y=k.coY+Math.sin(k.coA)*dist, sc=1+Math.sin(f*Math.PI)*.9;
+      tmDrawCar(c,k.car,x,y,k.coA+k.coT*7,sc,1-f*.7);
+      c.font='14px Anton, Impact, sans-serif'; c.textAlign='center'; c.fillStyle='#e2402b'; c.strokeStyle='#fff'; c.lineWidth=3; c.strokeText('CO!',x,y-18); c.fillText('CO!',x,y-18);
+      return;
+    }
+    const p=tkPos(k.s,k.lane); tmDrawCar(c,k.car,p.x,p.y,p.a,k.air>0?1+Math.sin(k.air/.35*Math.PI)*.35:1,1);
+  });
+  // HUD
+  c.fillStyle='rgba(17,17,17,.78)'; c.fillRect(110,232,140,110);
+  c.textAlign='center'; c.fillStyle='#e2c44c'; c.font='13px Anton, Impact, sans-serif';
+  if(TAM.t<0){ c.font='34px Anton, Impact, sans-serif'; c.fillText(TAM.t<-.8?'3':TAM.t<-.4?'2':'1',180,300); return; }
+  c.fillText(`${Math.max(0,TAM.t).toFixed(2)} dtk`,180,252);
+  c.font='11px "Space Mono", monospace'; c.textAlign='left';
+  TAM.cars.forEach((k,i)=>{ c.fillStyle=k.car.color; c.fillRect(120,262+i*24,8,8); c.fillStyle='#f4f0e2';
+    c.fillText(`${k.n} ${k.out?'CO':k.done?k.time.toFixed(2):'lap '+Math.min(3,k.lap+1)+'/3'}`,134,270+i*24); });
+}
+function tmSound(on){
+  try{
+    if(on===false||(!TAM.running&&TAM.snd)){ if(TAM.snd){ TAM.snd.forEach(o=>{ try{ o.g.gain.setTargetAtTime(0,ac().currentTime,.05); o.o.stop(ac().currentTime+.3); }catch(e){} }); TAM.snd=null; } return; }
+    const ctx=ac();
+    if(on===true){ TAM.snd=TAM.cars.map(()=>{ const o=ctx.createOscillator(), f=ctx.createBiquadFilter(), g=ctx.createGain(); o.type='sawtooth'; f.type='lowpass'; f.frequency.value=1800; g.gain.value=0; o.connect(f).connect(g).connect(MASTER); o.start(); return {o,g}; }); return; }
+    if(!TAM.snd) return;
+    TAM.cars.forEach((k,i)=>{ const s=TAM.snd[i]; if(!s) return; const live=!k.out&&!k.done&&TAM.t>0; s.o.frequency.setTargetAtTime(90+k.v*1.1+i*7,ctx.currentTime,.05); s.g.gain.setTargetAtTime(live?.03:0,ctx.currentTime,.08); });
+  }catch(e){}
+}
+function tmFinish(){
+  const res=TAM.cars.map(k=>({n:k.n,time:k.done?k.time:null,why:k.coWhy})).sort((a,b)=>(a.time??1e9)-(b.time??1e9));
+  TAM.result=res;
+  if(TAM.mode==='tt'&&res[0].time){
+    const me=tmMe(), cur=tmCar(me);
+    if(!cur.best||res[0].time<cur.best){ S.tamiya[me]=Object.assign(S.tamiya[me]||tmDefault(me),{best:res[0].time,bestAt:new Date().toISOString(),bestSetup:tmSetupLine(cur)}); save(); TAM.result.pb=true; }
+  }
+  renderTamiya();
+}
+function tmSetupLine(c){ return [TM.motor[c.motor].name,TM.tire[c.tire].name,TM.roll[c.roll].name,+c.w?TM.w[c.w].name:''].filter(Boolean).join(', '); }
+function tmBar(label,val,max,col){ const p=Math.max(4,Math.min(100,val/max*100)); return `<div class="tmStat"><span>${label}</span><i><b style="width:${p}%;background:${col}"></b></i></div>`; }
+function tmCarSVG(car){
+  const big=car.tire==='besar', body=car.body==='bulldog'?'<rect x="-21" y="-39" width="42" height="81" rx="4"/>':car.body==='kilat'?'<path d="M0,-45 L18,-18 L18,39 L-18,39 L-18,-18 Z"/>':'<path d="M-12,-42 L12,-42 L21,-12 L21,39 L-21,39 L-21,-12 Z"/>';
+  const rl=[[-27,-45],[24,-45],[-27,42],[24,42]].concat(+car.roll>=6?[[-30,-6],[27,-6]]:[]).concat(+car.roll>=8?[[-30,15],[27,15]]:[]);
+  const tw=big?15:12, th=big?24:21, stripe=car.color==='#f4f0e2'||car.color==='#e2c44c'?'#2e3274':'#f4f0e2';
+  return `<svg viewBox="-60 -62 120 124" class="tmCarSvg" role="img" aria-label="Mobil kamu dari atas"><g fill="#111">${[[-27,-33],[27-tw,-33],[-27,21],[27-tw,21]].map(([x,y])=>`<rect x="${x}" y="${y}" width="${tw}" height="${th}" rx="3"/>`).join('')}</g><g fill="${car.color}" stroke="#111" stroke-width="2.5">${body}</g><rect x="-12" y="-15" width="24" height="18" rx="3" fill="#1d2b4a" opacity=".85"/><rect x="-3" y="-39" width="6" height="75" fill="${stripe}"/>${+car.w?`<g fill="#9a9a9a" stroke="#111">${Array.from({length:+car.w},(_,i)=>`<rect x="${-8+i*9}" y="24" width="7" height="10"/>`).join('')}</g>`:''}<g fill="#e8e8e8" stroke="#111" stroke-width="1.2">${rl.map(([x,y])=>`<circle cx="${x+1.5}" cy="${y}" r="5"/>`).join('')}</g><text x="0" y="56" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="10" fill="#111">${esc((car.nick||'').slice(0,12))}</text></svg>`;
+}
+function renderTamiya(){
+  const me=tmMe(), car=tmCar(me), st=tmStats(car);
+  const opt=(k,map,label)=>`<div class="tmRow"><div class="tmLbl">${label}</div><div class="tmChips">${Object.entries(map).map(([v,o])=>`<button class="small ${String(car[k])===v?'sel':''}" data-tk="${k}" data-tv="${v}" ${TAM.running?'disabled':''}>${esc(o.name)}</button>`).join('')}</div></div>`;
+  $('#tmGarage').innerHTML=`<div class="tmTop">${tmCarSVG(car)}<div class="tmStats">
+      ${tmBar('Kecepatan',st.vmax,440,'#d23b2b')}${tmBar('Akselerasi',st.acc,460,'#e08a2e')}${tmBar('Tikungan',st.corner,460,'#2f8f45')}${tmBar('Tanjakan',st.jump,460,'#2f5fa8')}
+      <div class="tmHint">${st.vmax>st.corner*1.02?'⚠️ Terlalu kencang buat tikungan: rawan CO.':st.vmax>st.jump*1.02?'⚠️ Rawan terbang di tanjakan.':'Aman. Tapi bisa lebih kencang?'}</div></div></div>
+    ${opt('body',TM.body,'Bodi')}
+    <div class="tmRow"><div class="tmLbl">Warna</div><div class="tmChips">${TM.colors.map(c=>`<button class="tmSw ${car.color===c?'sel':''}" style="background:${c}" data-tk="color" data-tv="${c}" aria-label="Warna ${c}" ${TAM.running?'disabled':''}></button>`).join('')}</div></div>
+    ${opt('motor',TM.motor,'Dinamo')}${opt('bat',TM.bat,'Baterai')}${opt('tire',TM.tire,'Ban')}${opt('roll',TM.roll,'Roller')}${opt('w',TM.w,'Pemberat')}
+    <div class="tmRow"><div class="tmLbl">Stiker</div><input id="tmNick" maxlength="12" value="${esc(car.nick||'')}" placeholder="Nama mobil"></div>`;
+  const others=BAND.filter(n=>n!==me);
+  TAM.opp=TAM.opp.filter(n=>others.includes(n)); if(!TAM.opp.length) TAM.opp=others.slice(0,2);
+  $('#tmOpp').innerHTML=others.map(n=>`<button class="small ${TAM.opp.includes(n)?'sel':''}" data-opp="${n}" ${TAM.running?'disabled':''}>${esc(n)}</button>`).join('');
+  $('#tmTT').disabled=$('#tmRace').disabled=TAM.running;
+  const r=TAM.result;
+  $('#tmResult').innerHTML=!r?'':`<div class="qzH3">${TAM.mode==='tt'?'Time trial':'Hasil balapan'}</div><table class="qzTbl">${r.map((x,i)=>`<tr class="${x.n===me?'me':''}"><td>${x.time?(i===0&&TAM.mode!=='tt'?'🏆 ':i+1+'. '):'💥 '}${esc(x.n)}</td><td class="no">${x.time?'':'CO di '+x.why}</td><td>${x.time?x.time.toFixed(2)+' dtk':'–'}</td></tr>`).join('')}</table>${r.pb?'<div class="msg" style="color:#2d7a43">Rekor pribadi baru! Masuk papan.</div>':''}`;
+  const board=BAND.map(n=>({n,c:S.tamiya[n]})).filter(x=>x.c&&x.c.best).sort((a,b)=>a.c.best-b.c.best);
+  $('#tmBoard').innerHTML=board.length?`<table class="qzTbl">${board.map((x,i)=>`<tr class="${x.n===me?'me':''}"><td>${i===0?'👑':i+1+'.'} ${esc(x.n)}<br><span class="no" style="font-size:11px">${esc(x.c.bestSetup||'')}</span></td><td>${x.c.best.toFixed(2)} dtk</td></tr>`).join('')}</table>`:'<p class="hint">Belum ada waktu. Siapa yang pertama?</p>';
+  if(!TAM.running){ TAM.cars=TAM.cars.length?TAM.cars:[]; tmIdle(); }
+}
+function tmIdle(){ const cv=$('#tmCv'); if(!cv) return; const c=cv.getContext('2d'); c.drawImage(tkBackground(),0,0);
+  const me=tmMe(); const who=[me,...TAM.opp].slice(0,3); who.forEach((n,i)=>{ const p=tkPos(0,TK.lanes[i]); tmDrawCar(c,tmCar(n),p.x,p.y+4,p.a,1,1); }); }
+$('#tmGarage').addEventListener('click',e=>{
+  const b=e.target.closest('[data-tk]'); if(!b||TAM.running) return;
+  const me=tmMe(), k=b.dataset.tk; let v=b.dataset.tv; if(k==='roll'||k==='w') v=+v;
+  S.tamiya[me]=Object.assign(tmCar(me),S.tamiya[me]||{},{[k]:v}); save(); renderTamiya();
+});
+$('#tmGarage').addEventListener('change',e=>{ if(e.target.id!=='tmNick') return; const me=tmMe(); S.tamiya[me]=Object.assign(tmCar(me),{nick:e.target.value.trim().slice(0,12)}); save(); renderTamiya(); });
+$('#tmOpp').addEventListener('click',e=>{ const b=e.target.closest('[data-opp]'); if(!b) return; const n=b.dataset.opp;
+  TAM.opp=TAM.opp.includes(n)?TAM.opp.filter(x=>x!==n):[...TAM.opp,n].slice(-2); renderTamiya(); });
+$('#tmTT').onclick=()=>{ ac(); tmStart('tt'); };
+$('#tmRace').onclick=()=>{ ac(); tmStart('race'); };
+
 /* =================== TABS =================== */
-const TABS={cito:['#tabCito','#tabCitoBtn','cito'],kuis:['#tabKuis','#tabKuisBtn','kuis'],kereta:['#tabKereta','#tabKeretaBtn','kereta'],james:['#tabJames','#tabJamesBtn','jamesbon'],relay:['#tabRelay','#tabRelayBtn','jam'],moments:['#tabMoments','#tabMomBtn','momen'],nostalgia:['#tabNostalgia','#tabNosBtn','nostalgia']};
-const TAB_GROUP={nostalgia:'kenangan',moments:'kenangan',kereta:'seru',relay:'seru',kuis:'seru',cito:'ngobrol',james:'ngobrol'};
+const TABS={cito:['#tabCito','#tabCitoBtn','cito'],kuis:['#tabKuis','#tabKuisBtn','kuis'],tamiya:['#tabTamiya','#tabTamiyaBtn','tamiya'],james:['#tabJames','#tabJamesBtn','jamesbon'],relay:['#tabRelay','#tabRelayBtn','jam'],moments:['#tabMoments','#tabMomBtn','momen'],nostalgia:['#tabNostalgia','#tabNosBtn','nostalgia']};
+const TAB_GROUP={nostalgia:'kenangan',moments:'kenangan',tamiya:'seru',relay:'seru',kuis:'seru',cito:'ngobrol',james:'ngobrol'};
 const LAST_IN_GROUP={kenangan:'nostalgia',seru:'relay',ngobrol:'cito'};
 function switchTab(t){
   if(!TABS[t]) t='nostalgia';
   if(t!=='james'&&JB.key) jbLock();
-  if(t!=='kereta'&&ENG.on) engineOff();
+  if(ENG.on) engineOff();
+  if(t!=='tamiya'&&TAM.running){ cancelAnimationFrame(TAM.raf); TAM.running=false; tmSound(false); }
   if(t!=='kuis'&&QZ.play){ cancelAnimationFrame(QZ.raf); clearTimeout(QZ.timeout); QZ.play=null; }
   if(t!=='kuis') QZ.review=null;
   stopSeq(); if(G.running) quitGame(); if(WALK.on){ WALK.on=false; showDialog(null); }
@@ -3647,19 +3871,19 @@ function switchTab(t){
   if(t==='moments') renderMoments();
   else if(t==='nostalgia') renderNostalgia();
   else if(t==='james') renderJames();
-  else if(t==='kereta') renderKereta();
+  else if(t==='tamiya') renderTamiya();
   else if(t==='kuis') renderKuis();
   else if(t==='cito'){ CITO.drawn=false; renderCito(); }
   else { renderRelay(); renderBand(); }
   try{ history.replaceState(null,'','#'+TABS[t][2]); }catch(e){}
   window.scrollTo({top:0});
 }
-const tabFromHash=()=>({'#cito':'cito','#kuis':'kuis','#kereta':'kereta','#jamesbon':'james','#estafet':'relay','#jam':'relay','#momen':'moments'})[location.hash]||'nostalgia';
+const tabFromHash=()=>({'#cito':'cito','#kuis':'kuis','#kereta':'tamiya','#tamiya':'tamiya','#jamesbon':'james','#estafet':'relay','#jam':'relay','#momen':'moments'})[location.hash]||'nostalgia';
 $('#tabRelayBtn').onclick=()=>switchTab('relay');
 $('#tabMomBtn').onclick=()=>switchTab('moments');
 $('#tabNosBtn').onclick=()=>switchTab('nostalgia');
 $('#tabJamesBtn').onclick=()=>switchTab('james');
-$('#tabKeretaBtn').onclick=()=>switchTab('kereta');
+$('#tabTamiyaBtn').onclick=()=>switchTab('tamiya');
 $('#tabKuisBtn').onclick=()=>switchTab('kuis');
 $('#tabCitoBtn').onclick=()=>switchTab('cito');
 document.querySelectorAll('nav.tabs .gnav button').forEach(b=>b.onclick=()=>switchTab(LAST_IN_GROUP[b.dataset.g]));
