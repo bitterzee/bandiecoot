@@ -469,6 +469,7 @@ body.gaming{overflow:hidden}
 .tmChips{display:flex;flex-wrap:wrap;gap:6px;flex:1}
 .tmChips button{font-size:12px;padding:5px 8px;text-transform:none;font-family:'Space Mono',monospace;letter-spacing:0}
 .tmChips button.sel{background:var(--navy);color:var(--mustard)}
+.tmWins{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 4px}.tmWins span{background:var(--navy);color:var(--mustard);font-size:12px;padding:3px 8px}
 .tmSw{width:30px;height:30px;padding:0;border:2px solid var(--ink);border-radius:50%}
 .tmSw.sel{box-shadow:0 0 0 3px var(--mustard),0 0 0 5px var(--ink)}
 #tmNick{flex:1;font-family:'Space Mono',monospace;font-size:14px;padding:6px 8px;border:2px solid var(--ink);background:#fff8ea;text-transform:uppercase}
@@ -634,12 +635,14 @@ body.gaming{overflow:hidden}
       <span class="tape corner">3 lap</span>
       <h2>Lintasan</h2>
       <div class="tmTrack"><canvas id="tmCv" width="360" height="590"></canvas></div>
-      <div class="tmRow" style="margin-top:12px"><div class="tmLbl">Lawan</div><div class="tmChips" id="tmOpp"></div></div>
+      <p class="hint" style="margin:10px 0 0">Semua 7 mobil ikut, pakai setelan terakhir masing-masing. Teman nggak perlu online: setel mobil kapan aja, siapa pun boleh mulai balapan.</p>
       <div class="row" style="margin-top:10px;gap:10px">
         <button class="big" id="tmRace" style="flex:1">Balapan</button>
         <button class="big" id="tmTT" style="flex:1;background:var(--paper);color:#111">Time trial</button>
       </div>
       <div id="tmResult"></div>
+      <div class="qzH3">Balapan terakhir</div>
+      <div id="tmHistory"></div>
       <div class="qzH3">Rekor time trial</div>
       <div id="tmBoard"></div>
     </div>
@@ -3689,7 +3692,7 @@ function tmStats(c){
   return {vmax, acc:m.a*(c.w?1-.06*c.w:1), drain:m.drain*bt.drain, corner:320*r.st*t.grip*w.st, jump:360*b.jump*t.jump*(1+.15*(+c.w||0))};
 }
 // track: a stadium loop, 3 lanes, a jump on the right straight
-const TK={S:280,R:100,lx:80,rx:280,ty:150,by:430,lanes:[-24,0,24]};
+const TK={S:260,R:100,lx:80,rx:280,ty:160,by:420,lanes:[-48,-32,-16,0,16,32,48]};
 TK.L=2*TK.S+2*Math.PI*TK.R; TK.jumpS=TK.S+Math.PI*TK.R+TK.S/2;
 function tkPos(s,d){
   const {S,R,lx,rx,ty,by}=TK; s=((s%TK.L)+TK.L)%TK.L;
@@ -3706,20 +3709,19 @@ function tkBackground(){
   c.fillStyle='#3a6b3a'; c.fillRect(0,0,360,590);
   for(let i=0;i<260;i++){ c.fillStyle=i%2?'#447a44':'#335f33'; c.fillRect((i*137)%360,(i*89)%590,2,2); }
   c.lineJoin='round';
-  tkStadium(c,0); c.strokeStyle='#1f3f7a'; c.lineWidth=86; c.stroke();
-  tkStadium(c,0); c.strokeStyle='#d9d6cc'; c.lineWidth=76; c.stroke();
-  [-12,12].forEach(d=>{ tkStadium(c,d); c.strokeStyle='#2f5fa8'; c.lineWidth=3; c.stroke(); });
-  [-38,38].forEach(d=>{ tkStadium(c,d); c.strokeStyle='#2f5fa8'; c.lineWidth=4; c.stroke(); });
+  tkStadium(c,0); c.strokeStyle='#1f3f7a'; c.lineWidth=122; c.stroke();
+  tkStadium(c,0); c.strokeStyle='#d9d6cc'; c.lineWidth=112; c.stroke();
+  [-40,-24,-8,8,24,40].forEach(d=>{ tkStadium(c,d); c.strokeStyle='#2f5fa8'; c.lineWidth=2; c.stroke(); });
+  [-56,56].forEach(d=>{ tkStadium(c,d); c.strokeStyle='#2f5fa8'; c.lineWidth=4; c.stroke(); });
   // start line
-  c.fillStyle='#fff'; for(let i=0;i<8;i++) for(let j=0;j<2;j++) if((i+j)%2) c.fillRect(TK.lx-38+i*9.5,TK.by-6+j*5,9.5,5);
-  c.fillStyle='#111'; for(let i=0;i<8;i++) for(let j=0;j<2;j++) if(!((i+j)%2)) c.fillRect(TK.lx-38+i*9.5,TK.by-6+j*5,9.5,5);
+  for(let i=0;i<14;i++) for(let j=0;j<2;j++){ c.fillStyle=(i+j)%2?'#fff':'#111'; c.fillRect(TK.lx-56+i*8,TK.by-6+j*5,8,5); }
   // jump ramp
   const jy=TK.ty+TK.S/2; c.save(); c.translate(TK.rx,jy);
-  for(let i=0;i<10;i++){ c.fillStyle=i%2?'#e2c44c':'#1d1d1d'; c.fillRect(-38+i*7.6,-14,7.6,28); }
-  c.fillStyle='rgba(255,255,255,.25)'; c.fillRect(-38,-14,76,6); c.restore();
+  for(let i=0;i<14;i++){ c.fillStyle=i%2?'#e2c44c':'#1d1d1d'; c.fillRect(-56+i*8,-14,8,28); }
+  c.fillStyle='rgba(255,255,255,.25)'; c.fillRect(-56,-14,112,6); c.restore();
   c.font='bold 11px Anton, Impact, sans-serif'; c.fillStyle='#e2c44c'; c.textAlign='center';
-  c.fillText('TANJAKAN',TK.rx,jy+30);
-  c.save(); c.translate(180,290); c.fillStyle='rgba(0,0,0,.25)'; c.font='26px Anton, Impact, sans-serif'; c.fillText('BANDIECOOT',0,-10); c.font='16px Anton, Impact, sans-serif'; c.fillText('CUP 2004',0,14); c.restore();
+  c.fillText('TANJAKAN',TK.rx,jy+28);
+  c.save(); c.translate(180,150); c.fillStyle='rgba(0,0,0,.25)'; c.font='15px Anton, Impact, sans-serif'; c.fillText('BANDIECOOT',0,0); c.fillText('CUP 2004',0,18); c.restore();
   return TKBG=cv;
 }
 function tmDrawCar(c,car,x,y,a,scale,alpha){
@@ -3743,9 +3745,9 @@ const TAM={running:false,raf:0,cars:[],t:0,result:null,mode:null,opp:[],snd:null
 function tmRng(seed){ let s=seed>>>0||1; return ()=>((s=Math.imul(s^(s>>>15),2246822507)+0x9e3779b9>>>0)/4294967296); }
 function tmStart(mode){
   if(TAM.running) return;
-  const me=tmMe(); const who=mode==='tt'?[me]:[me,...TAM.opp].slice(0,3);
+  const me=tmMe(); const who=mode==='tt'?[me]:[me,...BAND.filter(n=>n!==me)].slice(0,7);
   const rnd=tmRng(Date.now());
-  TAM.cars=who.map((n,i)=>{ const car=tmCar(n), st=tmStats(car); return {n,car,st,lane:TK.lanes[mode==='tt'?1:i],s:0,v:0,bat:1,lap:0,out:false,done:false,time:0,lastSec:0,coT:0,coX:0,coY:0,coA:0,air:0}; });
+  TAM.cars=who.map((n,i)=>{ const car=tmCar(n), st=tmStats(car); st.vmax*=1+(rnd()-.5)*.02; return {n,car,st,lane:TK.lanes[mode==='tt'?3:i],s:0,v:0,bat:1,lap:0,out:false,done:false,time:0,lastSec:0,coT:0,coX:0,coY:0,coA:0,air:0}; });
   TAM.rnd=rnd; TAM.t=-1.2; TAM.mode=mode; TAM.running=true; TAM.result=null; TAM.last=performance.now();
   tmSound(true); renderTamiya(); TAM.raf=requestAnimationFrame(tmLoop);
 }
@@ -3778,20 +3780,21 @@ function tmDraw(){
   TAM.cars.forEach(k=>{
     if(k.out){
       const f=Math.min(1,k.coT/1.1), dist=k.v*.55*k.coT, x=k.coX+Math.cos(k.coA)*dist, y=k.coY+Math.sin(k.coA)*dist, sc=1+Math.sin(f*Math.PI)*.9;
-      tmDrawCar(c,k.car,x,y,k.coA+k.coT*7,sc,1-f*.7);
+      tmDrawCar(c,k.car,x,y,k.coA+k.coT*7,sc*.8,1-f*.7);
       c.font='14px Anton, Impact, sans-serif'; c.textAlign='center'; c.fillStyle='#e2402b'; c.strokeStyle='#fff'; c.lineWidth=3; c.strokeText('CO!',x,y-18); c.fillText('CO!',x,y-18);
       return;
     }
-    const p=tkPos(k.s,k.lane); tmDrawCar(c,k.car,p.x,p.y,p.a,k.air>0?1+Math.sin(k.air/.35*Math.PI)*.35:1,1);
+    const p=tkPos(k.s,k.lane); tmDrawCar(c,k.car,p.x,p.y,p.a,(k.air>0?1+Math.sin(k.air/.35*Math.PI)*.35:1)*.8,1);
   });
   // HUD
-  c.fillStyle='rgba(17,17,17,.78)'; c.fillRect(110,232,140,110);
+  c.fillStyle='rgba(17,17,17,.8)'; c.fillRect(138,196,84,190);
   c.textAlign='center'; c.fillStyle='#e2c44c'; c.font='13px Anton, Impact, sans-serif';
-  if(TAM.t<0){ c.font='34px Anton, Impact, sans-serif'; c.fillText(TAM.t<-.8?'3':TAM.t<-.4?'2':'1',180,300); return; }
-  c.fillText(`${Math.max(0,TAM.t).toFixed(2)} dtk`,180,252);
-  c.font='11px "Space Mono", monospace'; c.textAlign='left';
-  TAM.cars.forEach((k,i)=>{ c.fillStyle=k.car.color; c.fillRect(120,262+i*24,8,8); c.fillStyle='#f4f0e2';
-    c.fillText(`${k.n} ${k.out?'CO':k.done?k.time.toFixed(2):'lap '+Math.min(3,k.lap+1)+'/3'}`,134,270+i*24); });
+  if(TAM.t<0){ c.font='40px Anton, Impact, sans-serif'; c.fillText(TAM.t<-.8?'3':TAM.t<-.4?'2':'1',180,305); return; }
+  c.fillText(`${Math.max(0,TAM.t).toFixed(2)}`,180,214);
+  c.font='10px "Space Mono", monospace'; c.textAlign='left';
+  const order=[...TAM.cars].sort((a,b)=>(a.out-b.out)||(b.done-a.done)||(a.done?a.time-b.time:b.s-a.s));
+  order.forEach((k,i)=>{ const y=232+i*21; c.fillStyle=k.car.color; c.fillRect(143,y-7,6,8); c.fillStyle=k.out?'#e2402b':'#f4f0e2';
+    c.fillText(k.n.slice(0,6),152,y); c.textAlign='right'; c.fillText(k.out?'CO':k.done?k.time.toFixed(1):'L'+Math.min(3,k.lap+1),219,y); c.textAlign='left'; });
 }
 function tmSound(on){
   try{
@@ -3805,6 +3808,9 @@ function tmSound(on){
 function tmFinish(){
   const res=TAM.cars.map(k=>({n:k.n,time:k.done?k.time:null,why:k.coWhy})).sort((a,b)=>(a.time??1e9)-(b.time??1e9));
   TAM.result=res;
+  if(TAM.mode==='race'){
+    const id='race-'+Date.now().toString(36); S.tamiya[id]={kind:'race',by:tmMe(),at:new Date().toISOString(),res:res.map(x=>({n:x.n,time:x.time,why:x.why||null}))}; save();
+  }
   if(TAM.mode==='tt'&&res[0].time){
     const me=tmMe(), cur=tmCar(me);
     if(!cur.best||res[0].time<cur.best){ S.tamiya[me]=Object.assign(S.tamiya[me]||tmDefault(me),{best:res[0].time,bestAt:new Date().toISOString(),bestSetup:tmSetupLine(cur)}); save(); TAM.result.pb=true; }
@@ -3829,9 +3835,12 @@ function renderTamiya(){
     <div class="tmRow"><div class="tmLbl">Warna</div><div class="tmChips">${TM.colors.map(c=>`<button class="tmSw ${car.color===c?'sel':''}" style="background:${c}" data-tk="color" data-tv="${c}" aria-label="Warna ${c}" ${TAM.running?'disabled':''}></button>`).join('')}</div></div>
     ${opt('motor',TM.motor,'Dinamo')}${opt('bat',TM.bat,'Baterai')}${opt('tire',TM.tire,'Ban')}${opt('roll',TM.roll,'Roller')}${opt('w',TM.w,'Pemberat')}
     <div class="tmRow"><div class="tmLbl">Stiker</div><input id="tmNick" maxlength="12" value="${esc(car.nick||'')}" placeholder="Nama mobil"></div>`;
-  const others=BAND.filter(n=>n!==me);
-  TAM.opp=TAM.opp.filter(n=>others.includes(n)); if(!TAM.opp.length) TAM.opp=others.slice(0,2);
-  $('#tmOpp').innerHTML=others.map(n=>`<button class="small ${TAM.opp.includes(n)?'sel':''}" data-opp="${n}" ${TAM.running?'disabled':''}>${esc(n)}</button>`).join('');
+  const races=Object.entries(S.tamiya).filter(([k,v])=>k.startsWith('race-')&&v&&v.res).map(([,v])=>v).sort((a,b)=>String(b.at).localeCompare(String(a.at)));
+  const wins={}; races.forEach(r=>{ const w=r.res.find(x=>x.time); if(w) wins[w.n]=(wins[w.n]||0)+1; });
+  $('#tmHistory').innerHTML=races.length?`<div class="tmWins">${Object.entries(wins).sort((a,b)=>b[1]-a[1]).map(([n,w])=>`<span>🏆 ${esc(n)} ×${w}</span>`).join('')}</div>
+    <table class="qzTbl">${races.slice(0,10).map(r=>{ const d=new Date(r.at), w=r.res.find(x=>x.time), co=r.res.filter(x=>!x.time).length;
+      return `<tr><td>${d.getDate()} ${BULAN[d.getMonth()]}, ${hhmm(d)}<br><span class="no" style="font-size:11px">dimulai ${esc(r.by||'?')}${co?` · ${co} CO`:''}</span></td><td>${w?'🏆 '+esc(w.n):'semua CO'}</td><td>${w?w.time.toFixed(2):'–'}</td></tr>`; }).join('')}</table>`
+    :'<p class="hint">Belum ada balapan. Mobil teman tetap ikut walau mereka lagi offline.</p>';
   $('#tmTT').disabled=$('#tmRace').disabled=TAM.running;
   const r=TAM.result;
   $('#tmResult').innerHTML=!r?'':`<div class="qzH3">${TAM.mode==='tt'?'Time trial':'Hasil balapan'}</div><table class="qzTbl">${r.map((x,i)=>`<tr class="${x.n===me?'me':''}"><td>${x.time?(i===0&&TAM.mode!=='tt'?'🏆 ':i+1+'. '):'💥 '}${esc(x.n)}</td><td class="no">${x.time?'':'CO di '+x.why}</td><td>${x.time?x.time.toFixed(2)+' dtk':'–'}</td></tr>`).join('')}</table>${r.pb?'<div class="msg" style="color:#2d7a43">Rekor pribadi baru! Masuk papan.</div>':''}`;
@@ -3840,15 +3849,13 @@ function renderTamiya(){
   if(!TAM.running){ TAM.cars=TAM.cars.length?TAM.cars:[]; tmIdle(); }
 }
 function tmIdle(){ const cv=$('#tmCv'); if(!cv) return; const c=cv.getContext('2d'); c.drawImage(tkBackground(),0,0);
-  const me=tmMe(); const who=[me,...TAM.opp].slice(0,3); who.forEach((n,i)=>{ const p=tkPos(0,TK.lanes[i]); tmDrawCar(c,tmCar(n),p.x,p.y+4,p.a,1,1); }); }
+  const me=tmMe(); const who=[me,...BAND.filter(n=>n!==me)].slice(0,7); who.forEach((n,i)=>{ const p=tkPos(0,TK.lanes[i]); tmDrawCar(c,tmCar(n),p.x,p.y+4,p.a,.8,1); }); }
 $('#tmGarage').addEventListener('click',e=>{
   const b=e.target.closest('[data-tk]'); if(!b||TAM.running) return;
   const me=tmMe(), k=b.dataset.tk; let v=b.dataset.tv; if(k==='roll'||k==='w') v=+v;
   S.tamiya[me]=Object.assign(tmCar(me),S.tamiya[me]||{},{[k]:v}); save(); renderTamiya();
 });
 $('#tmGarage').addEventListener('change',e=>{ if(e.target.id!=='tmNick') return; const me=tmMe(); S.tamiya[me]=Object.assign(tmCar(me),{nick:e.target.value.trim().slice(0,12)}); save(); renderTamiya(); });
-$('#tmOpp').addEventListener('click',e=>{ const b=e.target.closest('[data-opp]'); if(!b) return; const n=b.dataset.opp;
-  TAM.opp=TAM.opp.includes(n)?TAM.opp.filter(x=>x!==n):[...TAM.opp,n].slice(-2); renderTamiya(); });
 $('#tmTT').onclick=()=>{ ac(); tmStart('tt'); };
 $('#tmRace').onclick=()=>{ ac(); tmStart('race'); };
 
