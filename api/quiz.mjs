@@ -23,9 +23,15 @@ export function weekKey(d = new Date()) {
 }
 
 /** Looks random, same for everyone that week, and goes through every subject before any repeats. */
+// Arab Melayu (Jawi, muatan lokal Riau) joins the mix: first in week 49 of 2026, then in the rotation.
+// Weeks before that keep the original 11-subject cycle, so past quizzes keep their subjects.
+export const SUBJECTS_2 = [...SUBJECTS, 'Arab Melayu'];
+const FIXED = { '2026-W49': 'Arab Melayu' };
 export function subjectFor(week) {
+  if (FIXED[week]) return FIXED[week];
   const [y, w] = week.split('-W').map(Number);
-  const order = shuffle([...SUBJECTS], 2004);
+  const list = week < '2026-W49' ? SUBJECTS : SUBJECTS_2;
+  const order = shuffle([...list], 2004);
   return order[(y * 53 + w) % order.length];
 }
 
@@ -76,14 +82,23 @@ const TOOL = {
   },
 };
 
+const EXTRA = {
+  'Arab Melayu': [
+    'Arab Melayu here means Malay written in Jawi (Arabic-script) letters, taught in Riau schools as muatan lokal; the friends learned it in Pekanbaru.',
+    'Mix question types: read a short word or phrase written in Arab Melayu and pick its Latin spelling; pick the correct Arab Melayu spelling of a Latin word; name a letter (for example nga ڠ, ca چ, nya ڽ, ga ݢ, pa ڤ, va ۏ); and a few on its history or use in Riau (signboards, the Gurindam Dua Belas, Raja Ali Haji).',
+    'Use common everyday words (rumah, sekolah, kawan, makan, Pekanbaru, Riau, Siak). Spell them the way standard Arab Melayu / Jawi teaching in Riau does; skip any word whose spelling is commonly disputed.',
+    'Put Jawi text in the question or choices as it is, unvocalised, with no transliteration next to it that would give the answer away. Write explanations in Indonesian, with the Jawi and its Latin reading.',
+  ].join('\n'),
+};
 const system = (subject) => [
   `Write a 12-question multiple-choice quiz (the best 10 get used) on SMA (Indonesian senior high school) ${subject}, for 7 old friends who graduated in 2004 from SMA Cendana Rumbai, Pekanbaru, and now compete every week for fun.`,
   'Level: what a kelas 1–3 SMA student learned in the KBK/Kurikulum 1994 era. Mix easy, medium and a few hard ones, ordered roughly easy to hard.',
   'Each question has exactly one correct answer and three plausible wrong ones. Double-check every fact and every calculation; if a question could be argued two ways, replace it.',
   'Keep questions short enough to read on a phone. For calculations, use numbers that work out cleanly without a calculator.',
   'A light nostalgic or local touch (Riau, Pekanbaru, Sungai Siak, early-2000s) is welcome now and then, but the content must stay correct subject matter.',
+  EXTRA[subject] || '',
   'Always answer by calling make_quiz.',
-].join('\n');
+].filter(Boolean).join('\n');
 
 async function stored(H, week) {
   const r = await fetch(`${SB}/rest/v1/items?coll=eq.quiz&id=eq.${encodeURIComponent(week)}&select=data`, { headers: H }).catch(() => null);
