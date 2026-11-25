@@ -4227,32 +4227,62 @@ const K3={ready:false,loading:false,failed:false,mats:{},tex:{}};
 function k3Init(){
   if(K3.ready||K3.loading||K3.failed) return; K3.loading=true;
   Promise.all([import('three'),import('three/addons/controls/OrbitControls.js'),import('three/addons/postprocessing/EffectComposer.js'),import('three/addons/postprocessing/RenderPass.js'),import('three/addons/postprocessing/UnrealBloomPass.js'),import('three/addons/postprocessing/OutputPass.js'),
-    import('three/addons/geometries/RoundedBoxGeometry.js'),import('three/addons/environments/RoomEnvironment.js'),import('three/addons/postprocessing/GTAOPass.js')])
-  .then(([T,OC,EC,RP,UB,OP,RB,RE,GT])=>{
+    import('three/addons/geometries/RoundedBoxGeometry.js'),import('three/addons/postprocessing/ShaderPass.js')])
+  .then(([T,OC,EC,RP,UB,OP,RB,SP])=>{
     const cv=$('#km3d'); const R=new T.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});
     R.setPixelRatio(Math.min(2,devicePixelRatio||1)); R.shadowMap.enabled=true; R.shadowMap.type=T.PCFSoftShadowMap;
-    R.toneMapping=T.ACESFilmicToneMapping; R.toneMappingExposure=1.05; R.outputColorSpace=T.SRGBColorSpace;
+    R.toneMapping=T.NeutralToneMapping; R.toneMappingExposure=1.05; R.outputColorSpace=T.SRGBColorSpace;
     const scene=new T.Scene(), cam=new T.PerspectiveCamera(32,1,.1,200);
     cam.position.set(24,15.5,24);
     const ctl=new OC.OrbitControls(cam,cv); ctl.target.set(5,3.2,5); ctl.enableDamping=true; ctl.enablePan=false;
     ctl.minAzimuthAngle=.12; ctl.maxAzimuthAngle=1.45; ctl.minPolarAngle=.55; ctl.maxPolarAngle=1.32; ctl.minDistance=10; ctl.maxDistance=38; ctl.update();
     const rt=new T.WebGLRenderTarget(512,512,{type:T.HalfFloatType,samples:4});
     const comp=new EC.EffectComposer(R,rt); comp.addPass(new RP.RenderPass(scene,cam));
-    const ao=new GT.GTAOPass(scene,cam,512,512); ao.output=GT.GTAOPass.OUTPUT.Default; ao.blendIntensity=.85; ao.updateGtaoMaterial({radius:.9,distanceExponent:1.4,thickness:1.5,scale:1.2,samples:12}); comp.addPass(ao);
-    const bloom=new UB.UnrealBloomPass(new T.Vector2(512,512),.5,.5,.88); comp.addPass(bloom); comp.addPass(new OP.OutputPass());
-    const pm=new T.PMREMGenerator(R); scene.environment=pm.fromScene(new RE.RoomEnvironment(),.04).texture; scene.environmentIntensity=.35;
-    Object.assign(K3,{T,R,scene,cam,ctl,comp,bloom,ao,RB:RB.RoundedBoxGeometry,geo:{},ready:true,loading:false});
-    try{ K3.hq=localStorage.getItem('bc.kmhq')!=='0'; }catch(e){ K3.hq=true; } ao.enabled=K3.hq;
+    const bloom=new UB.UnrealBloomPass(new T.Vector2(512,512),.35,.4,.92); comp.addPass(bloom);
+    // comic book pass: black ink outlines from depth + normal edges, halftone dots in the shadows, punchier colour
+    const nrt=new T.WebGLRenderTarget(512,512); nrt.depthTexture=new T.DepthTexture(512,512); nrt.depthTexture.type=T.UnsignedIntType;
+    const ink=new SP.ShaderPass({uniforms:{tDiffuse:{value:null},tNormal:{value:null},tDepth:{value:null},res:{value:new T.Vector2(512,512)},px:{value:1.5},near:{value:.1},far:{value:200},dotSz:{value:7}},
+      vertexShader:'varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }',
+      fragmentShader:`uniform sampler2D tDiffuse,tNormal,tDepth; uniform vec2 res; uniform float px,near,far,dotSz; varying vec2 vUv;
+        float ld(vec2 uv){ float z=texture2D(tDepth,uv).x*2.-1.; return 2.*near*far/(far+near-z*(far-near)); }
+        vec3 nn(vec2 uv){ return texture2D(tNormal,uv).xyz*2.-1.; }
+        void main(){ vec4 col=texture2D(tDiffuse,vUv); vec2 o=px/res; float d0=ld(vUv);
+          float dd=0.; float nd=0.; vec3 n0=nn(vUv);
+          vec2 k[4]; k[0]=vec2(o.x,0.); k[1]=vec2(0.,o.y); k[2]=vec2(o.x,o.y); k[3]=vec2(-o.x,o.y);
+          for(int i=0;i<4;i++){ float a=ld(vUv+k[i]), b=ld(vUv-k[i]); dd=max(dd,abs(a+b-2.*d0)/d0); dd=max(dd,abs(a-b)/d0*.35);
+            nd=max(nd,1.-dot(nn(vUv+k[i]),nn(vUv-k[i]))); }
+          float bg=step(.9999,texture2D(tDepth,vUv).x);
+          float edge=max(smoothstep(.025,.06,dd),smoothstep(.25,.5,nd)); if(bg>.5){ float e2=0.; for(int i=0;i<4;i++){ e2=max(e2,1.-step(.9999,texture2D(tDepth,vUv+k[i]).x)); e2=max(e2,1.-step(.9999,texture2D(tDepth,vUv-k[i]).x)); } edge=e2; }
+          vec3 c=col.rgb; float l=dot(c,vec3(.299,.587,.114));
+          c=mix(vec3(l),c,1.3);
+          if(bg<.5){ vec2 g=gl_FragCoord.xy*mat2(.707,-.707,.707,.707)/dotSz; vec2 f=fract(g)-.5; float r=length(f);
+            float amt=clamp((.2-l)*3.,0.,.6); c*=1.-smoothstep(amt*.6-.05,amt*.6+.05,.55-r)*.4*step(.001,amt); }
+          gl_FragColor=vec4(mix(c,vec3(.06,.03,.1),edge),col.a); }`});
+    ink.uniforms.tNormal.value=nrt.texture; ink.uniforms.tDepth.value=nrt.depthTexture; comp.addPass(ink); comp.addPass(new OP.OutputPass());
+    const nmat=new T.MeshNormalMaterial();
+    Object.assign(K3,{T,R,scene,cam,ctl,comp,bloom,ink,nrt,nmat,RB:RB.RoundedBoxGeometry,geo:{},ready:true,loading:false});
+    const ramp=new T.DataTexture(new Uint8Array([90,170,255]),3,1,T.RedFormat); ramp.minFilter=ramp.magFilter=T.NearestFilter; ramp.needsUpdate=true; K3.ramp=ramp;
+    try{ K3.hq=localStorage.getItem('bc.kmhq')!=='0'; }catch(e){ K3.hq=true; }
     $('#kmCv').hidden=true; cv.hidden=false; k3Size(); k3Taps(); k3Build(); k3Loop();
   }).catch(e=>{ console.warn('3D room unavailable',e); K3.failed=true; K3.loading=false; });
 }
-function k3Size(){ const cv=K3.R.domElement, w=cv.parentNode.clientWidth||360, h=Math.round(w*.92); K3.R.setPixelRatio(Math.min(K3.hq?2:1.25,devicePixelRatio||1)); K3.R.setSize(w,h,false); cv.style.width='100%'; cv.style.height='auto'; K3.comp.setPixelRatio(K3.R.getPixelRatio()); K3.comp.setSize(w,h); K3.cam.aspect=w/h; K3.cam.updateProjectionMatrix(); }
+function k3Size(){ const cv=K3.R.domElement, w=cv.parentNode.clientWidth||360, h=Math.round(w*.92); K3.R.setPixelRatio(Math.min(K3.hq?2:1.25,devicePixelRatio||1)); K3.R.setSize(w,h,false); cv.style.width='100%'; cv.style.height='auto'; K3.comp.setPixelRatio(K3.R.getPixelRatio()); K3.comp.setSize(w,h); const pr=K3.R.getPixelRatio(); K3.nrt.setSize(w*pr,h*pr); K3.ink.uniforms.res.value.set(w*pr,h*pr); K3.ink.uniforms.px.value=Math.max(1,.95*pr); K3.ink.uniforms.dotSz.value=3.6*pr; K3.cam.aspect=w/h; K3.cam.updateProjectionMatrix(); }
 window.addEventListener('resize',()=>{ if(K3.ready) k3Size(); });
-function k3Loop(){ if(!K3.ready) return; if(curTab()==='kamar'&&!document.hidden){ K3.ctl.update(); K3.comp.render(); } requestAnimationFrame(k3Loop); }
+function k3Loop(){ if(!K3.ready) return; if(curTab()==='kamar'&&!document.hidden){ K3.ctl.update(); k3Normals(); K3.comp.render(); } requestAnimationFrame(k3Loop); }
+// normals + depth for the ink lines: everything solid, no background, no glow
+function k3Normals(){ const S=K3.scene, bg=S.background; S.background=null; S.overrideMaterial=K3.nmat; const hid=[]; K3.root&&K3.root.traverse(o=>{ if(o.isMesh&&o.userData.noInk&&o.visible){ o.visible=false; hid.push(o); } });
+  K3.R.setRenderTarget(K3.nrt); K3.R.setClearColor(0x8080ff,1); K3.R.clear(); K3.R.render(S,K3.cam); K3.R.setRenderTarget(null); S.overrideMaterial=null; S.background=bg; hid.forEach(o=>o.visible=true); K3.R.setClearColor(0,0); }
+// flat cel-shaded material with 3 tones, the way comic colourists paint
+function k3Toon(o){ const T=K3.T, m=new T.MeshToonMaterial({gradientMap:K3.ramp}); ['color','map','emissive','emissiveIntensity','side','transparent','opacity'].forEach(k=>{ if(o[k]!=null) m[k]=k==='color'||k==='emissive'?new T.Color(o[k]):o[k]; }); return m; }
+// comic sunburst behind the diorama
+function k3Burst(night){ const T=K3.T, key='burst'+night; if(K3.tex[key]) return K3.tex[key];
+  const cv=document.createElement('canvas'); cv.width=cv.height=1024; const c=cv.getContext('2d'), [a,b,dotc]=night?['#2b1660','#3d1f86','#5a34b8']:['#ffd23f','#ffb627','#ff8c1a'];
+  c.fillStyle=a; c.fillRect(0,0,1024,1024); c.fillStyle=b; for(let i=0;i<24;i+=2){ c.beginPath(); c.moveTo(512,560); const a0=i/24*Math.PI*2, a1=(i+1)/24*Math.PI*2; c.lineTo(512+Math.cos(a0)*1200,560+Math.sin(a0)*1200); c.lineTo(512+Math.cos(a1)*1200,560+Math.sin(a1)*1200); c.fill(); }
+  c.fillStyle=dotc; for(let y=0;y<1024;y+=22) for(let x=(y/22%2)*11;x<1024;x+=22){ const r=Math.hypot(x-512,y-560)/700*5; if(r>.6){ c.beginPath(); c.arc(x,y,Math.min(r,6),0,7); c.fill(); } }
+  const t=new T.CanvasTexture(cv); t.colorSpace=T.SRGBColorSpace; return K3.tex[key]=t; }
 function k3Mat(col,o={}){ const T=K3.T, key=col+JSON.stringify(o); if(K3.mats[key]) return K3.mats[key];
   // dark plastic and painted surfaces get a little sheen, wood and fabric stay matte
-  const lum=new T.Color(col).getHSL({}).l, rough=o.rough??(lum<.2?.45:lum>.85?.6:.7);
-  const m=new T.MeshStandardMaterial({color:new T.Color(col),roughness:rough,metalness:o.metal??0,envMapIntensity:1});
+  const m=k3Toon({color:col});
   if(o.glow){ m.emissive=new T.Color(col); m.emissiveIntensity=o.glow; }
   if(o.map){ m.map=o.map; } return K3.mats[key]=m; }
 // procedural textures, so the materials read as wood, tile, woven mat and painted plaster
@@ -4266,7 +4296,7 @@ function k3Tex(kind,wall){
   else if(kind==='tikar'){ c.fillStyle='#d8be86'; c.fillRect(0,0,1024,1024); for(let y=0;y<1024;y+=16) for(let x=0;x<1024;x+=16){ c.fillStyle=((x+y)/16)%2?'#c9ab70':'#e2cb96'; c.fillRect(x,y,16,16); c.fillStyle='rgba(90,60,20,.15)'; c.fillRect(x,y+14,16,2); } rep=3; }
   else if(kind==='keramik'){ for(let y=0;y<1024;y+=128) for(let x=0;x<1024;x+=128){ const v=225+Math.random()*12; c.fillStyle=`rgb(${v},${v-3},${v-10})`; c.fillRect(x,y,128,128); c.fillStyle='rgba(120,110,95,.6)'; c.fillRect(x,y,128,3); c.fillRect(x,y,3,128); } rep=2; }
   else { c.fillStyle='#ffffff'; c.fillRect(0,0,1024,1024); for(let i=0;i<30000;i++){ const v=230+Math.random()*25; c.fillStyle=`rgba(${v},${v},${v},.5)`; c.fillRect(Math.random()*1024,Math.random()*1024,3,3); } rep=2; }
-  if(kind!=='wall') noise(.05);
+  // comic look: flat colour, no grain
   const t=new T.CanvasTexture(cv); t.colorSpace=T.SRGBColorSpace; t.wrapS=t.wrapT=T.RepeatWrapping; t.repeat.set(rep,rep); t.anisotropy=8; return K3.tex[key]=t;
 }
 function k3Frame(it,z0,G){
@@ -4289,18 +4319,18 @@ function k3Build(){
   K3.root&&K3.root.traverse(o=>{ if(o.geometry&&!Object.values(K3.geo).includes(o.geometry)) o.geometry.dispose(); }); K3.root&&K3.scene.remove(K3.root); K3.root=null;
   const n=KM.who||kmMe(), room=kmRoom(n), mine=n===kmMe(), night=(room.mood||'malam')==='malam';
   const root=new T.Group(); K3.root=root; K3.scene.add(root); K3.pick=[]; K3.surf={}; K3.L={desk:[],deskBulbs:[],led:[]};
-  K3.scene.background=new T.Color(night?'#0d0a18':'#2a2733');
+  K3.scene.background=k3Burst(night);
   const N=12, H=10, wallTex=k3Tex('wall');
   const plane=(w,h,mat,x,y,z,rx,ry)=>{ const m=new T.Mesh(new T.PlaneGeometry(w,h),mat); m.position.set(x,y,z); m.rotation.set(rx||0,ry||0,0); m.receiveShadow=true; root.add(m); return m; };
-  const wm=new T.MeshStandardMaterial({color:new T.Color(room.wall),map:wallTex,roughness:.95});
+  const wm=k3Toon({color:room.wall,map:wallTex});
   K3.surf.left=plane(N,H,wm,0,H/2,N/2,0,Math.PI/2); K3.surf.right=plane(N,H,wm,N/2,H/2,0,0,0);
-  K3.surf.floor=plane(N,N,new T.MeshStandardMaterial({map:k3Tex(room.floor),roughness:room.floor==='keramik'?.35:.8}),N/2,0,N/2,-Math.PI/2,0);
+  K3.surf.floor=plane(N,N,k3Toon({map:k3Tex(room.floor)}),N/2,0,N/2,-Math.PI/2,0);
   const bb=k3Mat('#6b4a2b'); const b1=new T.Mesh(new T.BoxGeometry(.08,.45,N),bb); b1.position.set(.04,.225,N/2); const b2=new T.Mesh(new T.BoxGeometry(N,.45,.08),bb); b2.position.set(N/2,.225,.04); [b1,b2].forEach(m=>{ m.receiveShadow=true; root.add(m); });
   // wall art: the flat drawings become textured panels hung on the walls
   room.items.forEach((it,i)=>{ const d=KM_ITEMS[it.t]; if(!d||d.zone!=='wall') return;
     const k=16, cv=document.createElement('canvas'); cv.width=d.w*8*k; cv.height=d.h*8*k; const o=cv.getContext('2d'); o.imageSmoothingEnabled=false; o.scale(k,k); kmDrawItem(o,{t:it.t,x:0,y:0},it.f);
     const tex=new T.CanvasTexture(cv); tex.colorSpace=T.SRGBColorSpace; tex.anisotropy=8;
-    const isWin=it.t==='jendela', mat=new T.MeshStandardMaterial({map:tex,roughness:isWin?.3:.85});
+    const isWin=it.t==='jendela', mat=k3Toon({map:tex});
     if(isWin){ mat.emissive=new T.Color('#ffffff'); mat.emissiveMap=tex; mat.emissiveIntensity=night?.55:.9; }
     const g=new T.Group(); g.userData.idx=i; root.add(g); K3.pick.push(g);
     const depth=['rakvcd','rakdinding','fotoband','kalender','jam','jendela'].includes(it.t)?.18:.03;
@@ -4320,22 +4350,19 @@ function k3Build(){
     if(it.t==='komputer') lamp(1.3,3,1.4,'#70e6ff',8,7);
     if(it.t==='lava') lamp(.3,.6,1.2,'#ff4fb0',8,6);
   });
-  // user lights: a pendant ceiling lamp and an LED strip along the top of both walls
+  // user lights: a pendant ceiling lamp
   const Lt=kmLights(room);
   { const cord=new T.Mesh(new T.CylinderGeometry(.03,.03,1.4,8),k3Mat('#222')); cord.position.set(6,9.3,6); root.add(cord);
-    const shade=new T.Mesh(new T.ConeGeometry(.9,.8,32,1,true),new T.MeshStandardMaterial({color:'#e8e2d0',roughness:.6,side:T.DoubleSide})); shade.position.set(6,8.3,6); shade.castShadow=true; root.add(shade);
-    const bulbM=new T.MeshStandardMaterial({color:Lt.ceil.c,emissive:new T.Color(Lt.ceil.c),emissiveIntensity:Lt.ceil.on?5*Lt.ceil.p:0}); const bulb=new T.Mesh(new T.SphereGeometry(.22,20,14),bulbM); bulb.position.set(6,8,6); root.add(bulb);
+    const shade=new T.Mesh(new T.ConeGeometry(.9,.8,32,1,true),k3Toon({color:'#fff1c9',side:T.DoubleSide})); shade.position.set(6,8.3,6); shade.castShadow=true; root.add(shade);
+    const bulbM=k3Toon({color:Lt.ceil.c,emissive:Lt.ceil.c,emissiveIntensity:Lt.ceil.on?5*Lt.ceil.p:0}); const bulb=new T.Mesh(new T.SphereGeometry(.22,20,14),bulbM); bulb.position.set(6,8,6); root.add(bulb);
     const L=new T.PointLight(Lt.ceil.c,Lt.ceil.on?140*Lt.ceil.p:0,30,2); L.position.set(6,7.6,6); L.castShadow=K3.hq; L.shadow.mapSize.set(1024,1024); L.shadow.bias=-.002; L.shadow.radius=5; root.add(L);
     K3.L.ceil=L; K3.L.ceilBulb=bulbM; }
-  { const ledM=new T.MeshStandardMaterial({color:Lt.led.c,emissive:new T.Color(Lt.led.c),emissiveIntensity:3*Lt.led.p}); K3.L.ledMat=ledM;
-    const s1=new T.Mesh(new T.BoxGeometry(.06,.06,12),ledM); s1.position.set(.08,9.85,6); const s2=new T.Mesh(new T.BoxGeometry(12,.06,.06),ledM); s2.position.set(6,9.85,.08); root.add(s1,s2);
-    [[.4,9.6,2],[.4,9.6,6],[.4,9.6,10],[2,9.6,.4],[6,9.6,.4],[10,9.6,.4]].forEach(p=>{ const L=new T.PointLight(Lt.led.c,14*Lt.led.p,9,2); L.position.set(...p); root.add(L); K3.L.led.push(L); }); }
   K3.R.toneMappingExposure=Lt.exp;
   // global light: moonlight or daylight through the room, plus a soft fill
   const hemi=new T.HemisphereLight(night?'#6d5fd6':'#fff6e8',night?'#140c28':'#7a6a58',night?.55:1.5); root.add(hemi);
   const sun=new T.DirectionalLight(night?'#7f8cff':'#fff1d6',night?.55:2.6); sun.position.set(K3.winLeft===false?6:-6,14,K3.winLeft===false?-6:6); sun.position.set(night?14:12,16,night?3:4);
   sun.target.position.set(5,0,5); root.add(sun.target); sun.castShadow=true; sun.shadow.mapSize.set(K3.hq?2048:1024,K3.hq?2048:1024); Object.assign(sun.shadow.camera,{left:-12,right:12,top:12,bottom:-12,near:1,far:50}); sun.shadow.bias=-.0008; sun.shadow.radius=4; root.add(sun);
-  K3.bloom.strength=night?.55:.22; K3.scene.environmentIntensity=night?.12:.45;
+  K3.bloom.strength=night?.4:.12;
   // selection
   if(mine&&KM.sel!=null){ const g=K3.pick.find(o=>o.userData.idx===KM.sel); if(g){ const bh=new T.BoxHelper(g,0xff5a3c); root.add(bh); } }
 }
@@ -4347,7 +4374,6 @@ function k3ApplyLights(room){
   if(!K3.ready||!K3.L) return; const Lt=kmLights(room), night=(room.mood||'malam')==='malam';
   K3.R.toneMappingExposure=Lt.exp;
   if(K3.L.ceil){ K3.L.ceil.color.set(Lt.ceil.c); K3.L.ceil.intensity=Lt.ceil.on?140*Lt.ceil.p:0; K3.L.ceilBulb.color.set(Lt.ceil.c); K3.L.ceilBulb.emissive.set(Lt.ceil.c); K3.L.ceilBulb.emissiveIntensity=Lt.ceil.on?5*Lt.ceil.p:0; }
-  K3.L.ledMat.color.set(Lt.led.c); K3.L.ledMat.emissive.set(Lt.led.c); K3.L.ledMat.emissiveIntensity=3*Lt.led.p; K3.L.led.forEach(L=>{ L.color.set(Lt.led.c); L.intensity=14*Lt.led.p; });
   K3.L.desk.forEach(L=>{ L.color.set(Lt.desk.c); L.intensity=60*Lt.desk.p*(night?1:.5); }); K3.L.deskBulbs.forEach(m=>{ m.color.set(Lt.desk.c); m.emissive.set(Lt.desk.c); m.emissiveIntensity=4*Lt.desk.p; });
 }
 function k3Taps(){
@@ -4394,7 +4420,6 @@ function renderKamar(){
         return `<div class="kmLightBox"><div class="kmGrp" style="margin:0 0 6px">Lampu</div>
         <div class="tmRow"><div class="tmLbl">Kecerahan</div>${sl('exp',Lt.exp,.4,2)}</div>
         <div class="tmRow"><div class="tmLbl">Plafon</div><div style="flex:1"><div class="tmChips"><button class="small ${Lt.ceil.on?'sel':''}" data-kcon="1">${Lt.ceil.on?'Nyala':'Mati'}</button>${sw('ceil',Lt.ceil.c)}</div>${sl('ceil',Lt.ceil.p,0,2)}</div></div>
-        <div class="tmRow"><div class="tmLbl">LED strip</div><div style="flex:1"><div class="tmChips">${sw('led',Lt.led.c)}</div>${sl('led',Lt.led.p,0,2)}</div></div>
         <div class="tmRow"><div class="tmLbl">Lampu meja</div><div style="flex:1"><div class="tmChips">${sw('desk',Lt.desk.c)}</div>${sl('desk',Lt.desk.p,0,2)}</div></div>
         <div class="tmRow"><div class="tmLbl">Grafis</div><div class="tmChips"><button class="small ${K3.hq!==false?'sel':''}" data-khq="1">Tinggi</button><button class="small ${K3.hq===false?'sel':''}" data-khq="0">Hemat</button></div></div></div>`; })()}`;
   }
@@ -4447,7 +4472,7 @@ $('#tabKamar').addEventListener('click',e=>{
   if(b.dataset.kmood){ room.mood=b.dataset.kmood; kmSave(room); return renderKamar(); }
   if(b.dataset.klc){ const L=room.lights=room.lights||{}; L[b.dataset.klc]=Object.assign({},L[b.dataset.klc],{c:b.dataset.col}); kmSave(room); k3ApplyLights(room); return renderKamarControls(); }
   if(b.dataset.kcon){ const L=room.lights=room.lights||{}, cur=kmLights(room); L.ceil=Object.assign({},L.ceil,{on:!cur.ceil.on}); kmSave(room); k3ApplyLights(room); return renderKamarControls(); }
-  if(b.dataset.khq){ K3.hq=b.dataset.khq==='1'; try{ localStorage.setItem('bc.kmhq',K3.hq?'1':'0'); }catch(e){} if(K3.ready){ K3.ao.enabled=K3.hq; k3Size(); k3Build(); } return renderKamarControls(); }
+  if(b.dataset.khq){ K3.hq=b.dataset.khq==='1'; try{ localStorage.setItem('bc.kmhq',K3.hq?'1':'0'); }catch(e){} if(K3.ready){ k3Size(); k3Build(); } return renderKamarControls(); }
   const a=b.dataset.km; if(!a||KM.sel==null) return; const it=room.items[KM.sel]; if(!it) return;
   if(a==='done'){ KM.sel=null; return renderKamar(); }
   if(a==='del'){ room.items.splice(KM.sel,1); KM.sel=null; }
