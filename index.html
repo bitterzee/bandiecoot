@@ -645,7 +645,7 @@ body.gaming{overflow:hidden}
       <p class="sub">Tata ulang kamar SMA kamu: poster, tape compo, gitar di pojok. Main ke kamar yang lain juga bisa.</p>
       <div class="tmChips" id="kmWho" style="margin:0 0 12px"></div>
       <div class="kmCap" id="kmCap"></div>
-      <div class="kmFrame"><canvas id="kmCv" width="960" height="720"></canvas></div>
+      <div class="kmFrame"><canvas id="kmCv" width="820" height="720"></canvas></div>
       <p class="hint" id="kmNote" style="margin:8px 0 0"></p>
       <div id="kmEdit">
         <div class="kmSelBar" id="kmSelBar" hidden></div>
@@ -4004,16 +4004,8 @@ const KM_ITEMS={
 };
 const KM_WALLS=['#e8dcc0','#bcd3c2','#c9d6e8','#e6c7b8','#d8d0e8','#f1e3a4','#3b3f52'];
 const KM_FLOORS={keramik:'Keramik',kayu:'Kayu',tikar:'Tikar'};
-function kmDefault(){ return {wall:'#c9d6e8',floor:'kayu',mood:'malam',items:[
-  {t:'poster',x:0,y:0},{t:'poster3',x:2,y:0},{t:'poster4',x:4,y:0},{t:'jendela',x:1,y:4},{t:'rakvcd',x:8,y:1},{t:'poster5',x:15,y:0},{t:'poster2',x:17,y:0},{t:'stiker',x:20,y:0},
-  {t:'fotoband',x:15,y:4},{t:'kalender',x:21,y:4},{t:'jam',x:18,y:4},{t:'poster2',x:5,y:4},{t:'poster3',x:12,y:4},{t:'bendera',x:8,y:4},{t:'speaker',x:14,y:10},
-  {t:'meja',x:7,y:12},{t:'komputer',x:8,y:9},{t:'lampu',x:7,y:9},{t:'lava',x:11,y:9},{t:'lemari',x:20,y:13},{t:'tv',x:16,y:10},{t:'rakbuku',x:16,y:15},
-  {t:'kursi',x:12,y:14},{t:'karpet',x:6,y:17},{t:'kasur',x:0,y:17},{t:'kardus',x:8,y:17},{t:'majalah',x:13,y:17},{t:'konsol',x:16,y:17},{t:'gitar',x:22,y:17},{t:'bola',x:12,y:17}]}; }
 const kmMe=()=>ME&&ME.name||'Aku';
-const kmRoom=n=>S.rooms[n]&&S.rooms[n].items?S.rooms[n]:kmDefault();
 function kmBox(it){ const d=KM_ITEMS[it.t]; if(d.zone==='wall') return {x:it.x*8,y:it.y*8,w:d.w*8,h:d.h*8}; return {x:it.x*8,y:(it.y+1-d.h)*8,w:d.w*8,h:d.h*8}; }
-function kmClamp(it){ const d=KM_ITEMS[it.t]; it.x=Math.max(0,Math.min(KM.W-d.w,it.x));
-  if(d.zone==='wall') it.y=Math.max(0,Math.min(KM.WALLR-d.h,it.y)); else it.y=Math.max(KM.WALLR,Math.min(KM.ROWS-1,it.y)); return it; }
 function kmDrawItem(c,it,flip,comic){
   const b=kmBox(it), ink='#1d1d1d', R=(x,y,w,h,col)=>{ const X=b.x+(flip?b.w-x-w:x), Y=b.y+y; c.fillStyle=col;
     if(comic&&w>=2&&h>=2&&c.roundRect){ c.beginPath(); c.roundRect(X,Y,w,h,Math.min(1.2,w/4,h/4)); c.fill(); } else c.fillRect(X,Y,w,h);
@@ -4058,97 +4050,167 @@ function kmDrawItem(c,it,flip,comic){
     case 'karpet': R(0,2,64,6,'#b3243a'); R(2,3,60,4,'#d9822b'); R(4,4,56,2,'#b3243a'); for(let i=0;i<8;i++) R(4+i*8,4,2,2,'#f1e3a4'); break;
   }
 }
-// Comic-book rendering: everything is laid out in the same 192x144 units, drawn 5x larger with ink outlines,
-// flat colours, halftone shading and one-point-perspective floor lines.
-const KMS=5, KM_INK='#141414';
-let KM_DOTS=null;
-function kmDots(c){
-  if(KM_DOTS) return KM_DOTS;
-  const p=document.createElement('canvas'); p.width=p.height=9; const x=p.getContext('2d');
-  x.fillStyle='rgba(0,0,0,.3)'; x.beginPath(); x.arc(2.5,2.5,1.7,0,7); x.arc(7,7,1.7,0,7); x.fill();
-  return KM_DOTS=c.createPattern(p,'repeat');
+// ---- corner view: the room seen from the doorway, looking into the far corner ----
+// floor: x runs toward the bottom-right, y toward the bottom-left, 12x12 units (1 unit ≈ 25 cm); walls 10 units high.
+// Left wall is the plane x=0, right wall the plane y=0. Wall items keep their x 0-23: 0-11 on the left wall, 12-23 on the right.
+const ISO={N:12,TW:30,TH:15,ZH:30,WH:10,ox:410,oy:330,CW:820,CH:720};
+const pj=(x,y,z)=>[ISO.ox+(x-y)*ISO.TW, ISO.oy+(x+y)*ISO.TH-z*ISO.ZH];
+// floor furniture: width along its front, depth, height (units), and whether small things can sit on top
+const KM3={kasur:[4.2,8,3,2],meja:[5,2.4,3,3],kursi:[1.8,1.8,3.6],lemari:[3,2,8,8],rakbuku:[3,1.2,6,6],tv:[2.2,2,2],komputer:[2.6,2.8,2.6],
+  compo:[2.8,1,1.2],konsol:[1.3,1.6,.35],kaset:[1,.7,.5],gitar:[1.2,.5,4.6],drum:[1.4,1.4,1.6],ampli:[1.6,1,1.7,1.7],kipas:[1.2,1.2,4.2],
+  tanaman:[1,1,3],bola:[.7,.7,.7],karpet:[6,4,.05],lampu:[1,1,2.2],lava:[.6,.6,2.2],keyboard:[4.5,1.3,2.6],majalah:[1.6,1.2,.3],kardus:[2.6,1.8,.4],speaker:[.8,.8,1.4]};
+const KM_STACK=new Set(['tv','komputer','compo','konsol','kaset','lampu','lava','speaker','majalah','kardus','tanaman','bola']);
+const shadeC=(hex,p)=>{ const n=parseInt(hex.slice(1),16); let r=n>>16,g=n>>8&255,b=n&255; const k=p/100; const f=v=>Math.max(0,Math.min(255,Math.round(k>0?v+(255-v)*k:v*(1+k)))); return `rgb(${f(r)},${f(g)},${f(b)})`; };
+function kmDims(it){ const d=KM3[it.t]||[1,1,1]; return it.r?{w:d[1],d:d[0],h:d[2]}:{w:d[0],d:d[1],h:d[2]}; }
+// older rooms were laid out flat; place their floor items roughly where they stood
+function kmUpgrade(room){
+  room.items.forEach(it=>{ const def=KM_ITEMS[it.t]; if(!def||def.zone!=='floor'||it.gx!=null) return;
+    const s=((it.x||0)+def.w/2)/24, dp=Math.max(0,Math.min(1,((it.y||9)-9)/8)), a=(s*2-1)*9, b=3+dp*14, D=kmDims(it);
+    it.gx=Math.max(0,Math.min(ISO.N-D.w,Math.round((a+b)/2-D.w/2))); it.gy=Math.max(0,Math.min(ISO.N-D.d,Math.round((b-a)/2-D.d/2))); it.r=0; });
+  if(room.items.some(it=>KM_ITEMS[it.t]&&KM_ITEMS[it.t].zone==='wall'&&it.x<12&&it.x+KM_ITEMS[it.t].w>12)) room.items.forEach(it=>{ if(KM_ITEMS[it.t]&&KM_ITEMS[it.t].zone==='wall') kmClamp(it); });
+  return room;
 }
-function kmRenderItem(c,it,flip){
-  const b=kmBox(it), pad=2, W=Math.ceil((b.w+pad*2)*KMS), H=Math.ceil((b.h+pad*2)*KMS);
-  const off=document.createElement('canvas'); off.width=W; off.height=H; const o=off.getContext('2d');
-  o.scale(KMS,KMS); o.translate(pad-b.x,pad-b.y); o.lineJoin='round';
-  kmDrawItem(o,it,flip,true);
-  // halftone shading on the right/lower side of the item
-  o.setTransform(1,0,0,1,0,0); o.globalCompositeOperation='source-atop'; o.fillStyle=kmDots(o);
-  o.fillRect(W*.62,0,W*.38,H); o.fillRect(0,H*.78,W,H*.22);
-  // thick ink outline: the item's silhouette stamped around it
-  const sil=document.createElement('canvas'); sil.width=W; sil.height=H; const s=sil.getContext('2d');
-  s.drawImage(off,0,0); s.globalCompositeOperation='source-in'; s.fillStyle=KM_INK; s.fillRect(0,0,W,H);
-  const X=(b.x-pad)*KMS, Y=(b.y-pad)*KMS, t=3.2;
-  for(let a=0;a<8;a++) c.drawImage(sil,X+Math.cos(a*Math.PI/4)*t,Y+Math.sin(a*Math.PI/4)*t);
-  c.drawImage(off,X,Y);
+function kmClamp(it){ const d=KM_ITEMS[it.t];
+  if(d.zone==='wall'){ it.x=Math.max(0,Math.min(24-d.w,it.x)); if(it.x<12&&it.x+d.w>12) it.x=(12-it.x>it.x+d.w-12)?12-d.w:12; it.y=Math.max(0,Math.min(KM.WALLR-d.h,it.y)); return it; }
+  const D=kmDims(it); it.gx=Math.max(0,Math.min(ISO.N-D.w,it.gx)); it.gy=Math.max(0,Math.min(ISO.N-D.d,it.gy)); return it; }
+function kmZ(room,it){
+  if(!KM_STACK.has(it.t)) return 0; const D=kmDims(it), cx=it.gx+D.w/2, cy=it.gy+D.d/2; let z=0;
+  room.items.forEach(o=>{ if(o===it||!KM3[o.t]||KM3[o.t][3]==null||KM_ITEMS[o.t].zone!=='floor') return; const E=kmDims(o); if(cx>o.gx&&cx<o.gx+E.w&&cy>o.gy&&cy<o.gy+E.d) z=Math.max(z,KM3[o.t][3]); });
+  return z;
 }
-function kmBackground(c,room,n){
-  const S=KMS, ink=KM_INK; c.save(); c.scale(S,S); c.lineJoin='round';
-  // back wall
-  c.fillStyle=room.wall; c.fillRect(0,0,192,72);
-  c.fillStyle='rgba(255,255,255,.18)'; c.beginPath(); c.moveTo(150,0); c.lineTo(192,0); c.lineTo(110,72); c.lineTo(80,72); c.closePath(); c.fill();
-  c.restore(); c.save(); c.fillStyle=kmDots(c); c.fillRect(0,0,960,70); c.fillRect(0,0,90,360); c.fillRect(870,0,90,360); c.restore();
-  c.save(); c.scale(S,S);
-  // floor with one-point perspective toward the middle of the wall
-  const fl=room.floor, base=fl==='kayu'?'#c48a52':fl==='tikar'?'#dcc48e':'#ece8de', line=fl==='kayu'?'#8a5a2e':fl==='tikar'?'#b0945c':'#b9b3a6';
-  c.fillStyle=base; c.fillRect(0,72,192,72);
-  const vx=96, vy=28; c.strokeStyle=line; c.lineWidth=fl==='tikar'?.45:.7;
-  const step=fl==='tikar'?6:fl==='kayu'?14:16;
-  for(let x=-300;x<=500;x+=step){ c.beginPath(); c.moveTo(vx+(x-vx)*((72-vy)/(144-vy)),72); c.lineTo(x,144); c.stroke(); }
-  if(fl!=='kayu'){ for(let k=1;k<12;k++){ const y=72+72*Math.pow(k/12,1.6); c.beginPath(); c.moveTo(0,y); c.lineTo(192,y); c.stroke(); } }
-  else { c.lineWidth=.5; for(let k=0;k<26;k++){ const y=72+((k*37)%72), x=(k*53)%192; c.beginPath(); c.moveTo(x,y); c.lineTo(x+3,y); c.stroke(); } }
-  // baseboard and the wall/floor line
-  c.fillStyle='#7a4f2a'; c.fillRect(0,67,192,5); c.strokeStyle=ink; c.lineWidth=.9; c.beginPath(); c.moveTo(0,67); c.lineTo(192,67); c.moveTo(0,72); c.lineTo(192,72); c.stroke();
+function kmDefault(){ return {v:2,wall:'#c9d6e8',floor:'kayu',mood:'malam',items:[
+  {t:'poster',x:0,y:0},{t:'poster3',x:2,y:0},{t:'jendela',x:4,y:1},{t:'poster5',x:9,y:0},{t:'stiker',x:9,y:4},{t:'poster2',x:1,y:4},
+  {t:'rakvcd',x:13,y:1},{t:'poster4',x:20,y:0},{t:'fotoband',x:20,y:3},{t:'jam',x:17,y:4},{t:'kalender',x:13,y:4},{t:'poster',x:22,y:3},
+  {t:'kasur',gx:0,gy:4,r:1},{t:'meja',gx:5,gy:0,r:0},{t:'komputer',gx:6,gy:0,r:0},{t:'lampu',gx:9,gy:0,r:0},{t:'lava',gx:5,gy:1,r:0},
+  {t:'kursi',gx:7,gy:3,r:0},{t:'lemari',gx:0,gy:0,r:1},{t:'rakbuku',gx:10.8,gy:3,r:1},{t:'tv',gx:10.8,gy:3.4,r:1},
+  {t:'karpet',gx:5,gy:6,r:0},{t:'kardus',gx:6,gy:7,r:0},{t:'majalah',gx:9,gy:9,r:0},{t:'konsol',gx:8,gy:5,r:0},{t:'gitar',gx:11,gy:8,r:1},{t:'bola',gx:4,gy:10,r:0},{t:'ampli',gx:10,gy:10,r:1}]}; }
+const kmRoom=n=>S.rooms[n]&&S.rooms[n].items?kmUpgrade(S.rooms[n]):kmDefault();
+
+// drawing primitives
+function kmPoly(c,pts,fill,edge){ c.beginPath(); pts.forEach((p,i)=>{ const q=pj(p[0],p[1],p[2]); i?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1]); }); c.closePath(); c.fillStyle=fill; c.fill(); if(edge!==false){ c.strokeStyle=edge||'rgba(0,0,0,.28)'; c.lineWidth=.8; c.stroke(); } }
+function kmBox3(c,x,y,z,w,d,h,col){
+  kmPoly(c,[[x,y,z+h],[x+w,y,z+h],[x+w,y+d,z+h],[x,y+d,z+h]],shadeC(col,14));
+  kmPoly(c,[[x,y+d,z],[x+w,y+d,z],[x+w,y+d,z+h],[x,y+d,z+h]],shadeC(col,-6));
+  kmPoly(c,[[x+w,y,z],[x+w,y+d,z],[x+w,y+d,z+h],[x+w,y,z+h]],shadeC(col,-24));
+}
+// an item's own frame: u across its front (left→right on screen), v from back to front, z up
+function kmFrameOf(it,z0){
+  const D=kmDims(it), W=KM3[it.t][0], Dp=KM3[it.t][1];
+  const map=(u,v)=>it.r?[it.gx+v, it.gy+W-u]:[it.gx+u, it.gy+v];
+  return {W,Dp,
+    B:(c,u0,u1,v0,v1,za,zb,col)=>{ const a=map(u0,v0), b=map(u1,v1); kmBox3(c,Math.min(a[0],b[0]),Math.min(a[1],b[1]),z0+za,Math.abs(b[0]-a[0]),Math.abs(b[1]-a[1]),zb-za,col); },
+    F:(c,u0,u1,za,zb,col,v)=>{ v=v==null?Dp:v; const p=[map(u0,v),map(u1,v)]; kmPoly(c,[[p[0][0],p[0][1],z0+za],[p[1][0],p[1][1],z0+za],[p[1][0],p[1][1],z0+zb],[p[0][0],p[0][1],z0+zb]],col,false); },
+    T:(c,u0,u1,v0,v1,z,col)=>{ const a=map(u0,v0),b=map(u1,v0),e=map(u1,v1),f=map(u0,v1); kmPoly(c,[[a[0],a[1],z0+z],[b[0],b[1],z0+z],[e[0],e[1],z0+z],[f[0],f[1],z0+z]],col,false); },
+    P:(u,v,z)=>{ const m=map(u,v); return pj(m[0],m[1],z0+z); }};
+}
+function kmItem3(c,it,z0){
+  const K=kmFrameOf(it,z0), {B,F,T,P,W,Dp}=K, circ=(u,v,z,r,col,ring)=>{ const q=P(u,v,z); c.beginPath(); c.arc(q[0],q[1],r,0,7); c.fillStyle=col; c.fill(); if(ring){ c.strokeStyle=ring; c.lineWidth=1.2; c.stroke(); } };
+  switch(it.t){
+    case 'kasur': B(c,0,4.2,0,.4,0,3,'#5a3a22'); B(c,0,4.2,0,8,0,1,'#6b4a2b'); B(c,.2,4,.4,7.8,1,1.8,'#f1ede4'); B(c,.6,3.6,.7,2.1,1.8,2.35,'#ffffff');
+      B(c,.15,4.05,3,7.85,1.75,2.05,'#2f6db0'); T(c,.15,4.05,4,4.5,2.06,'#e2c44c'); T(c,.15,4.05,5.5,6,2.06,'#e2c44c'); break;
+    case 'meja': [[.1,.1],[4.6,.1]].forEach(([u,v])=>B(c,u,u+.3,v,v+.3,0,2.7,'#5a3a22')); B(c,3,4.8,.2,2.3,1.2,2.7,'#8b5a2b'); F(c,3.7,4.1,1.85,1.95,'#e2c44c',2.3);
+      [[.1,2],[4.6,2]].forEach(([u,v])=>B(c,u,u+.3,v,v+.3,0,2.7,'#5a3a22')); B(c,0,5,0,2.4,2.7,3,'#b07a44'); break;
+    case 'kursi': [[.1,.1],[1.4,.1],[.1,1.4],[1.4,1.4]].forEach(([u,v])=>B(c,u,u+.25,v,v+.25,0,1.6,'#3a3a3a')); B(c,0,1.8,0,1.8,1.6,1.9,'#2e3274'); B(c,0,1.8,0,.3,1.9,3.6,'#2e3274'); break;
+    case 'lemari': B(c,0,3,0,2,0,8,'#9a6a3e'); F(c,.12,1.44,.3,7.7,'#a8743f'); F(c,1.56,2.88,.3,7.7,'#a8743f'); F(c,.35,1.2,4.6,7.2,'#b9d8e8'); F(c,1.25,1.38,3.6,4.2,'#e2c44c'); F(c,1.62,1.75,3.6,4.2,'#e2c44c'); break;
+    case 'rakbuku': { B(c,0,3,0,1.2,0,6,'#6b4a2b'); F(c,.15,2.85,.2,5.8,'#2a1c10');
+      const cols=['#d23b2b','#2f5fa8','#e2c44c','#2f8f45','#f4f0e2','#8a4fb3','#e08a2e','#1d1d1d'];
+      [.3,2.2,4.1].forEach((zb,k)=>{ for(let i=0;i<13;i++){ const h=1.2+((i*7+k*3)%5)*.12; F(c,.2+i*.2,.36+i*.2,zb,zb+h,cols[(i+k*3)%8]); } F(c,.15,2.85,zb-.12,zb,'#6b4a2b'); }); break; }
+    case 'tv': B(c,.4,1.8,0,.5,.3,1.7,'#2e2e2e'); B(c,0,2.2,.4,2,0,2,'#3a3a3a'); F(c,.18,1.62,.25,1.75,'#1a2630'); F(c,.25,1.55,.32,1.68,'#5a8fb8'); F(c,1.75,1.98,1.2,1.35,'#c8302a'); F(c,1.75,1.98,.7,.82,'#111'); break;
+    case 'komputer': B(c,.8,1.8,.8,1.8,0,.4,'#cfc9b8'); B(c,.6,2,0,.7,.6,2.1,'#d8d2c0'); B(c,.3,2.3,.6,2.2,.4,2.3,'#e6e1d2');
+      F(c,.48,2.12,.62,2.12,'#1d3a5a',2.2); F(c,.6,1.4,1.75,1.85,'#7fd17f',2.2); F(c,.6,1.8,1.5,1.58,'#7fd17f',2.2); F(c,.6,1.2,1.25,1.33,'#7fd17f',2.2);
+      B(c,.2,2.4,2.35,2.8,0,.15,'#e6e1d2'); break;
+    case 'compo': B(c,0,2.8,0,1,0,1.2,'#2a2a2a'); circ(.4,1,.6,7,'#111','#555'); circ(2.4,1,.6,7,'#111','#555'); F(c,.85,1.95,.5,1,'#9fb4c8'); F(c,.95,1.85,.6,.85,'#2a2a2a'); F(c,.85,1.95,.15,.35,'#e2c44c'); break;
+    case 'konsol': B(c,0,1.3,0,1,0,.35,'#a6a6b4'); T(c,.15,.8,.15,.8,.36,'#8a8a98'); B(c,.3,.9,1.15,1.55,0,.12,'#555'); break;
+    case 'kaset': B(c,0,1,0,.7,0,.15,'#d23b2b'); B(c,.05,.95,0,.7,.15,.3,'#2f5fa8'); B(c,0,1,0,.7,.3,.45,'#e2c44c'); break;
+    case 'gitar': B(c,.05,1.15,0,.45,0,1.7,'#c8452f'); F(c,.42,.78,.9,1.25,'#1d1d1d',.45); F(c,.2,.6,.25,.55,'#f4f0e2',.45); B(c,.5,.7,.1,.3,1.7,4.2,'#5a3a22'); B(c,.4,.8,.1,.3,4.2,4.6,'#2a1a10'); break;
+    case 'drum': [[.15,.15],[1.1,.15],[.6,1.1]].forEach(([u,v])=>B(c,u,u+.12,v,v+.12,0,.95,'#888')); B(c,.1,1.3,.1,1.3,.95,1.5,'#f4f0e2'); T(c,.15,1.25,.15,1.25,1.51,'#e8e2d0'); B(c,.2,1.4,.9,1,1.5,1.58,'#e6c27a'); break;
+    case 'ampli': B(c,0,1.6,0,1,0,1.7,'#1d1d1d'); F(c,.12,1.48,.12,1.25,'#2e2e2e'); for(let i=0;i<5;i++) F(c,.12,1.48,.25+i*.2,.3+i*.2,'#3c3c3c'); [.3,.6,.9,1.2].forEach(u=>F(c,u,u+.12,1.42,1.54,'#e2c44c')); break;
+    case 'kipas': { B(c,.2,1,.2,1,0,.2,'#5a6a7a'); B(c,.5,.7,.5,.7,.2,3.2,'#7a8690'); const q=P(.6,.8,3.5); c.beginPath(); c.arc(q[0],q[1],20,0,7); c.fillStyle='rgba(210,220,228,.9)'; c.fill(); c.strokeStyle='#5a6a7a'; c.lineWidth=2; c.stroke();
+      c.lineWidth=.7; for(let a=0;a<6;a++){ c.beginPath(); c.moveTo(q[0],q[1]); c.lineTo(q[0]+Math.cos(a)*19,q[1]+Math.sin(a)*19); c.stroke(); } c.beginPath(); c.arc(q[0],q[1],5,0,7); c.fillStyle='#5a6a7a'; c.fill(); break; }
+    case 'tanaman': { B(c,.15,.85,.15,.85,0,.9,'#b0563a'); [[.5,.5,1.6,13,'#2f8f45'],[.3,.6,2.3,11,'#3aa055'],[.7,.4,2.6,10,'#2f8f45'],[.5,.5,3,9,'#46b062']].forEach(([u,v,z,r,col])=>circ(u,v,z,r,col)); break; }
+    case 'bola': { const q=P(.35,.35,.35); c.beginPath(); c.arc(q[0],q[1],10,0,7); c.fillStyle='#e08a2e'; c.fill(); c.strokeStyle='#5a2a0a'; c.lineWidth=1.2; c.stroke(); c.beginPath(); c.moveTo(q[0]-10,q[1]); c.lineTo(q[0]+10,q[1]); c.moveTo(q[0],q[1]-10); c.lineTo(q[0],q[1]+10); c.stroke(); break; }
+    case 'karpet': T(c,0,6,0,4,.02,'#b3243a'); T(c,.3,5.7,.3,3.7,.03,'#d9822b'); T(c,.6,5.4,.6,3.4,.04,'#b3243a'); for(let i=0;i<6;i++) T(c,.9+i*.8,1.3+i*.8,1.8,2.2,.05,'#f1e3a4'); break;
+    case 'lampu': B(c,.2,.8,.2,.8,0,.12,'#2a2a2a'); B(c,.45,.55,.45,.55,.12,1.6,'#3a3a3a'); B(c,.1,.9,.3,.9,1.55,2.1,'#2f8f45'); F(c,.15,.85,1.55,1.62,'#fff3c4',.9); break;
+    case 'lava': B(c,.05,.55,.05,.55,0,.5,'#7a7a8a'); B(c,.1,.5,.1,.5,.5,1.8,'#e0408a'); circ(.3,.5,1,4,'#ffb347'); circ(.25,.5,1.4,3,'#ffb347'); B(c,.15,.45,.15,.45,1.8,2.2,'#7a7a8a'); break;
+    case 'keyboard': [[.6,.5],[3.7,.5]].forEach(([u,v])=>{ B(c,u,u+.15,v,v+.15,0,2,'#333'); }); B(c,0,4.5,0,1.3,2,2.4,'#2a2a2a'); T(c,.2,4.3,.6,1.25,2.41,'#f4f0e2'); for(let i=0;i<14;i++) T(c,.3+i*.29,.42+i*.29,.6,.95,2.42,'#111'); F(c,.3,1.3,2.2,2.3,'#5a8fb8'); break;
+    case 'majalah': B(c,0,1.6,0,1.2,0,.1,'#d23b2b'); B(c,.1,1.5,.05,1.15,.1,.2,'#f4f0e2'); B(c,0,1.5,0,1.1,.2,.3,'#2f5fa8'); T(c,.2,.9,.2,.5,.31,'#e2c44c'); break;
+    case 'kardus': B(c,0,.9,0,.6,0,.25,'#2f8f45'); B(c,1.1,1.8,.2,.8,0,.3,'#e08a2e'); B(c,.3,1.1,1,1.6,0,.22,'#8a4fb3'); B(c,1.8,2.5,1,1.7,0,.4,'#d23b2b'); T(c,1.9,2.4,1.1,1.6,.41,'#f4f0e2'); break;
+    case 'speaker': B(c,0,.8,0,.8,0,1.4,'#1d1d1d'); circ(.4,.8,.45,5,'#444','#222'); circ(.4,.8,1,4,'#444','#222'); break;
+  }
+}
+// wall art: the flat poster/shelf drawing, sheared onto the wall it hangs on
+function kmWallItem(c,it,room){
+  const d=KM_ITEMS[it.t], k=4, off=document.createElement('canvas'); off.width=d.w*8*k; off.height=d.h*8*k; const o=off.getContext('2d'); o.scale(k,k);
+  kmDrawItem(o,{t:it.t,x:0,y:0},it.f); const zt=9.6-it.y, s=1/(8*k);
+  c.save();
+  if(it.x>=12){ const x0=it.x-12, p=pj(x0,0,zt); c.setTransform(ISO.TW*s,ISO.TH*s,0,ISO.ZH*s,p[0],p[1]); }
+  else { const yR=12-it.x, p=pj(0,yR,zt); c.setTransform(ISO.TW*s,-ISO.TH*s,0,ISO.ZH*s,p[0],p[1]); }
+  c.fillStyle='rgba(0,0,0,.22)'; c.fillRect(5,5,off.width,off.height);
+  c.drawImage(off,0,0); c.restore();
+}
+function kmWallQuad(it){ const d=KM_ITEMS[it.t], zt=9.6-it.y, zb=zt-d.h;
+  if(it.x>=12){ const a=it.x-12, b=a+d.w; return [pj(a,0,zt),pj(b,0,zt),pj(b,0,zb),pj(a,0,zb)]; }
+  const ya=12-it.x, yb=ya-d.w; return [pj(0,ya,zt),pj(0,yb,zt),pj(0,yb,zb),pj(0,ya,zb)]; }
+function kmFloorBox(it,z){ const D=kmDims(it), xs=[it.gx,it.gx+D.w], ys=[it.gy,it.gy+D.d], zs=[z,z+D.h]; let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+  xs.forEach(x=>ys.forEach(y=>zs.forEach(zz=>{ const p=pj(x,y,zz); x0=Math.min(x0,p[0]); x1=Math.max(x1,p[0]); y0=Math.min(y0,p[1]); y1=Math.max(y1,p[1]); }))); return {x0,x1,y0,y1}; }
+function kmRoomShell(c,room){
+  const N=ISO.N, H=ISO.WH, wall=room.wall;
+  c.fillStyle='#17131f'; c.fillRect(0,0,ISO.CW,ISO.CH);
+  kmPoly(c,[[0,0,0],[0,N,0],[0,N,H],[0,0,H]],shadeC(wall,-12),false);
+  kmPoly(c,[[0,0,0],[N,0,0],[N,0,H],[0,0,H]],wall,false);
+  // floor
+  const fl=room.floor, base=fl==='kayu'?'#b98250':fl==='tikar'?'#d6bd86':'#e6e2d8';
+  kmPoly(c,[[0,0,0],[N,0,0],[N,N,0],[0,N,0]],base,false);
+  c.save(); c.beginPath(); [[0,0],[N,0],[N,N],[0,N]].forEach((p,i)=>{ const q=pj(p[0],p[1],0); i?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1]); }); c.closePath(); c.clip();
+  c.strokeStyle=fl==='kayu'?'rgba(90,50,20,.45)':fl==='tikar'?'rgba(140,110,60,.4)':'rgba(120,115,105,.45)'; c.lineWidth=fl==='tikar'?.6:1;
+  const step=fl==='kayu'?.7:fl==='tikar'?.35:1.5;
+  for(let t=0;t<=N;t+=step){ const a=pj(t,0,0), b=pj(t,N,0); c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(b[0],b[1]); c.stroke(); if(fl!=='kayu'){ const e=pj(0,t,0), f=pj(N,t,0); c.beginPath(); c.moveTo(e[0],e[1]); c.lineTo(f[0],f[1]); c.stroke(); } }
+  if(fl==='kayu'){ for(let i=0;i<40;i++){ const t=((i*7)%17)*.7, s=(i*37)%12; const a=pj(t,s,0), b=pj(t+.7,s,0); c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(b[0],b[1]); c.stroke(); } }
+  const sh=c.createLinearGradient(...pj(0,0,0),...pj(6,6,0)); sh.addColorStop(0,'rgba(0,0,0,.35)'); sh.addColorStop(1,'rgba(0,0,0,0)'); c.fillStyle=sh; c.fillRect(0,0,ISO.CW,ISO.CH);
   c.restore();
-  c.save(); c.fillStyle=kmDots(c); c.fillRect(0,360,960,26); c.fillRect(0,640,960,80); c.restore();
-}
-function kmFrame(c,n){
-  c.save(); c.strokeStyle=KM_INK; c.lineWidth=14; c.strokeRect(7,7,946,706);
-  c.restore(); const cap=$('#kmCap'); if(cap) cap.textContent=`Kamar ${n} · 2002`;
+  // baseboards and the corner
+  kmPoly(c,[[0,0,0],[0,N,0],[0,N,.4],[0,0,.4]],'#6b4a2b',false); kmPoly(c,[[0,0,0],[N,0,0],[N,0,.4],[0,0,.4]],'#7a5432',false);
+  const top=pj(0,0,H), bot=pj(0,0,0); const g=c.createLinearGradient(top[0]-60,0,top[0]+60,0); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(.5,'rgba(0,0,0,.18)'); g.addColorStop(1,'rgba(0,0,0,0)'); c.fillStyle=g; c.fillRect(top[0]-60,top[1],120,bot[1]-top[1]);
+  const wg=c.createLinearGradient(0,pj(0,0,H)[1],0,pj(0,0,4)[1]); wg.addColorStop(0,'rgba(0,0,0,.25)'); wg.addColorStop(1,'rgba(0,0,0,0)'); c.save(); c.beginPath(); [[0,N,H],[0,0,H],[N,0,H],[N,0,0],[0,0,0],[0,N,0]].forEach((p,i)=>{ const q=pj(...p); i?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1]); }); c.closePath(); c.clip(); c.fillStyle=wg; c.fillRect(0,0,ISO.CW,ISO.CH); c.restore();
 }
 function kmDraw(){
-  const cv=$('#kmCv'); if(!cv) return; const c=cv.getContext('2d'), n=KM.who||kmMe(), room=kmRoom(n);
-  c.setTransform(1,0,0,1,0,0); c.clearRect(0,0,cv.width,cv.height);
-  kmBackground(c,room,n);
-  const items=room.items.map((it,i)=>({it,i})).filter(o=>KM_ITEMS[o.it.t]);
-  const order=items.filter(o=>KM_ITEMS[o.it.t].zone==='wall').concat(items.filter(o=>KM_ITEMS[o.it.t].flat), items.filter(o=>KM_ITEMS[o.it.t].zone==='floor'&&!KM_ITEMS[o.it.t].flat).sort((a,b)=>a.it.y-b.it.y));
-  order.forEach(({it,i})=>{
-    const b=kmBox(it), d=KM_ITEMS[it.t];
-    if(d.zone==='floor'&&!d.flat){ c.fillStyle='rgba(0,0,0,.22)'; c.beginPath(); c.ellipse((b.x+b.w/2)*KMS,(b.y+b.h)*KMS,(b.w/2+2)*KMS,2.4*KMS,0,0,7); c.fill(); }
-    if(d.zone==='wall'){ c.fillStyle='rgba(0,0,0,.18)'; c.fillRect((b.x+1.5)*KMS,(b.y+1.5)*KMS,b.w*KMS,b.h*KMS); }
-    kmRenderItem(c,it,it.f);
-    if(KM.sel===i&&n===kmMe()){ c.save(); c.strokeStyle='#e2402b'; c.lineWidth=4; c.setLineDash([12,8]); c.strokeRect((b.x-1.5)*KMS,(b.y-1.5)*KMS,(b.w+3)*KMS,(b.h+3)*KMS); c.restore(); }
-  });
-  if((room.mood||'malam')==='malam') kmNight(c,room);
-  kmFrame(c,n);
+  const cv=$('#kmCv'); if(!cv) return; const c=cv.getContext('2d'), n=KM.who||kmMe(), room=kmRoom(n), mine=n===kmMe();
+  c.setTransform(1,0,0,1,0,0); c.clearRect(0,0,cv.width,cv.height); c.lineJoin='round';
+  kmRoomShell(c,room);
+  const all=room.items.map((it,i)=>({it,i})).filter(o=>KM_ITEMS[o.it.t]);
+  all.filter(o=>KM_ITEMS[o.it.t].zone==='wall').forEach(({it,i})=>{ kmWallItem(c,it,room); if(KM.sel===i&&mine){ const q=kmWallQuad(it); c.save(); c.strokeStyle='#ff5a3c'; c.lineWidth=3; c.setLineDash([9,6]); c.beginPath(); q.forEach((p,j)=>j?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1])); c.closePath(); c.stroke(); c.restore(); } });
+  const floor=all.filter(o=>KM_ITEMS[o.it.t].zone==='floor').map(o=>({...o,z:kmZ(room,o.it),D:kmDims(o.it)}));
+  // contact shadows first, then furniture back to front
+  floor.filter(o=>!o.z&&o.it.t!=='karpet').forEach(({it,D})=>kmPoly(c,[[it.gx+.2,it.gy+.2,0],[it.gx+D.w+.35,it.gy+.2,0],[it.gx+D.w+.35,it.gy+D.d+.35,0],[it.gx+.2,it.gy+D.d+.35,0]],'rgba(0,0,0,.22)',false));
+  floor.sort((a,b)=>(a.it.t==='karpet'?-99:0)-(b.it.t==='karpet'?-99:0)||(a.it.gx+a.D.w/2+a.it.gy+a.D.d/2+a.z*.3)-(b.it.gx+b.D.w/2+b.it.gy+b.D.d/2+b.z*.3));
+  floor.forEach(({it,i,z})=>{ kmItem3(c,it,z); if(KM.sel===i&&mine){ const b=kmFloorBox(it,z); c.save(); c.strokeStyle='#ff5a3c'; c.lineWidth=3; c.setLineDash([9,6]); c.strokeRect(b.x0-4,b.y0-4,b.x1-b.x0+8,b.y1-b.y0+8); c.restore(); } });
+  if((room.mood||'malam')==='malam') kmNight(c,room,floor);
+  const cap=$('#kmCap'); if(cap) cap.textContent=`Kamar ${n} · 2002`;
 }
-// evening light: a purple-blue room lit by the window, screens and lamps (multiply for the dark, screen for the glow)
-function kmNight(c,room){
-  const S=KMS; c.save();
-  c.globalCompositeOperation='multiply';
-  const g=c.createLinearGradient(0,0,0,720); g.addColorStop(0,'#5a4cb0'); g.addColorStop(.55,'#6d5fc0'); g.addColorStop(1,'#4b3f8e'); c.fillStyle=g; c.fillRect(0,0,960,720);
+function kmNight(c,room,floor){
+  c.save(); c.globalCompositeOperation='multiply';
+  const g=c.createLinearGradient(0,0,0,ISO.CH); g.addColorStop(0,'#5a4cb0'); g.addColorStop(.55,'#6d5fc0'); g.addColorStop(1,'#4b3f8e'); c.fillStyle=g; c.fillRect(0,0,ISO.CW,ISO.CH);
   c.globalCompositeOperation='screen';
-  const glow=(x,y,r,col,a)=>{ const rg=c.createRadialGradient(x,y,0,x,y,r); rg.addColorStop(0,col.replace('A',a)); rg.addColorStop(1,col.replace('A','0')); c.fillStyle=rg; c.fillRect(x-r,y-r,r*2,r*2); };
-  room.items.forEach(it=>{ const d=KM_ITEMS[it.t]; if(!d) return; const b=kmBox(it), cx=(b.x+b.w/2)*S, cy=(b.y+b.h/2)*S;
-    if(it.t==='jendela'){ glow(cx,cy,40*S,'rgba(90,170,255,A)',.4); glow(cx+10*S,(b.y+b.h)*S+18*S,30*S,'rgba(70,140,240,A)',.18); }
-    if(it.t==='tv'||it.t==='komputer'){ glow(cx,(b.y+b.h*.35)*S,26*S,'rgba(80,230,255,A)',.42); }
-    if(it.t==='lampu'){ glow((b.x+b.w*.45)*S,(b.y+b.h*.7)*S,34*S,'rgba(255,190,90,A)',.6); }
-    if(it.t==='lava'){ glow(cx,cy,18*S,'rgba(255,80,170,A)',.5); }
-    if(it.t==='compo'||it.t==='ampli'||it.t==='keyboard'){ glow(cx,cy,10*S,'rgba(120,255,160,A)',.25); }
+  const glow=(q,r,col,a)=>{ const rg=c.createRadialGradient(q[0],q[1],0,q[0],q[1],r); rg.addColorStop(0,col.replace('A',a)); rg.addColorStop(1,col.replace('A','0')); c.fillStyle=rg; c.fillRect(q[0]-r,q[1]-r,r*2,r*2); };
+  room.items.forEach(it=>{ const d=KM_ITEMS[it.t]; if(!d) return;
+    if(it.t==='jendela'){ const q=kmWallQuad(it), m=[(q[0][0]+q[2][0])/2,(q[0][1]+q[2][1])/2]; glow(m,170,'rgba(90,170,255,A)',.42); glow([m[0],m[1]+150],150,'rgba(70,140,240,A)',.16); }
   });
-  // light sources stay bright: screens, window panes, the lamp bulb, the lava
-  c.globalCompositeOperation='source-over';
-  room.items.forEach(it=>{ const d=KM_ITEMS[it.t]; if(!d) return; const b=kmBox(it), f=it.f, at=(x,y,w,h,col)=>{ c.fillStyle=col; c.fillRect((b.x+(f?b.w-x-w:x))*S,(b.y+y)*S,w*S,h*S); };
-    if(it.t==='tv'){ at(2,2,16,14,'rgba(120,200,240,.85)'); at(3,3,6,4,'rgba(220,245,255,.9)'); }
-    if(it.t==='komputer'){ at(4,2,16,11,'rgba(30,70,110,.95)'); at(5,3,8,2,'#9dffa0'); at(5,6,11,1,'#9dffa0'); at(5,8,6,1,'#9dffa0'); }
-    if(it.t==='jendela'){ at(2,2,13,9,'rgba(150,200,255,.55)'); at(17,2,13,9,'rgba(150,200,255,.55)'); }
-    if(it.t==='lampu'){ at(4,10,6,1,'#fff3c4'); }
-    if(it.t==='lava'){ at(2,7,3,3,'#ffd08a'); at(4,12,3,3,'#ffd08a'); }
+  floor.forEach(({it,z})=>{ const K=kmFrameOf(it,z);
+    if(it.t==='tv') glow(K.P(1.1,2.3,1),110,'rgba(80,230,255,A)',.45);
+    if(it.t==='komputer') glow(K.P(1.3,2.6,1.4),110,'rgba(80,230,255,A)',.42);
+    if(it.t==='lampu') glow(K.P(.5,.9,1.2),150,'rgba(255,190,90,A)',.6);
+    if(it.t==='lava') glow(K.P(.3,.5,1.2),70,'rgba(255,80,170,A)',.55);
+    if(it.t==='compo'||it.t==='ampli'||it.t==='keyboard') glow(K.P(K.W/2,K.Dp,1),40,'rgba(120,255,160,A)',.22);
   });
-  // rim light along the floor and a soft vignette
   c.globalCompositeOperation='source-over';
-  const v=c.createRadialGradient(480,380,200,480,380,640); v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(10,5,30,.32)'); c.fillStyle=v; c.fillRect(0,0,960,720);
+  // light sources stay bright
+  floor.forEach(({it,z})=>{ const K=kmFrameOf(it,z);
+    if(it.t==='tv'){ K.F(c,.25,1.55,.32,1.68,'rgba(140,210,245,.9)'); }
+    if(it.t==='komputer'){ K.F(c,.48,2.12,.62,2.12,'rgba(30,70,110,.95)',2.2); K.F(c,.6,1.4,1.75,1.85,'#a8ffaa',2.2); K.F(c,.6,1.8,1.5,1.58,'#a8ffaa',2.2); K.F(c,.6,1.2,1.25,1.33,'#a8ffaa',2.2); }
+    if(it.t==='lampu') K.F(c,.15,.85,1.55,1.62,'#fff3c4',.9);
+  });
+  room.items.filter(it=>it.t==='jendela').forEach(it=>{ const q=kmWallQuad(it); c.fillStyle='rgba(150,200,255,.35)'; c.beginPath(); q.forEach((p,j)=>j?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1])); c.closePath(); c.fill(); });
+  const v=c.createRadialGradient(ISO.CW/2,ISO.CH*.55,200,ISO.CW/2,ISO.CH*.55,620); v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(10,5,30,.4)'); c.fillStyle=v; c.fillRect(0,0,ISO.CW,ISO.CH);
   c.restore();
 }
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ if(curTab()==='kamar') kmDraw(); });
@@ -4156,12 +4218,13 @@ function renderKamar(){
   const me=kmMe(); KM.who=KM.who||me; const n=KM.who, mine=n===me, room=kmRoom(n), r=S.rooms[n];
   $('#kmWho').innerHTML=BAND.concat(BAND.includes(me)?[]:[me]).map(x=>`<button class="small ${x===n?'sel':''}" data-kw="${esc(x)}">${esc(x===me?'Kamarku':x)}</button>`).join('');
   $('#kmTitle').textContent=mine?'Kamar kamu':`Kamar ${n}`;
-  $('#kmNote').textContent=mine?(KM.pick?`Ketuk ruangan buat taruh ${KM_ITEMS[KM.pick].name.toLowerCase()}.`:KM.sel!=null?'Ketuk tempat lain buat mindahin, atau pakai tombol di bawah.':'Pilih barang di bawah, lalu ketuk ruangan. Ketuk barang buat geser.')
+  $('#kmNote').textContent=mine?(KM.pick?`Ketuk ruangan buat taruh ${KM_ITEMS[KM.pick].name.toLowerCase()}.`:KM.sel!=null?'Ketuk tempat lain buat mindahin, atau pakai tombol di bawah.':'Pilih barang di bawah, lalu ketuk lantai atau dinding. Ketuk barang buat geser atau putar.')
     :(r&&r.at?`Terakhir diubah ${momDate(r.at)}.`:`${n} belum nata kamarnya. Ini kamar standar dulu.`);
   $('#kmEdit').hidden=!mine;
   if(mine){
     const sel=KM.sel!=null?room.items[KM.sel]:null;
-    $('#kmSelBar').innerHTML=sel?`<b>${esc(KM_ITEMS[sel.t].name)}</b><span class="spacer"></span><button class="small" data-km="l">◀</button><button class="small" data-km="u">▲</button><button class="small" data-km="d">▼</button><button class="small" data-km="r">▶</button><button class="small" data-km="flip">Balik</button><button class="small" data-km="up">Depan</button><button class="small dark" data-km="del">Hapus</button><button class="small" data-km="done">Selesai</button>`:'';
+    const wallSel=sel&&KM_ITEMS[sel.t].zone==='wall';
+    $('#kmSelBar').innerHTML=sel?`<b>${esc(KM_ITEMS[sel.t].name)}</b><span class="spacer"></span>${wallSel?'<button class="small" data-km="l">◀</button><button class="small" data-km="u">▲</button><button class="small" data-km="d">▼</button><button class="small" data-km="r">▶</button><button class="small" data-km="flip">Balik</button>':'<button class="small" data-km="nw" aria-label="Ke dinding kiri">↖</button><button class="small" data-km="ne" aria-label="Ke dinding kanan">↗</button><button class="small" data-km="sw" aria-label="Maju kiri">↙</button><button class="small" data-km="se" aria-label="Maju kanan">↘</button><button class="small" data-km="rot">Putar</button>'}<button class="small dark" data-km="del">Hapus</button><button class="small" data-km="done">Selesai</button>`:'';
     $('#kmSelBar').hidden=!sel;
     const btn=([k,d])=>`<button class="small ${KM.pick===k?'sel':''}" data-kp="${k}">${esc(d.name)}</button>`;
     $('#kmPalette').innerHTML=`<div class="kmGrp">Dinding</div>${Object.entries(KM_ITEMS).filter(([,d])=>d.zone==='wall').map(btn).join('')}<div class="kmGrp">Lantai</div>${Object.entries(KM_ITEMS).filter(([,d])=>d.zone==='floor').map(btn).join('')}`;
@@ -4172,21 +4235,37 @@ function renderKamar(){
   kmDraw();
 }
 function kmSave(room){ room.at=new Date().toISOString(); S.rooms[kmMe()]=room; save(); }
-function kmMine(){ const me=kmMe(); const r=kmRoom(me); return S.rooms[me]===r?r:JSON.parse(JSON.stringify(r)); }
+function kmMine(){ const me=kmMe(); const r=kmRoom(me); r.v=2; return S.rooms[me]===r?r:JSON.parse(JSON.stringify(r)); }
+function kmTapSpot(px,py,def){
+  // floor point under the finger, or the wall point for wall items
+  if(def.zone==='wall'){ if(px<ISO.ox){ const y=(ISO.ox-px)/ISO.TW, z=(ISO.oy+y*ISO.TH-py)/ISO.ZH; return {x:Math.round(12-y-def.w/2), y:Math.round(9.6-z-def.h/2)}; }
+    const x=(px-ISO.ox)/ISO.TW, z=(ISO.oy+x*ISO.TH-py)/ISO.ZH; return {x:Math.round(12+x-def.w/2), y:Math.round(9.6-z-def.h/2)}; }
+  const a=(px-ISO.ox)/ISO.TW, b=(py-ISO.oy)/ISO.TH; return {fx:(a+b)/2, fy:(b-a)/2};
+}
+function kmPlaceAt(it,px,py){
+  const def=KM_ITEMS[it.t], t=kmTapSpot(px,py,def);
+  if(def.zone==='wall'){ it.x=t.x; it.y=t.y; } else { const D=kmDims(it); it.gx=Math.round((t.fx-D.w/2)*2)/2; it.gy=Math.round((t.fy-D.d/2)*2)/2; }
+  return kmClamp(it);
+}
+function kmHit(room,px,py){
+  const inPoly=(q)=>{ let r=false; for(let i=0,j=q.length-1;i<q.length;j=i++){ if(((q[i][1]>py)!==(q[j][1]>py))&&(px<(q[j][0]-q[i][0])*(py-q[i][1])/(q[j][1]-q[i][1])+q[i][0])) r=!r; } return r; };
+  const floor=room.items.map((it,i)=>({it,i})).filter(o=>KM_ITEMS[o.it.t]&&KM_ITEMS[o.it.t].zone==='floor').map(o=>({...o,z:kmZ(room,o.it),D:kmDims(o.it)}))
+    .sort((a,b)=>(b.it.gx+b.D.w/2+b.it.gy+b.D.d/2+b.z*.3)-(a.it.gx+a.D.w/2+a.it.gy+a.D.d/2+a.z*.3));
+  const f=floor.find(o=>o.it.t!=='karpet'&&(()=>{ const b=kmFloorBox(o.it,o.z); return px>=b.x0&&px<=b.x1&&py>=b.y0&&py<=b.y1; })());
+  if(f) return f.i;
+  const w=room.items.map((it,i)=>({it,i})).filter(o=>KM_ITEMS[o.it.t]&&KM_ITEMS[o.it.t].zone==='wall').reverse().find(o=>inPoly(kmWallQuad(o.it)));
+  if(w) return w.i;
+  const k=floor.find(o=>o.it.t==='karpet'&&(()=>{ const b=kmFloorBox(o.it,o.z); return px>=b.x0&&px<=b.x1&&py>=b.y0&&py<=b.y1; })());
+  return k?k.i:null;
+}
 $('#kmCv').addEventListener('click',e=>{
   const me=kmMe(); if((KM.who||me)!==me) return;
-  const cv=e.currentTarget, rc=cv.getBoundingClientRect(), px=(e.clientX-rc.left)/rc.width*192, py=(e.clientY-rc.top)/rc.height*144;
-  const cx=Math.floor(px/8), cy=Math.floor(py/8), room=kmMine();
-  if(KM.pick){
-    const d=KM_ITEMS[KM.pick], it=kmClamp({t:KM.pick,x:cx-Math.floor(d.w/2),y:d.zone==='wall'?cy-Math.floor(d.h/2):Math.max(KM.WALLR,cy)});
-    room.items.push(it); KM.sel=room.items.length-1; KM.pick=null; kmSave(room); return renderKamar();
-  }
-  // tap on an item: select the frontmost one under the finger
-  const order=room.items.map((it,i)=>({it,i})).sort((a,b)=>{ const za=KM_ITEMS[a.it.t].zone==='wall'?0:KM_ITEMS[a.it.t].flat?1:2+a.it.y/100, zb=KM_ITEMS[b.it.t].zone==='wall'?0:KM_ITEMS[b.it.t].flat?1:2+b.it.y/100; return zb-za; });
-  const hit=order.find(({it})=>{ const b=kmBox(it); return px>=b.x&&px<b.x+b.w&&py>=b.y&&py<b.y+b.h; });
-  if(hit&&hit.i!==KM.sel){ KM.sel=hit.i; return renderKamar(); }
-  if(KM.sel!=null&&!hit){ const it=room.items[KM.sel], d=KM_ITEMS[it.t]; it.x=cx-Math.floor(d.w/2); it.y=d.zone==='wall'?cy-Math.floor(d.h/2):Math.max(KM.WALLR,cy); kmClamp(it); kmSave(room); return renderKamar(); }
-  if(!hit){ KM.sel=null; renderKamar(); }
+  const cv=e.currentTarget, rc=cv.getBoundingClientRect(), px=(e.clientX-rc.left)/rc.width*ISO.CW, py=(e.clientY-rc.top)/rc.height*ISO.CH, room=kmMine();
+  if(KM.pick){ const def=KM_ITEMS[KM.pick], it=def.zone==='wall'?{t:KM.pick,x:0,y:0}:{t:KM.pick,gx:0,gy:0,r:0}; kmPlaceAt(it,px,py); room.items.push(it); KM.sel=room.items.length-1; KM.pick=null; kmSave(room); return renderKamar(); }
+  const hit=kmHit(room,px,py);
+  if(hit!=null&&hit!==KM.sel){ KM.sel=hit; return renderKamar(); }
+  if(KM.sel!=null&&hit==null){ kmPlaceAt(room.items[KM.sel],px,py); kmSave(room); return renderKamar(); }
+  if(hit==null){ KM.sel=null; renderKamar(); }
 });
 $('#tabKamar').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
@@ -4200,8 +4279,9 @@ $('#tabKamar').addEventListener('click',e=>{
   if(a==='done'){ KM.sel=null; return renderKamar(); }
   if(a==='del'){ room.items.splice(KM.sel,1); KM.sel=null; }
   else if(a==='flip') it.f=!it.f;
-  else if(a==='up'){ room.items.splice(KM.sel,1); room.items.push(it); KM.sel=room.items.length-1; }
-  else { if(a==='l') it.x--; if(a==='r') it.x++; if(a==='u') it.y--; if(a==='d') it.y++; kmClamp(it); }
+  else if(a==='rot'){ it.r=it.r?0:1; kmClamp(it); }
+  else { if(a==='l') it.x--; if(a==='r') it.x++; if(a==='u') it.y--; if(a==='d') it.y++;
+    if(a==='nw') it.gx-=.5; if(a==='se') it.gx+=.5; if(a==='ne') it.gy-=.5; if(a==='sw') it.gy+=.5; kmClamp(it); }
   kmSave(room); renderKamar();
 });
 
