@@ -4232,10 +4232,10 @@ function k3Init(){
     const cv=$('#km3d'); const R=new T.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});
     R.setPixelRatio(Math.min(2,devicePixelRatio||1)); R.shadowMap.enabled=true; R.shadowMap.type=T.PCFSoftShadowMap;
     R.toneMapping=T.NeutralToneMapping; R.toneMappingExposure=1.05; R.outputColorSpace=T.SRGBColorSpace;
-    const scene=new T.Scene(), cam=new T.PerspectiveCamera(32,1,.1,200);
-    cam.position.set(24,15.5,24);
-    const ctl=new OC.OrbitControls(cam,cv); ctl.target.set(5,3.2,5); ctl.enableDamping=true; ctl.enablePan=false;
-    ctl.minAzimuthAngle=.12; ctl.maxAzimuthAngle=1.45; ctl.minPolarAngle=.55; ctl.maxPolarAngle=1.32; ctl.minDistance=10; ctl.maxDistance=38; ctl.update();
+    const scene=new T.Scene(), cam=new T.PerspectiveCamera(56,1,.1,200);
+    cam.position.set(13.2,6.4,13.2);
+    const ctl=new OC.OrbitControls(cam,cv); ctl.target.set(3.2,3.3,3.2); ctl.enableDamping=true; ctl.enablePan=false;
+    ctl.minAzimuthAngle=.3; ctl.maxAzimuthAngle=1.27; ctl.minPolarAngle=1.0; ctl.maxPolarAngle=1.5; ctl.minDistance=6; ctl.maxDistance=16; ctl.update();
     const rt=new T.WebGLRenderTarget(512,512,{type:T.HalfFloatType,samples:4});
     const comp=new EC.EffectComposer(R,rt); comp.addPass(new RP.RenderPass(scene,cam));
     const bloom=new UB.UnrealBloomPass(new T.Vector2(512,512),.35,.4,.92); comp.addPass(bloom);
@@ -4252,21 +4252,23 @@ function k3Init(){
           for(int i=0;i<4;i++){ float a=ld(vUv+k[i]), b=ld(vUv-k[i]); dd=max(dd,abs(a+b-2.*d0)/d0); dd=max(dd,abs(a-b)/d0*.35);
             nd=max(nd,1.-dot(nn(vUv+k[i]),nn(vUv-k[i]))); }
           float bg=step(.9999,texture2D(tDepth,vUv).x);
-          float edge=max(smoothstep(.025,.06,dd),smoothstep(.25,.5,nd)); if(bg>.5){ float e2=0.; for(int i=0;i<4;i++){ e2=max(e2,1.-step(.9999,texture2D(tDepth,vUv+k[i]).x)); e2=max(e2,1.-step(.9999,texture2D(tDepth,vUv-k[i]).x)); } edge=e2; }
+          float edge=max(smoothstep(.03,.08,dd),smoothstep(.35,.65,nd)); if(bg>.5){ float e2=0.; for(int i=0;i<4;i++){ e2=max(e2,1.-step(.9999,texture2D(tDepth,vUv+k[i]).x)); e2=max(e2,1.-step(.9999,texture2D(tDepth,vUv-k[i]).x)); } edge=e2; }
           vec3 c=col.rgb; float l=dot(c,vec3(.299,.587,.114));
           c=mix(vec3(l),c,1.3);
-          if(bg<.5){ vec2 g=gl_FragCoord.xy*mat2(.707,-.707,.707,.707)/dotSz; vec2 f=fract(g)-.5; float r=length(f);
-            float amt=clamp((.2-l)*3.,0.,.6); c*=1.-smoothstep(amt*.6-.05,amt*.6+.05,.55-r)*.4*step(.001,amt); }
-          gl_FragColor=vec4(mix(c,vec3(.06,.03,.1),edge),col.a); }`});
+          c=mix(vec3(l),c,.72/1.3); c*=vec3(1.04,.98,.95);
+          float h=fract(sin(dot(floor(gl_FragCoord.xy/1.5),vec2(12.9898,78.233)))*43758.5453); c+=(h-.5)*.055;
+          float hatch=step(.5,fract((gl_FragCoord.x+gl_FragCoord.y)/dotSz)); c*=1.-(1.-smoothstep(.05,.16,l))*hatch*.18;
+          vec2 q=vUv-.5; c*=1.-dot(q,q)*.9;
+          gl_FragColor=vec4(mix(c,vec3(.12,.06,.08),edge*.9),col.a); }`});
     ink.uniforms.tNormal.value=nrt.texture; ink.uniforms.tDepth.value=nrt.depthTexture; comp.addPass(ink); comp.addPass(new OP.OutputPass());
     const nmat=new T.MeshNormalMaterial();
     Object.assign(K3,{T,R,scene,cam,ctl,comp,bloom,ink,nrt,nmat,RB:RB.RoundedBoxGeometry,geo:{},ready:true,loading:false});
-    const ramp=new T.DataTexture(new Uint8Array([90,170,255]),3,1,T.RedFormat); ramp.minFilter=ramp.magFilter=T.NearestFilter; ramp.needsUpdate=true; K3.ramp=ramp;
+    const ramp=new T.DataTexture(new Uint8Array([70,135,195,255]),4,1,T.RedFormat); ramp.minFilter=ramp.magFilter=T.NearestFilter; ramp.needsUpdate=true; K3.ramp=ramp;
     try{ K3.hq=localStorage.getItem('bc.kmhq')!=='0'; }catch(e){ K3.hq=true; }
     $('#kmCv').hidden=true; cv.hidden=false; k3Size(); k3Taps(); k3Build(); k3Loop();
   }).catch(e=>{ console.warn('3D room unavailable',e); K3.failed=true; K3.loading=false; });
 }
-function k3Size(){ const cv=K3.R.domElement, w=cv.parentNode.clientWidth||360, h=Math.round(w*.92); K3.R.setPixelRatio(Math.min(K3.hq?2:1.25,devicePixelRatio||1)); K3.R.setSize(w,h,false); cv.style.width='100%'; cv.style.height='auto'; K3.comp.setPixelRatio(K3.R.getPixelRatio()); K3.comp.setSize(w,h); const pr=K3.R.getPixelRatio(); K3.nrt.setSize(w*pr,h*pr); K3.ink.uniforms.res.value.set(w*pr,h*pr); K3.ink.uniforms.px.value=Math.max(1,.95*pr); K3.ink.uniforms.dotSz.value=3.6*pr; K3.cam.aspect=w/h; K3.cam.updateProjectionMatrix(); }
+function k3Size(){ const cv=K3.R.domElement, w=cv.parentNode.clientWidth||360, h=Math.round(w*.92); K3.R.setPixelRatio(Math.min(K3.hq?2:1.25,devicePixelRatio||1)); K3.R.setSize(w,h,false); cv.style.width='100%'; cv.style.height='auto'; K3.comp.setPixelRatio(K3.R.getPixelRatio()); K3.comp.setSize(w,h); const pr=K3.R.getPixelRatio(); K3.nrt.setSize(w*pr,h*pr); K3.ink.uniforms.res.value.set(w*pr,h*pr); K3.ink.uniforms.px.value=Math.max(.8,.7*pr); K3.ink.uniforms.dotSz.value=3*pr; K3.cam.aspect=w/h; K3.cam.updateProjectionMatrix(); }
 window.addEventListener('resize',()=>{ if(K3.ready) k3Size(); });
 function k3Loop(){ if(!K3.ready) return; if(curTab()==='kamar'&&!document.hidden){ K3.ctl.update(); k3Normals(); K3.comp.render(); } requestAnimationFrame(k3Loop); }
 // normals + depth for the ink lines: everything solid, no background, no glow
@@ -4319,7 +4321,7 @@ function k3Build(){
   K3.root&&K3.root.traverse(o=>{ if(o.geometry&&!Object.values(K3.geo).includes(o.geometry)) o.geometry.dispose(); }); K3.root&&K3.scene.remove(K3.root); K3.root=null;
   const n=KM.who||kmMe(), room=kmRoom(n), mine=n===kmMe(), night=(room.mood||'malam')==='malam';
   const root=new T.Group(); K3.root=root; K3.scene.add(root); K3.pick=[]; K3.surf={}; K3.L={desk:[],deskBulbs:[],led:[]};
-  K3.scene.background=k3Burst(night);
+  K3.scene.background=new T.Color(night?'#0e0b16':'#2a2228');
   const N=12, H=10, wallTex=k3Tex('wall');
   const plane=(w,h,mat,x,y,z,rx,ry)=>{ const m=new T.Mesh(new T.PlaneGeometry(w,h),mat); m.position.set(x,y,z); m.rotation.set(rx||0,ry||0,0); m.receiveShadow=true; root.add(m); return m; };
   const wm=k3Toon({color:room.wall,map:wallTex});
@@ -4359,7 +4361,7 @@ function k3Build(){
     K3.L.ceil=L; K3.L.ceilBulb=bulbM; }
   K3.R.toneMappingExposure=Lt.exp;
   // global light: moonlight or daylight through the room, plus a soft fill
-  const hemi=new T.HemisphereLight(night?'#6d5fd6':'#fff6e8',night?'#140c28':'#7a6a58',night?.55:1.5); root.add(hemi);
+  const hemi=new T.HemisphereLight(night?'#4a5cc8':'#fff6e8',night?'#140c28':'#7a6a58',night?.38:1.5); root.add(hemi);
   const sun=new T.DirectionalLight(night?'#7f8cff':'#fff1d6',night?.55:2.6); sun.position.set(K3.winLeft===false?6:-6,14,K3.winLeft===false?-6:6); sun.position.set(night?14:12,16,night?3:4);
   sun.target.position.set(5,0,5); root.add(sun.target); sun.castShadow=true; sun.shadow.mapSize.set(K3.hq?2048:1024,K3.hq?2048:1024); Object.assign(sun.shadow.camera,{left:-12,right:12,top:12,bottom:-12,near:1,far:50}); sun.shadow.bias=-.0008; sun.shadow.radius=4; root.add(sun);
   K3.bloom.strength=night?.4:.12;
@@ -4367,7 +4369,7 @@ function k3Build(){
   if(mine&&KM.sel!=null){ const g=K3.pick.find(o=>o.userData.idx===KM.sel); if(g){ const bh=new T.BoxHelper(g,0xff5a3c); root.add(bh); } }
 }
 const KM_LCOLORS=['#ffd9a0','#ffffff','#ff9a3c','#ff4fa0','#8a4fff','#3c8cff','#3cffb0','#ff3c3c'];
-function kmLights(room){ const d={exp:1,ceil:{on:true,c:'#ffd9a0',p:.55},led:{c:'#8a4fff',p:.6},desk:{c:'#ffbf6a',p:1}}; const L=room.lights||{};
+function kmLights(room){ const d={exp:1,ceil:{on:true,c:'#ffd9a0',p:.3},led:{c:'#8a4fff',p:.6},desk:{c:'#ffbf6a',p:1}}; const L=room.lights||{};
   return {exp:L.exp??d.exp, ceil:Object.assign({},d.ceil,L.ceil), led:Object.assign({},d.led,L.led), desk:Object.assign({},d.desk,L.desk)}; }
 // live update while dragging a slider or picking a colour, without rebuilding the room
 function k3ApplyLights(room){
