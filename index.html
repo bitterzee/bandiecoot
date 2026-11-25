@@ -490,6 +490,9 @@ body.gaming{overflow:hidden}
 .kmPalette{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
 .kmPalette button{font-size:12px;padding:5px 8px;text-transform:none;font-family:'Space Mono',monospace;letter-spacing:0}
 .kmPalette button.sel,#kmWho button.sel{background:var(--navy);color:var(--mustard)}
+.kmLightBox{margin-top:12px;padding:10px;border:2px solid var(--ink);background:#fff8ea}
+.kmSlider{width:100%;accent-color:var(--navy);margin:6px 0 2px}
+.kmLsw{width:24px;height:24px}
 .kmGrp{width:100%;font-family:Anton,Impact,sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
 </style>
 </head>
@@ -4223,8 +4226,9 @@ function kmNight(c,room,floor){
 const K3={ready:false,loading:false,failed:false,mats:{},tex:{}};
 function k3Init(){
   if(K3.ready||K3.loading||K3.failed) return; K3.loading=true;
-  Promise.all([import('three'),import('three/addons/controls/OrbitControls.js'),import('three/addons/postprocessing/EffectComposer.js'),import('three/addons/postprocessing/RenderPass.js'),import('three/addons/postprocessing/UnrealBloomPass.js'),import('three/addons/postprocessing/OutputPass.js')])
-  .then(([T,OC,EC,RP,UB,OP])=>{
+  Promise.all([import('three'),import('three/addons/controls/OrbitControls.js'),import('three/addons/postprocessing/EffectComposer.js'),import('three/addons/postprocessing/RenderPass.js'),import('three/addons/postprocessing/UnrealBloomPass.js'),import('three/addons/postprocessing/OutputPass.js'),
+    import('three/addons/geometries/RoundedBoxGeometry.js'),import('three/addons/environments/RoomEnvironment.js'),import('three/addons/postprocessing/GTAOPass.js')])
+  .then(([T,OC,EC,RP,UB,OP,RB,RE,GT])=>{
     const cv=$('#km3d'); const R=new T.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});
     R.setPixelRatio(Math.min(2,devicePixelRatio||1)); R.shadowMap.enabled=true; R.shadowMap.type=T.PCFSoftShadowMap;
     R.toneMapping=T.ACESFilmicToneMapping; R.toneMappingExposure=1.05; R.outputColorSpace=T.SRGBColorSpace;
@@ -4232,16 +4236,23 @@ function k3Init(){
     cam.position.set(24,15.5,24);
     const ctl=new OC.OrbitControls(cam,cv); ctl.target.set(5,3.2,5); ctl.enableDamping=true; ctl.enablePan=false;
     ctl.minAzimuthAngle=.12; ctl.maxAzimuthAngle=1.45; ctl.minPolarAngle=.55; ctl.maxPolarAngle=1.32; ctl.minDistance=10; ctl.maxDistance=38; ctl.update();
-    const comp=new EC.EffectComposer(R); comp.addPass(new RP.RenderPass(scene,cam)); const bloom=new UB.UnrealBloomPass(new T.Vector2(512,512),.5,.5,.88); comp.addPass(bloom); comp.addPass(new OP.OutputPass());
-    Object.assign(K3,{T,R,scene,cam,ctl,comp,bloom,ready:true,loading:false});
+    const rt=new T.WebGLRenderTarget(512,512,{type:T.HalfFloatType,samples:4});
+    const comp=new EC.EffectComposer(R,rt); comp.addPass(new RP.RenderPass(scene,cam));
+    const ao=new GT.GTAOPass(scene,cam,512,512); ao.output=GT.GTAOPass.OUTPUT.Default; ao.blendIntensity=.85; ao.updateGtaoMaterial({radius:.9,distanceExponent:1.4,thickness:1.5,scale:1.2,samples:12}); comp.addPass(ao);
+    const bloom=new UB.UnrealBloomPass(new T.Vector2(512,512),.5,.5,.88); comp.addPass(bloom); comp.addPass(new OP.OutputPass());
+    const pm=new T.PMREMGenerator(R); scene.environment=pm.fromScene(new RE.RoomEnvironment(),.04).texture; scene.environmentIntensity=.35;
+    Object.assign(K3,{T,R,scene,cam,ctl,comp,bloom,ao,RB:RB.RoundedBoxGeometry,geo:{},ready:true,loading:false});
+    try{ K3.hq=localStorage.getItem('bc.kmhq')!=='0'; }catch(e){ K3.hq=true; } ao.enabled=K3.hq;
     $('#kmCv').hidden=true; cv.hidden=false; k3Size(); k3Taps(); k3Build(); k3Loop();
   }).catch(e=>{ console.warn('3D room unavailable',e); K3.failed=true; K3.loading=false; });
 }
-function k3Size(){ const cv=K3.R.domElement, w=cv.parentNode.clientWidth||360, h=Math.round(w*.92); K3.R.setSize(w,h,false); cv.style.width='100%'; cv.style.height='auto'; K3.comp.setSize(w,h); K3.cam.aspect=w/h; K3.cam.updateProjectionMatrix(); }
+function k3Size(){ const cv=K3.R.domElement, w=cv.parentNode.clientWidth||360, h=Math.round(w*.92); K3.R.setPixelRatio(Math.min(K3.hq?2:1.25,devicePixelRatio||1)); K3.R.setSize(w,h,false); cv.style.width='100%'; cv.style.height='auto'; K3.comp.setPixelRatio(K3.R.getPixelRatio()); K3.comp.setSize(w,h); K3.cam.aspect=w/h; K3.cam.updateProjectionMatrix(); }
 window.addEventListener('resize',()=>{ if(K3.ready) k3Size(); });
 function k3Loop(){ if(!K3.ready) return; if(curTab()==='kamar'&&!document.hidden){ K3.ctl.update(); K3.comp.render(); } requestAnimationFrame(k3Loop); }
 function k3Mat(col,o={}){ const T=K3.T, key=col+JSON.stringify(o); if(K3.mats[key]) return K3.mats[key];
-  const m=new T.MeshStandardMaterial({color:new T.Color(col),roughness:o.rough??.72,metalness:o.metal??0});
+  // dark plastic and painted surfaces get a little sheen, wood and fabric stay matte
+  const lum=new T.Color(col).getHSL({}).l, rough=o.rough??(lum<.2?.45:lum>.85?.6:.7);
+  const m=new T.MeshStandardMaterial({color:new T.Color(col),roughness:rough,metalness:o.metal??0,envMapIntensity:1});
   if(o.glow){ m.emissive=new T.Color(col); m.emissiveIntensity=o.glow; }
   if(o.map){ m.map=o.map; } return K3.mats[key]=m; }
 // procedural textures, so the materials read as wood, tile, woven mat and painted plaster
@@ -4264,7 +4275,9 @@ function k3Frame(it,z0,G){
   const front=(m)=>{ if(it.r) m.rotation.y=Math.PI/2; };
   return {W,Dp,
     B:(c,u0,u1,v0,v1,za,zb,col,glow)=>{ const a=map(u0,v0), b=map(u1,v1), w=Math.abs(b[0]-a[0]), d=Math.abs(b[1]-a[1]), h=zb-za; if(w<=0||d<=0||h<=0) return;
-      put(new T.BoxGeometry(w,h,d),k3Mat(col,glow?{glow}:{}),(a[0]+b[0])/2,z0+(za+zb)/2,(a[1]+b[1])/2); },
+      const key=[w,h,d].map(v=>v.toFixed(3)).join('x'); let g=K3.geo[key];
+      if(!g){ const r=Math.min(.07,w*.18,h*.18,d*.18); g=K3.geo[key]=r>.012?new K3.RB(w,h,d,2,r):new T.BoxGeometry(w,h,d); }
+      put(g,k3Mat(col,glow?{glow}:{}),(a[0]+b[0])/2,z0+(za+zb)/2,(a[1]+b[1])/2); },
     F:(c,u0,u1,za,zb,col,v,glow)=>{ v=v==null?Dp:v; const m0=map((u0+u1)/2,v), off=.012; const mesh=put(new T.PlaneGeometry(Math.abs(u1-u0),zb-za),k3Mat(col,glow?{glow,rough:.25}:{}),m0[0]+(it.r?off:0),z0+(za+zb)/2,m0[1]+(it.r?0:off)); mesh.castShadow=false; front(mesh); },
     T:(c,u0,u1,v0,v1,z,col)=>{ const a=map(u0,v0), b=map(u1,v1), mesh=put(new T.PlaneGeometry(Math.abs(b[0]-a[0]),Math.abs(b[1]-a[1])),k3Mat(col),(a[0]+b[0])/2,z0+z+.006,(a[1]+b[1])/2); mesh.rotation.x=-Math.PI/2; mesh.castShadow=false; },
     C:(c,u,v,z,r,col)=>{ const m=map(u,v); put(new T.SphereGeometry(r,20,14),k3Mat(col,{rough:.55}),m[0],z0+z,m[1]); },
@@ -4272,9 +4285,10 @@ function k3Frame(it,z0,G){
     P:(u,v,z)=>{ const m=map(u,v); return [m[0],z0+z,m[1]]; }};
 }
 function k3Build(){
-  const T=K3.T, n=KM.who||kmMe(), room=kmRoom(n), mine=n===kmMe(), night=(room.mood||'malam')==='malam';
-  if(K3.root){ K3.scene.remove(K3.root); K3.root.traverse(o=>{ if(o.geometry) o.geometry.dispose(); }); }
-  const root=new T.Group(); K3.root=root; K3.scene.add(root); K3.pick=[]; K3.surf={};
+  const T=K3.T;
+  K3.root&&K3.root.traverse(o=>{ if(o.geometry&&!Object.values(K3.geo).includes(o.geometry)) o.geometry.dispose(); }); K3.root&&K3.scene.remove(K3.root); K3.root=null;
+  const n=KM.who||kmMe(), room=kmRoom(n), mine=n===kmMe(), night=(room.mood||'malam')==='malam';
+  const root=new T.Group(); K3.root=root; K3.scene.add(root); K3.pick=[]; K3.surf={}; K3.L={desk:[],deskBulbs:[],led:[]};
   K3.scene.background=new T.Color(night?'#0d0a18':'#2a2733');
   const N=12, H=10, wallTex=k3Tex('wall');
   const plane=(w,h,mat,x,y,z,rx,ry)=>{ const m=new T.Mesh(new T.PlaneGeometry(w,h),mat); m.position.set(x,y,z); m.rotation.set(rx||0,ry||0,0); m.receiveShadow=true; root.add(m); return m; };
@@ -4300,18 +4314,41 @@ function k3Build(){
   room.items.forEach((it,i)=>{ const d=KM_ITEMS[it.t]; if(!d||d.zone!=='floor'||!KM3[it.t]) return; const z=kmZ(room,it), g=new T.Group(); g.userData.idx=i; root.add(g); K3.pick.push(g);
     const K=k3Frame(it,z,g); kmItem3(null,it,z,K);
     const lamp=(u,v,zz,col,pow,dist)=>{ if(!night&&pow<30) return; const p=K.P(u,v,zz), L=new T.PointLight(col,night?pow:pow*.4,dist,2); L.position.set(...p); root.add(L); return L; };
-    if(it.t==='lampu'){ const L=lamp(.5,.6,1.45,'#ffbf6a',38,12); if(L&&night){ L.castShadow=true; L.shadow.mapSize.set(512,512); L.shadow.bias=-.003; } }
+    if(it.t==='lampu'){ const Lt=kmLights(room); if(Lt.desk.p>0){ const p=K.P(.5,.6,1.45), L=new T.PointLight(Lt.desk.c,60*Lt.desk.p*(night?1:.5),12,2); L.position.set(...p); L.castShadow=K3.hq&&night; L.shadow.mapSize.set(1024,1024); L.shadow.bias=-.003; L.shadow.radius=6; root.add(L); K3.L.desk.push(L); }
+      g.traverse(o=>{ if(o.material&&o.material.emissive&&o.material.color.getHexString()==='fff3c4'){ o.material=o.material.clone(); o.material.color.set(Lt.desk.c); o.material.emissive.set(Lt.desk.c); o.material.emissiveIntensity=4*Lt.desk.p; K3.L.deskBulbs.push(o.material); } }); }
     if(it.t==='tv') lamp(1.1,2.6,1,'#70e6ff',14,8);
     if(it.t==='komputer') lamp(1.3,3,1.4,'#70e6ff',8,7);
     if(it.t==='lava') lamp(.3,.6,1.2,'#ff4fb0',8,6);
   });
+  // user lights: a pendant ceiling lamp and an LED strip along the top of both walls
+  const Lt=kmLights(room);
+  { const cord=new T.Mesh(new T.CylinderGeometry(.03,.03,1.4,8),k3Mat('#222')); cord.position.set(6,9.3,6); root.add(cord);
+    const shade=new T.Mesh(new T.ConeGeometry(.9,.8,32,1,true),new T.MeshStandardMaterial({color:'#e8e2d0',roughness:.6,side:T.DoubleSide})); shade.position.set(6,8.3,6); shade.castShadow=true; root.add(shade);
+    const bulbM=new T.MeshStandardMaterial({color:Lt.ceil.c,emissive:new T.Color(Lt.ceil.c),emissiveIntensity:Lt.ceil.on?5*Lt.ceil.p:0}); const bulb=new T.Mesh(new T.SphereGeometry(.22,20,14),bulbM); bulb.position.set(6,8,6); root.add(bulb);
+    const L=new T.PointLight(Lt.ceil.c,Lt.ceil.on?140*Lt.ceil.p:0,30,2); L.position.set(6,7.6,6); L.castShadow=K3.hq; L.shadow.mapSize.set(1024,1024); L.shadow.bias=-.002; L.shadow.radius=5; root.add(L);
+    K3.L.ceil=L; K3.L.ceilBulb=bulbM; }
+  { const ledM=new T.MeshStandardMaterial({color:Lt.led.c,emissive:new T.Color(Lt.led.c),emissiveIntensity:3*Lt.led.p}); K3.L.ledMat=ledM;
+    const s1=new T.Mesh(new T.BoxGeometry(.06,.06,12),ledM); s1.position.set(.08,9.85,6); const s2=new T.Mesh(new T.BoxGeometry(12,.06,.06),ledM); s2.position.set(6,9.85,.08); root.add(s1,s2);
+    [[.4,9.6,2],[.4,9.6,6],[.4,9.6,10],[2,9.6,.4],[6,9.6,.4],[10,9.6,.4]].forEach(p=>{ const L=new T.PointLight(Lt.led.c,14*Lt.led.p,9,2); L.position.set(...p); root.add(L); K3.L.led.push(L); }); }
+  K3.R.toneMappingExposure=Lt.exp;
   // global light: moonlight or daylight through the room, plus a soft fill
   const hemi=new T.HemisphereLight(night?'#6d5fd6':'#fff6e8',night?'#140c28':'#7a6a58',night?.55:1.5); root.add(hemi);
   const sun=new T.DirectionalLight(night?'#7f8cff':'#fff1d6',night?.55:2.6); sun.position.set(K3.winLeft===false?6:-6,14,K3.winLeft===false?-6:6); sun.position.set(night?14:12,16,night?3:4);
-  sun.target.position.set(5,0,5); root.add(sun.target); sun.castShadow=true; sun.shadow.mapSize.set(1024,1024); Object.assign(sun.shadow.camera,{left:-12,right:12,top:12,bottom:-12,near:1,far:50}); sun.shadow.bias=-.0008; sun.shadow.radius=4; root.add(sun);
-  K3.bloom.strength=night?.5:.2;
+  sun.target.position.set(5,0,5); root.add(sun.target); sun.castShadow=true; sun.shadow.mapSize.set(K3.hq?2048:1024,K3.hq?2048:1024); Object.assign(sun.shadow.camera,{left:-12,right:12,top:12,bottom:-12,near:1,far:50}); sun.shadow.bias=-.0008; sun.shadow.radius=4; root.add(sun);
+  K3.bloom.strength=night?.55:.22; K3.scene.environmentIntensity=night?.12:.45;
   // selection
   if(mine&&KM.sel!=null){ const g=K3.pick.find(o=>o.userData.idx===KM.sel); if(g){ const bh=new T.BoxHelper(g,0xff5a3c); root.add(bh); } }
+}
+const KM_LCOLORS=['#ffd9a0','#ffffff','#ff9a3c','#ff4fa0','#8a4fff','#3c8cff','#3cffb0','#ff3c3c'];
+function kmLights(room){ const d={exp:1,ceil:{on:true,c:'#ffd9a0',p:.55},led:{c:'#8a4fff',p:.6},desk:{c:'#ffbf6a',p:1}}; const L=room.lights||{};
+  return {exp:L.exp??d.exp, ceil:Object.assign({},d.ceil,L.ceil), led:Object.assign({},d.led,L.led), desk:Object.assign({},d.desk,L.desk)}; }
+// live update while dragging a slider or picking a colour, without rebuilding the room
+function k3ApplyLights(room){
+  if(!K3.ready||!K3.L) return; const Lt=kmLights(room), night=(room.mood||'malam')==='malam';
+  K3.R.toneMappingExposure=Lt.exp;
+  if(K3.L.ceil){ K3.L.ceil.color.set(Lt.ceil.c); K3.L.ceil.intensity=Lt.ceil.on?140*Lt.ceil.p:0; K3.L.ceilBulb.color.set(Lt.ceil.c); K3.L.ceilBulb.emissive.set(Lt.ceil.c); K3.L.ceilBulb.emissiveIntensity=Lt.ceil.on?5*Lt.ceil.p:0; }
+  K3.L.ledMat.color.set(Lt.led.c); K3.L.ledMat.emissive.set(Lt.led.c); K3.L.ledMat.emissiveIntensity=3*Lt.led.p; K3.L.led.forEach(L=>{ L.color.set(Lt.led.c); L.intensity=14*Lt.led.p; });
+  K3.L.desk.forEach(L=>{ L.color.set(Lt.desk.c); L.intensity=60*Lt.desk.p*(night?1:.5); }); K3.L.deskBulbs.forEach(m=>{ m.color.set(Lt.desk.c); m.emissive.set(Lt.desk.c); m.emissiveIntensity=4*Lt.desk.p; });
 }
 function k3Taps(){
   const cv=K3.R.domElement; let down=null;
@@ -4351,9 +4388,17 @@ function renderKamar(){
     $('#kmPalette').innerHTML=`<div class="kmGrp">Dinding</div>${Object.entries(KM_ITEMS).filter(([,d])=>d.zone==='wall').map(btn).join('')}<div class="kmGrp">Lantai</div>${Object.entries(KM_ITEMS).filter(([,d])=>d.zone==='floor').map(btn).join('')}`;
     $('#kmLook').innerHTML=`<div class="tmRow"><div class="tmLbl">Cat</div><div class="tmChips">${KM_WALLS.map(col=>`<button class="tmSw ${room.wall===col?'sel':''}" style="background:${col}" data-kwall="${col}" aria-label="Cat ${col}"></button>`).join('')}</div></div>
       <div class="tmRow"><div class="tmLbl">Lantai</div><div class="tmChips">${Object.entries(KM_FLOORS).map(([k,v])=>`<button class="small ${room.floor===k?'sel':''}" data-kfloor="${k}">${v}</button>`).join('')}</div></div>
-      <div class="tmRow"><div class="tmLbl">Suasana</div><div class="tmChips">${[['malam','Malam'],['siang','Siang']].map(([k,v])=>`<button class="small ${(room.mood||'malam')===k?'sel':''}" data-kmood="${k}">${v}</button>`).join('')}</div></div>`;
+      <div class="tmRow"><div class="tmLbl">Suasana</div><div class="tmChips">${[['malam','Malam'],['siang','Siang']].map(([k,v])=>`<button class="small ${(room.mood||'malam')===k?'sel':''}" data-kmood="${k}">${v}</button>`).join('')}</div></div>
+      ${(()=>{ const Lt=kmLights(room), sw=(grp,cur)=>KM_LCOLORS.map(col=>`<button class="tmSw kmLsw ${cur===col?'sel':''}" style="background:${col}" data-klc="${grp}" data-col="${col}" aria-label="Warna ${col}"></button>`).join(''),
+          sl=(grp,val,min,max)=>`<input type="range" class="kmSlider" data-kls="${grp}" min="${min}" max="${max}" step="0.05" value="${val}" aria-label="Terang ${grp}">`;
+        return `<div class="kmLightBox"><div class="kmGrp" style="margin:0 0 6px">Lampu</div>
+        <div class="tmRow"><div class="tmLbl">Kecerahan</div>${sl('exp',Lt.exp,.4,2)}</div>
+        <div class="tmRow"><div class="tmLbl">Plafon</div><div style="flex:1"><div class="tmChips"><button class="small ${Lt.ceil.on?'sel':''}" data-kcon="1">${Lt.ceil.on?'Nyala':'Mati'}</button>${sw('ceil',Lt.ceil.c)}</div>${sl('ceil',Lt.ceil.p,0,2)}</div></div>
+        <div class="tmRow"><div class="tmLbl">LED strip</div><div style="flex:1"><div class="tmChips">${sw('led',Lt.led.c)}</div>${sl('led',Lt.led.p,0,2)}</div></div>
+        <div class="tmRow"><div class="tmLbl">Lampu meja</div><div style="flex:1"><div class="tmChips">${sw('desk',Lt.desk.c)}</div>${sl('desk',Lt.desk.p,0,2)}</div></div>
+        <div class="tmRow"><div class="tmLbl">Grafis</div><div class="tmChips"><button class="small ${K3.hq!==false?'sel':''}" data-khq="1">Tinggi</button><button class="small ${K3.hq===false?'sel':''}" data-khq="0">Hemat</button></div></div></div>`; })()}`;
   }
-  kmDraw();
+  if(!KM.noDraw) kmDraw();
 }
 function kmSave(room){ room.at=new Date().toISOString(); S.rooms[kmMe()]=room; save(); }
 function kmMine(){ const me=kmMe(); const r=kmRoom(me); r.v=2; return S.rooms[me]===r?r:JSON.parse(JSON.stringify(r)); }
@@ -4388,6 +4433,10 @@ $('#kmCv').addEventListener('click',e=>{
   if(KM.sel!=null&&hit==null){ kmPlaceAt(room.items[KM.sel],px,py); kmSave(room); return renderKamar(); }
   if(hit==null){ KM.sel=null; renderKamar(); }
 });
+// sliders update the light live, and save once you let go
+$('#tabKamar').addEventListener('input',e=>{ const t=e.target; if(!t.dataset||!t.dataset.kls) return; const room=kmMine(), v=+t.value, L=room.lights=room.lights||{};
+  if(t.dataset.kls==='exp') L.exp=v; else L[t.dataset.kls]=Object.assign({},L[t.dataset.kls],{p:v}); S.rooms[kmMe()]=room; k3ApplyLights(room); clearTimeout(KM.lsave); KM.lsave=setTimeout(()=>kmSave(room),500); });
+function renderKamarControls(){ const y=window.scrollY; KM.noDraw=true; renderKamar(); KM.noDraw=false; window.scrollTo(0,y); }
 $('#tabKamar').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
   if(b.dataset.kw){ KM.who=b.dataset.kw; KM.sel=null; KM.pick=null; return renderKamar(); }
@@ -4396,6 +4445,9 @@ $('#tabKamar').addEventListener('click',e=>{
   if(b.dataset.kwall){ room.wall=b.dataset.kwall; kmSave(room); return renderKamar(); }
   if(b.dataset.kfloor){ room.floor=b.dataset.kfloor; kmSave(room); return renderKamar(); }
   if(b.dataset.kmood){ room.mood=b.dataset.kmood; kmSave(room); return renderKamar(); }
+  if(b.dataset.klc){ const L=room.lights=room.lights||{}; L[b.dataset.klc]=Object.assign({},L[b.dataset.klc],{c:b.dataset.col}); kmSave(room); k3ApplyLights(room); return renderKamarControls(); }
+  if(b.dataset.kcon){ const L=room.lights=room.lights||{}, cur=kmLights(room); L.ceil=Object.assign({},L.ceil,{on:!cur.ceil.on}); kmSave(room); k3ApplyLights(room); return renderKamarControls(); }
+  if(b.dataset.khq){ K3.hq=b.dataset.khq==='1'; try{ localStorage.setItem('bc.kmhq',K3.hq?'1':'0'); }catch(e){} if(K3.ready){ K3.ao.enabled=K3.hq; k3Size(); k3Build(); } return renderKamarControls(); }
   const a=b.dataset.km; if(!a||KM.sel==null) return; const it=room.items[KM.sel]; if(!it) return;
   if(a==='done'){ KM.sel=null; return renderKamar(); }
   if(a==='del'){ room.items.splice(KM.sel,1); KM.sel=null; }
