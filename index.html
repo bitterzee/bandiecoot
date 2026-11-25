@@ -3984,6 +3984,9 @@ const KM_ITEMS={
   poster5:{name:'Poster konser',zone:'wall',w:2,h:3},
   rakvcd:{name:'Rak VCD penuh',zone:'wall',w:6,h:2},
   stiker:{name:'Tempelan stiker',zone:'wall',w:3,h:3},
+  neon:{name:'Lampu neon',zone:'wall',w:3,h:2},
+  ring:{name:'Ring basket',zone:'wall',w:2,h:3},
+  kerai:{name:'Jendela kerai',zone:'wall',w:4,h:4},
   // floor items: x = left cell, y = bottom row on the floor, drawn h cells tall
   kasur:{name:'Kasur',zone:'floor',w:7,h:3},
   meja:{name:'Meja belajar',zone:'floor',w:5,h:3},
@@ -4007,7 +4010,17 @@ const KM_ITEMS={
   keyboard:{name:'Keyboard musik',zone:'floor',w:6,h:2},
   majalah:{name:'Tumpukan majalah',zone:'floor',w:3,h:1},
   kardus:{name:'Kaset game berserakan',zone:'floor',w:4,h:1},
-  speaker:{name:'Speaker kecil',zone:'floor',w:1,h:2}
+  speaker:{name:'Speaker kecil',zone:'floor',w:1,h:2},
+  vcr:{name:'Video player',zone:'floor',w:2,h:1},
+  stik:{name:'Stik game',zone:'floor',w:1,h:1},
+  topi:{name:'Topi',zone:'floor',w:1,h:1},
+  sepatu:{name:'Sepatu kets',zone:'floor',w:2,h:1},
+  kaleng:{name:'Kaleng soda',zone:'floor',w:1,h:1},
+  pizza:{name:'Kotak pizza',zone:'floor',w:2,h:1},
+  skate:{name:'Papan skate',zone:'floor',w:1,h:4},
+  kerucut:{name:'Kerucut jalan',zone:'floor',w:1,h:2},
+  globe:{name:'Globe',zone:'floor',w:1,h:2},
+  boneka:{name:'Boneka beruang',zone:'floor',w:1,h:2}
 };
 const KM_WALLS=['#e8dcc0','#bcd3c2','#c9d6e8','#e6c7b8','#d8d0e8','#f1e3a4','#3b3f52'];
 const KM_FLOORS={keramik:'Keramik',kayu:'Kayu',tikar:'Tikar'};
@@ -4054,6 +4067,9 @@ function kmDrawItem(c,it,flip,comic){
     case 'majalah': R(0,5,24,3,'#d23b2b'); R(2,3,20,2,'#f4f0e2'); R(1,1,22,2,'#2f5fa8'); R(4,1,6,1,'#e2c44c'); break;
     case 'kardus': R(0,5,8,3,'#2f8f45'); R(9,4,7,4,'#e08a2e'); R(18,5,8,3,'#8a4fb3'); R(27,3,5,5,'#d23b2b'); R(2,6,4,1,'#f4f0e2'); R(11,5,3,1,'#f4f0e2'); break;
     case 'speaker': R(0,0,8,16,'#1d1d1d'); R(2,3,4,4,'#444'); R(2,9,4,5,'#444'); R(3,10,2,3,'#222'); break;
+    case 'neon': R(0,0,24,16,'#1d1d1d'); R(1,1,22,14,'#2a1a3a'); R(2,2,20,1,'#3c8cff'); R(2,13,20,1,'#3c8cff'); R(2,2,1,12,'#3c8cff'); R(21,2,1,12,'#3c8cff'); [4,9,13,17].forEach(x=>{ R(x,5,3,1,'#ff4fa0'); R(x,5,1,6,'#ff4fa0'); R(x,10,3,1,'#ff4fa0'); }); break;
+    case 'ring': R(0,0,16,14,'#f4f0e2'); R(4,3,8,6,'#d23b2b'); R(5,4,6,4,'#f4f0e2'); R(3,13,10,2,'#e07a2e'); for(let i=0;i<5;i++) R(4+i*2,15,1,8,'#f4f0e2'); break;
+    case 'kerai': R(0,0,32,32,'#e6e1d2'); R(2,2,28,28,'#9fc4e8'); for(let i=0;i<14;i++) R(2,3+i*2,28,1.3,'#cfcfd6'); R(28,3,1,26,'#888'); break;
     case 'karpet': R(0,2,64,6,'#b3243a'); R(2,3,60,4,'#d9822b'); R(4,4,56,2,'#b3243a'); for(let i=0;i<8;i++) R(4+i*8,4,2,2,'#f1e3a4'); break;
   }
 }
@@ -4065,8 +4081,9 @@ const pj=(x,y,z)=>[ISO.ox+(x-y)*ISO.TW, ISO.oy+(x+y)*ISO.TH-z*ISO.ZH];
 // floor furniture: width along its front, depth, height (units), and whether small things can sit on top
 const KM3={kasur:[4.2,8,3,2],meja:[5,2.4,3,3],kursi:[1.8,1.8,3.6],lemari:[3,2,8,8],rakbuku:[3,1.2,6,6],tv:[2.2,2,2],komputer:[2.6,2.8,2.6],
   compo:[2.8,1,1.2],konsol:[1.3,1.6,.35],kaset:[1,.7,.5],gitar:[1.2,.5,4.6],drum:[1.4,1.4,1.6],ampli:[1.6,1,1.7,1.7],kipas:[1.2,1.2,4.2],
-  tanaman:[1,1,3],bola:[.7,.7,.7],karpet:[6,4,.05],lampu:[1,1,2.2],lava:[.6,.6,2.2],keyboard:[4.5,1.3,2.6],majalah:[1.6,1.2,.3],kardus:[2.6,1.8,.4],speaker:[.8,.8,1.4]};
-const KM_STACK=new Set(['tv','komputer','compo','konsol','kaset','lampu','lava','speaker','majalah','kardus','tanaman','bola']);
+  tanaman:[1,1,3],bola:[.7,.7,.7],karpet:[6,4,.05],lampu:[1,1,2.2],lava:[.6,.6,2.2],keyboard:[4.5,1.3,2.6],majalah:[1.6,1.2,.3],kardus:[2.6,1.8,.4],speaker:[.8,.8,1.4],
+  vcr:[1.6,1.2,.4,.5],stik:[.6,.4,.15],topi:[.7,.8,.35],sepatu:[1.2,.5,.45],kaleng:[.3,.3,.45],pizza:[1.5,1.5,.15],skate:[.9,.3,3],kerucut:[.9,.9,1.7],globe:[.8,.8,1.2],boneka:[.9,.8,1.1]};
+const KM_STACK=new Set(['tv','komputer','compo','konsol','kaset','lampu','lava','speaker','majalah','kardus','tanaman','bola','vcr','stik','topi','kaleng','globe','boneka']);
 const shadeC=(hex,p)=>{ const n=parseInt(hex.slice(1),16); let r=n>>16,g=n>>8&255,b=n&255; const k=p/100; const f=v=>Math.max(0,Math.min(255,Math.round(k>0?v+(255-v)*k:v*(1+k)))); return `rgb(${f(r)},${f(g)},${f(b)})`; };
 function kmDims(it){ const d=KM3[it.t]||[1,1,1]; return it.r?{w:d[1],d:d[0],h:d[2]}:{w:d[0],d:d[1],h:d[2]}; }
 // older rooms were laid out flat; place their floor items roughly where they stood
@@ -4090,7 +4107,8 @@ function kmDefault(){ return {v:2,wall:'#c9d6e8',floor:'kayu',mood:'malam',items
   {t:'rakvcd',x:13,y:1},{t:'poster4',x:20,y:0},{t:'fotoband',x:20,y:3},{t:'jam',x:17,y:4},{t:'kalender',x:13,y:4},{t:'poster',x:22,y:3},
   {t:'kasur',gx:0,gy:4,r:1},{t:'meja',gx:5,gy:0,r:0},{t:'komputer',gx:6,gy:0,r:0},{t:'lampu',gx:9,gy:0,r:0},{t:'lava',gx:5,gy:1,r:0},
   {t:'kursi',gx:7,gy:3,r:0},{t:'lemari',gx:0,gy:0,r:1},{t:'rakbuku',gx:10.8,gy:3,r:1},{t:'tv',gx:10.8,gy:3.4,r:1},
-  {t:'karpet',gx:5,gy:6,r:0},{t:'kardus',gx:6,gy:7,r:0},{t:'majalah',gx:9,gy:9,r:0},{t:'konsol',gx:8,gy:5,r:0},{t:'gitar',gx:11,gy:8,r:1},{t:'bola',gx:4,gy:10,r:0},{t:'ampli',gx:10,gy:10,r:1}]}; }
+  {t:'karpet',gx:5,gy:6,r:0},{t:'kardus',gx:6,gy:7,r:0},{t:'majalah',gx:9,gy:9,r:0},{t:'konsol',gx:8,gy:5,r:0},{t:'gitar',gx:11,gy:8,r:1},{t:'bola',gx:4,gy:10,r:0},{t:'ampli',gx:10,gy:10,r:1},
+  {t:'neon',x:5,y:4},{t:'boneka',gx:1,gy:6.5,r:1},{t:'kaleng',gx:7.6,gy:1.7,r:0},{t:'sepatu',gx:8.5,gy:10.8,r:0},{t:'pizza',gx:1.5,gy:9.4,r:0},{t:'stik',gx:8.6,gy:6.6,r:0},{t:'kerucut',gx:10.9,gy:.9,r:0}]}; }
 const kmRoom=n=>S.rooms[n]&&S.rooms[n].items?kmUpgrade(S.rooms[n]):kmDefault();
 
 // drawing primitives
@@ -4144,6 +4162,16 @@ function kmItem3(c,it,z0,K3f){
     case 'majalah': B(c,0,1.6,0,1.2,0,.1,'#d23b2b'); B(c,.1,1.5,.05,1.15,.1,.2,'#f4f0e2'); B(c,0,1.5,0,1.1,.2,.3,'#2f5fa8'); T(c,.2,.9,.2,.5,.31,'#e2c44c'); break;
     case 'kardus': B(c,0,.9,0,.6,0,.25,'#2f8f45'); B(c,1.1,1.8,.2,.8,0,.3,'#e08a2e'); B(c,.3,1.1,1,1.6,0,.22,'#8a4fb3'); B(c,1.8,2.5,1,1.7,0,.4,'#d23b2b'); T(c,1.9,2.4,1.1,1.6,.41,'#f4f0e2'); break;
     case 'speaker': B(c,0,.8,0,.8,0,1.4,'#1d1d1d'); circ(.4,.8,.45,5,'#444','#222'); circ(.4,.8,1,4,'#444','#222'); break;
+    case 'vcr': B(c,0,1.6,0,1.1,0,.32,'#2a2a2e'); F(c,1.1,1.4,.15,.25,'#3cff7a',1.1); B(c,.2,1.1,.2,.8,.32,.5,'#1d1d1d'); break;
+    case 'stik': B(c,.05,.55,.05,.35,0,.1,'#9a9aa8'); T(c,.4,.5,.1,.2,.11,'#d23b2b'); break;
+    case 'topi': B(c,.05,.65,0,.5,0,.3,'#d23b2b'); B(c,.12,.58,.5,.8,0,.05,'#d23b2b'); break;
+    case 'sepatu': B(c,0,1.1,0,.22,0,.35,'#2f5fa8'); B(c,0,1.1,.26,.48,0,.35,'#2f5fa8'); T(c,0,1.1,0,.48,.1,'#f4f0e2'); break;
+    case 'kaleng': B(c,.02,.28,.02,.28,0,.45,'#d23b2b'); break;
+    case 'pizza': B(c,0,1.5,0,1.5,0,.14,'#d9b98a'); T(c,.3,1.2,.3,1.2,.15,'#c8302a'); break;
+    case 'skate': B(c,.15,.75,.05,.2,0,3,'#2a2a2a'); F(c,.2,.7,.6,2.4,'#f4f0e2',.2); break;
+    case 'kerucut': B(c,0,.9,0,.9,0,.12,'#e05a1e'); B(c,.25,.65,.25,.65,.12,1.7,'#e8681e'); F(c,.25,.65,.6,.8,'#f4f0e2',.65); break;
+    case 'globe': B(c,.15,.65,.15,.65,0,.1,'#5a3a22'); K.C(c,.4,.4,.75,.37,'#3c7fc8','#2a5a90'); break;
+    case 'boneka': K.C(c,.45,.4,.35,.32,'#9a6a3e'); K.C(c,.45,.45,.8,.24,'#9a6a3e'); break;
   }
 }
 // wall art: the flat poster/shelf drawing, sheared onto the wall it hangs on
@@ -4227,8 +4255,8 @@ const K3={ready:false,loading:false,failed:false,mats:{},tex:{}};
 function k3Init(){
   if(K3.ready||K3.loading||K3.failed) return; K3.loading=true;
   Promise.all([import('three'),import('three/addons/controls/OrbitControls.js'),import('three/addons/postprocessing/EffectComposer.js'),import('three/addons/postprocessing/RenderPass.js'),import('three/addons/postprocessing/UnrealBloomPass.js'),import('three/addons/postprocessing/OutputPass.js'),
-    import('three/addons/geometries/RoundedBoxGeometry.js'),import('three/addons/postprocessing/ShaderPass.js')])
-  .then(([T,OC,EC,RP,UB,OP,RB,SP])=>{
+    import('three/addons/geometries/RoundedBoxGeometry.js'),import('three/addons/postprocessing/ShaderPass.js'),import('three/addons/loaders/GLTFLoader.js'),import('three/addons/libs/meshopt_decoder.module.js')])
+  .then(([T,OC,EC,RP,UB,OP,RB,SP,GL,MO])=>{
     const cv=$('#km3d'); const R=new T.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});
     R.setPixelRatio(Math.min(2,devicePixelRatio||1)); R.shadowMap.enabled=true; R.shadowMap.type=T.PCFSoftShadowMap;
     R.toneMapping=T.NeutralToneMapping; R.toneMappingExposure=1.05; R.outputColorSpace=T.SRGBColorSpace;
@@ -4266,11 +4294,17 @@ function k3Init(){
     const ramp=new T.DataTexture(new Uint8Array([70,135,195,255]),4,1,T.RedFormat); ramp.minFilter=ramp.magFilter=T.NearestFilter; ramp.needsUpdate=true; K3.ramp=ramp;
     try{ K3.hq=localStorage.getItem('bc.kmhq')!=='0'; }catch(e){ K3.hq=true; }
     $('#kmCv').hidden=true; cv.hidden=false; k3Size(); k3Taps(); k3Build(); k3Loop();
+    ctl.addEventListener('change',()=>{ K3.dirty=true; });
+    // furniture modeled in Blender (blender/kamar_models.py); until it arrives the room uses the simple shapes
+    const gl=new GL.GLTFLoader(); gl.setMeshoptDecoder(MO.MeshoptDecoder);
+    gl.load('models/kamar.glb',g=>{ K3.models={}; g.scene.children.forEach(o=>{ K3.models[o.name]=o; }); if(curTab()==='kamar') k3Build(); },undefined,e=>console.warn('room models unavailable',e));
   }).catch(e=>{ console.warn('3D room unavailable',e); K3.failed=true; K3.loading=false; });
 }
-function k3Size(){ const cv=K3.R.domElement, w=cv.parentNode.clientWidth||360, h=Math.round(w*.92); K3.R.setPixelRatio(Math.min(K3.hq?2:1.25,devicePixelRatio||1)); K3.R.setSize(w,h,false); cv.style.width='100%'; cv.style.height='auto'; K3.comp.setPixelRatio(K3.R.getPixelRatio()); K3.comp.setSize(w,h); const pr=K3.R.getPixelRatio(); K3.nrt.setSize(w*pr,h*pr); K3.ink.uniforms.res.value.set(w*pr,h*pr); K3.ink.uniforms.px.value=Math.max(.8,.7*pr); K3.ink.uniforms.dotSz.value=3*pr; K3.cam.aspect=w/h; K3.cam.updateProjectionMatrix(); }
+function k3Size(){ const cv=K3.R.domElement, w=cv.parentNode.clientWidth||360, h=Math.round(w*.92); K3.R.setPixelRatio(Math.min(K3.hq?1.75:1.1,devicePixelRatio||1)); K3.R.setSize(w,h,false); cv.style.width='100%'; cv.style.height='auto'; K3.comp.setPixelRatio(K3.R.getPixelRatio()); K3.comp.setSize(w,h); const pr=K3.R.getPixelRatio(); K3.nrt.setSize(w*pr,h*pr); K3.ink.uniforms.res.value.set(w*pr,h*pr); K3.ink.uniforms.px.value=Math.max(.8,.7*pr); K3.ink.uniforms.dotSz.value=3*pr; K3.cam.aspect=w/h; K3.cam.updateProjectionMatrix(); K3.dirty=true; }
 window.addEventListener('resize',()=>{ if(K3.ready) k3Size(); });
-function k3Loop(){ if(!K3.ready) return; if(curTab()==='kamar'&&!document.hidden){ K3.ctl.update(); k3Normals(); K3.comp.render(); } requestAnimationFrame(k3Loop); }
+function k3Loop(){ if(!K3.ready) return; const on=curTab()==='kamar'&&!document.hidden;
+  if(on){ const moved=K3.ctl.update(); if(moved||K3.dirty||!K3.wasOn){ k3Normals(); K3.comp.render(); K3.dirty=false; } }
+  K3.wasOn=on; requestAnimationFrame(k3Loop); }
 // normals + depth for the ink lines: everything solid, no background, no glow
 function k3Normals(){ const S=K3.scene, bg=S.background; S.background=null; S.overrideMaterial=K3.nmat; const hid=[]; K3.root&&K3.root.traverse(o=>{ if(o.isMesh&&o.userData.noInk&&o.visible){ o.visible=false; hid.push(o); } });
   K3.R.setRenderTarget(K3.nrt); K3.R.setClearColor(0x8080ff,1); K3.R.clear(); K3.R.render(S,K3.cam); K3.R.setRenderTarget(null); S.overrideMaterial=null; S.background=bg; hid.forEach(o=>o.visible=true); K3.R.setClearColor(0,0); }
@@ -4282,6 +4316,11 @@ function k3Burst(night){ const T=K3.T, key='burst'+night; if(K3.tex[key]) return
   c.fillStyle=a; c.fillRect(0,0,1024,1024); c.fillStyle=b; for(let i=0;i<24;i+=2){ c.beginPath(); c.moveTo(512,560); const a0=i/24*Math.PI*2, a1=(i+1)/24*Math.PI*2; c.lineTo(512+Math.cos(a0)*1200,560+Math.sin(a0)*1200); c.lineTo(512+Math.cos(a1)*1200,560+Math.sin(a1)*1200); c.fill(); }
   c.fillStyle=dotc; for(let y=0;y<1024;y+=22) for(let x=(y/22%2)*11;x<1024;x+=22){ const r=Math.hypot(x-512,y-560)/700*5; if(r>.6){ c.beginPath(); c.arc(x,y,Math.min(r,6),0,7); c.fill(); } }
   const t=new T.CanvasTexture(cv); t.colorSpace=T.SRGBColorSpace; return K3.tex[key]=t; }
+// a Blender part's material name carries its colour: c_<hex>, or g_<hex>_<glow> for glowing parts
+function k3ModelMat(m){ const n=(m&&m.name)||'', g=n.match(/^g_([0-9a-f]{6})_([\d.]+)/), c=n.match(/^c_([0-9a-f]{6})/);
+  if(g) return k3Mat('#'+g[1],{glow:+g[2]}); if(c) return k3Mat('#'+c[1]); return k3Mat('#'+(m&&m.color?m.color.getHexString():'888888')); }
+function k3Model(name){ const src=K3.models&&K3.models[name]; if(!src) return null; const c=src.clone(true), o=new K3.T.Group(); o.add(c); // keep the node's own transform (compressed meshes rely on it)
+  c.traverse(m=>{ if(m.isMesh){ m.material=Array.isArray(m.material)?m.material.map(k3ModelMat):k3ModelMat(m.material); m.castShadow=true; m.receiveShadow=true; } }); return o; }
 function k3Mat(col,o={}){ const T=K3.T, key=col+JSON.stringify(o); if(K3.mats[key]) return K3.mats[key];
   // dark plastic and painted surfaces get a little sheen, wood and fabric stay matte
   const m=k3Toon({color:col});
@@ -4335,6 +4374,11 @@ function k3Build(){
     const isWin=it.t==='jendela', mat=k3Toon({map:tex});
     if(isWin){ mat.emissive=new T.Color('#ffffff'); mat.emissiveMap=tex; mat.emissiveIntensity=night?.55:.9; }
     const g=new T.Group(); g.userData.idx=i; root.add(g); K3.pick.push(g);
+    const WM=k3Model('w_'+it.t);
+    if(WM){ const base=9.6-it.y-d.h; if(it.x>=12) WM.position.set(it.x-12,base,0); else { WM.rotation.y=Math.PI/2; WM.position.set(0,base,12-it.x); } g.add(WM);
+      if(it.t==='neon'){ const L=new T.PointLight('#ff4fa0',night?16:5,9,2); L.position.set(it.x>=12?it.x-12+d.w/2:1,base+d.h/2,it.x>=12?1:12-it.x-d.w/2); root.add(L); }
+      if(it.t==='kerai'&&night){ const L=new T.PointLight('#6fa8ff',14,14,2); L.position.set(it.x>=12?it.x-12+d.w/2:1.2,base+d.h/2,it.x>=12?1.2:12-it.x-d.w/2); root.add(L); }
+      return; }
     const depth=['rakvcd','rakdinding','fotoband','kalender','jam','jendela'].includes(it.t)?.18:.03;
     const m=new T.Mesh(new T.BoxGeometry(d.w,d.h,depth),[k3Mat('#3a2a1a'),k3Mat('#3a2a1a'),k3Mat('#3a2a1a'),k3Mat('#3a2a1a'),mat,k3Mat('#3a2a1a')]); m.castShadow=true; m.receiveShadow=true; g.add(m);
     const yc=9.6-it.y-d.h/2;
@@ -4344,7 +4388,9 @@ function k3Build(){
   });
   // furniture
   room.items.forEach((it,i)=>{ const d=KM_ITEMS[it.t]; if(!d||d.zone!=='floor'||!KM3[it.t]) return; const z=kmZ(room,it), g=new T.Group(); g.userData.idx=i; root.add(g); K3.pick.push(g);
-    const K=k3Frame(it,z,g); kmItem3(null,it,z,K);
+    const K=k3Frame(it,z,g), M=k3Model(it.t);
+    if(M){ if(it.r){ M.rotation.y=Math.PI/2; M.position.set(it.gx,z,it.gy+KM3[it.t][0]); } else M.position.set(it.gx,z,it.gy); g.add(M); }
+    else kmItem3(null,it,z,K);
     const lamp=(u,v,zz,col,pow,dist)=>{ if(!night&&pow<30) return; const p=K.P(u,v,zz), L=new T.PointLight(col,night?pow:pow*.4,dist,2); L.position.set(...p); root.add(L); return L; };
     if(it.t==='lampu'){ const Lt=kmLights(room); if(Lt.desk.p>0){ const p=K.P(.5,.6,1.45), L=new T.PointLight(Lt.desk.c,60*Lt.desk.p*(night?1:.5),12,2); L.position.set(...p); L.castShadow=K3.hq&&night; L.shadow.mapSize.set(1024,1024); L.shadow.bias=-.003; L.shadow.radius=6; root.add(L); K3.L.desk.push(L); }
       g.traverse(o=>{ if(o.material&&o.material.emissive&&o.material.color.getHexString()==='fff3c4'){ o.material=o.material.clone(); o.material.color.set(Lt.desk.c); o.material.emissive.set(Lt.desk.c); o.material.emissiveIntensity=4*Lt.desk.p; K3.L.deskBulbs.push(o.material); } }); }
@@ -4364,7 +4410,7 @@ function k3Build(){
   const hemi=new T.HemisphereLight(night?'#4a5cc8':'#fff6e8',night?'#140c28':'#7a6a58',night?.38:1.5); root.add(hemi);
   const sun=new T.DirectionalLight(night?'#7f8cff':'#fff1d6',night?.55:2.6); sun.position.set(K3.winLeft===false?6:-6,14,K3.winLeft===false?-6:6); sun.position.set(night?14:12,16,night?3:4);
   sun.target.position.set(5,0,5); root.add(sun.target); sun.castShadow=true; sun.shadow.mapSize.set(K3.hq?2048:1024,K3.hq?2048:1024); Object.assign(sun.shadow.camera,{left:-12,right:12,top:12,bottom:-12,near:1,far:50}); sun.shadow.bias=-.0008; sun.shadow.radius=4; root.add(sun);
-  K3.bloom.strength=night?.4:.12;
+  K3.bloom.strength=night?.4:.12; K3.dirty=true;
   // selection
   if(mine&&KM.sel!=null){ const g=K3.pick.find(o=>o.userData.idx===KM.sel); if(g){ const bh=new T.BoxHelper(g,0xff5a3c); root.add(bh); } }
 }
@@ -4376,6 +4422,7 @@ function k3ApplyLights(room){
   if(!K3.ready||!K3.L) return; const Lt=kmLights(room), night=(room.mood||'malam')==='malam';
   K3.R.toneMappingExposure=Lt.exp;
   if(K3.L.ceil){ K3.L.ceil.color.set(Lt.ceil.c); K3.L.ceil.intensity=Lt.ceil.on?140*Lt.ceil.p:0; K3.L.ceilBulb.color.set(Lt.ceil.c); K3.L.ceilBulb.emissive.set(Lt.ceil.c); K3.L.ceilBulb.emissiveIntensity=Lt.ceil.on?5*Lt.ceil.p:0; }
+  K3.dirty=true;
   K3.L.desk.forEach(L=>{ L.color.set(Lt.desk.c); L.intensity=60*Lt.desk.p*(night?1:.5); }); K3.L.deskBulbs.forEach(m=>{ m.color.set(Lt.desk.c); m.emissive.set(Lt.desk.c); m.emissiveIntensity=4*Lt.desk.p; });
 }
 function k3Taps(){
