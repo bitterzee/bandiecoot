@@ -478,6 +478,15 @@ body.gaming{overflow:hidden}
 #tmNick{flex:1;font-family:'Space Mono',monospace;font-size:14px;padding:6px 8px;border:2px solid var(--ink);background:#fff8ea;text-transform:uppercase}
 .tmTrack{background:#3a6b3a;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--navy);max-width:360px;margin:8px auto 0}
 .tmTrack canvas{display:block;width:100%;height:auto}
+.kmFrame{border:3px solid var(--ink);box-shadow:4px 4px 0 var(--navy);background:#111}
+.kmFrame canvas{display:block;width:100%;height:auto;image-rendering:pixelated;image-rendering:crisp-edges;cursor:pointer;touch-action:manipulation}
+.kmSelBar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:var(--navy);color:var(--mustard);padding:8px;margin:10px 0 0}
+.kmSelBar b{font-family:Anton,Impact,sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.5px}
+.kmSelBar button{font-size:12px;padding:5px 8px}
+.kmPalette{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.kmPalette button{font-size:12px;padding:5px 8px;text-transform:none;font-family:'Space Mono',monospace;letter-spacing:0}
+.kmPalette button.sel,#kmWho button.sel{background:var(--navy);color:var(--mustard)}
+.kmGrp{width:100%;font-family:Anton,Impact,sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
 </style>
 </head>
 <body>
@@ -500,6 +509,7 @@ body.gaming{overflow:hidden}
     <div class="snav" data-g="kenangan">
       <button id="tabNosBtn" class="sel">Peta</button>
       <button id="tabMomBtn">Momen</button>
+      <button id="tabKamarBtn">Kamar</button>
     </div>
     <div class="snav" data-g="seru" hidden>
       <button id="tabRelayBtn">Studio</button>
@@ -624,6 +634,22 @@ body.gaming{overflow:hidden}
       <h2>Kuis Mingguan</h2>
       <p class="sub">Tiap Senin pelajaran baru, diacak. 10 soal, 20 detik per soal, satu kali coba. Nyontek? Kita udah 40-an.</p>
       <div id="kuisBox"></div>
+    </div>
+  </section>
+
+  <section id="tabKamar" hidden>
+    <div class="panel">
+      <span class="tape corner">kamar · circa 2002</span>
+      <h2 id="kmTitle">Kamar kamu</h2>
+      <p class="sub">Tata ulang kamar SMA kamu: poster, tape compo, gitar di pojok. Main ke kamar yang lain juga bisa.</p>
+      <div class="tmChips" id="kmWho" style="margin:0 0 12px"></div>
+      <div class="kmFrame"><canvas id="kmCv" width="192" height="144"></canvas></div>
+      <p class="hint" id="kmNote" style="margin:8px 0 0"></p>
+      <div id="kmEdit">
+        <div class="kmSelBar" id="kmSelBar" hidden></div>
+        <div class="kmPalette" id="kmPalette"></div>
+        <div id="kmLook" style="margin-top:12px"></div>
+      </div>
     </div>
   </section>
 
@@ -3096,6 +3122,7 @@ const COLLS={
   quiz:{get:()=>S.quiz||{}, set:m=>{ S.quiz=m; }},
   quizres:{get:()=>S.qres||{}, set:m=>{ S.qres=m; }},
   tamiya:{get:()=>S.tamiya||{}, set:m=>{ S.tamiya=m; }},
+  room:{get:()=>S.rooms||{}, set:m=>{ S.rooms=m; }},
   placepic:{get:()=>S.ppics||{}, set:m=>{ S.ppics=m; }},
   chat:{get:()=>S.chat||{}, set:m=>{ S.chat=m; }}
 };
@@ -3153,6 +3180,7 @@ async function refreshAfterRemote(){
   if(cs.has('placepic')&&PL.id&&!$('#placeOverlay').hidden) renderPlace();
   if(t==='game'&&cs.has('song')&&!G.running) renderGameSetup();
   if(t==='kereta'&&cs.has('bike')&&document.activeElement!==$('#bkPrompt')) renderKereta();
+  if(t==='kamar'&&cs.has('room')&&(KM.who&&KM.who!==kmMe()||KM.sel==null)) renderKamar();
   if(t==='tamiya'&&cs.has('tamiya')&&!TAM.running&&document.activeElement!==$('#tmNick')) renderTamiya();
   if(t==='kuis'&&(cs.has('quiz')||cs.has('quizres'))&&!QZ.play) renderKuis();
   if(cs.has('chat')){ if(t==='cito') renderCito(); else chatBadge(); }
@@ -3928,9 +3956,150 @@ $('#tmGarage').addEventListener('change',e=>{ if(e.target.id!=='tmNick') return;
 $('#tmTT').onclick=()=>{ ac(); tmStart('tt'); };
 $('#tmRace').onclick=()=>{ ac(); tmStart('race'); };
 
+/* =================== KAMAR (each of us designs our room, circa 2002) =================== */
+if(!S.rooms) S.rooms={};
+// a 192x144 pixel room seen from the front: wall rows 0-8, floor rows 9-17 (8 px cells)
+const KM={W:24,WALLR:9,ROWS:18,sel:null,pick:null,who:null};
+const KM_ITEMS={
+  // wall items: x,y = top-left cell
+  jendela:{name:'Jendela',zone:'wall',w:4,h:3},
+  poster:{name:'Poster rock',zone:'wall',w:2,h:3},
+  poster2:{name:'Poster band',zone:'wall',w:3,h:2},
+  jam:{name:'Jam dinding',zone:'wall',w:1,h:1},
+  kalender:{name:'Kalender',zone:'wall',w:2,h:2},
+  rakdinding:{name:'Rak kaset',zone:'wall',w:3,h:1},
+  fotoband:{name:'Foto band',zone:'wall',w:2,h:2},
+  bendera:{name:'Syal klub',zone:'wall',w:4,h:1},
+  // floor items: x = left cell, y = bottom row on the floor, drawn h cells tall
+  kasur:{name:'Kasur',zone:'floor',w:7,h:3},
+  meja:{name:'Meja belajar',zone:'floor',w:5,h:3},
+  kursi:{name:'Kursi',zone:'floor',w:2,h:3},
+  lemari:{name:'Lemari',zone:'floor',w:3,h:7},
+  rakbuku:{name:'Rak buku',zone:'floor',w:3,h:5},
+  tv:{name:'TV tabung',zone:'floor',w:3,h:3},
+  komputer:{name:'Komputer',zone:'floor',w:3,h:3},
+  compo:{name:'Tape compo',zone:'floor',w:4,h:2},
+  konsol:{name:'Konsol + stik',zone:'floor',w:2,h:1},
+  kaset:{name:'Tumpukan kaset',zone:'floor',w:2,h:1},
+  gitar:{name:'Gitar',zone:'floor',w:1,h:5},
+  drum:{name:'Snare + stik',zone:'floor',w:2,h:3},
+  ampli:{name:'Ampli',zone:'floor',w:2,h:2},
+  kipas:{name:'Kipas angin',zone:'floor',w:2,h:4},
+  tanaman:{name:'Tanaman',zone:'floor',w:1,h:3},
+  bola:{name:'Bola',zone:'floor',w:1,h:1},
+  karpet:{name:'Karpet',zone:'floor',w:8,h:1,flat:true}
+};
+const KM_WALLS=['#e8dcc0','#bcd3c2','#c9d6e8','#e6c7b8','#d8d0e8','#f1e3a4','#3b3f52'];
+const KM_FLOORS={keramik:'Keramik',kayu:'Kayu',tikar:'Tikar'};
+function kmDefault(){ return {wall:'#e8dcc0',floor:'keramik',items:[
+  {t:'jendela',x:2,y:2},{t:'poster',x:9,y:1},{t:'jam',x:13,y:1},{t:'kalender',x:20,y:2},
+  {t:'kasur',x:1,y:16},{t:'meja',x:15,y:13},{t:'compo',x:15,y:10},{t:'kursi',x:13,y:14},{t:'gitar',x:9,y:15}]}; }
+const kmMe=()=>ME&&ME.name||'Aku';
+const kmRoom=n=>S.rooms[n]&&S.rooms[n].items?S.rooms[n]:kmDefault();
+function kmBox(it){ const d=KM_ITEMS[it.t]; if(d.zone==='wall') return {x:it.x*8,y:it.y*8,w:d.w*8,h:d.h*8}; return {x:it.x*8,y:(it.y+1-d.h)*8,w:d.w*8,h:d.h*8}; }
+function kmClamp(it){ const d=KM_ITEMS[it.t]; it.x=Math.max(0,Math.min(KM.W-d.w,it.x));
+  if(d.zone==='wall') it.y=Math.max(0,Math.min(KM.WALLR-d.h,it.y)); else it.y=Math.max(KM.WALLR,Math.min(KM.ROWS-1,it.y)); return it; }
+function kmDrawItem(c,it,flip){
+  const b=kmBox(it), R=(x,y,w,h,col)=>{ c.fillStyle=col; c.fillRect(b.x+(flip?b.w-x-w:x),b.y+y,w,h); }, ink='#1d1d1d';
+  switch(it.t){
+    case 'jendela': R(0,0,32,24,'#6b4a2b'); R(2,2,28,20,'#9fd3f0'); R(2,14,28,8,'#bfe3a0'); R(15,2,2,20,'#6b4a2b'); R(2,11,28,2,'#6b4a2b'); R(0,0,6,24,'#c8452f'); R(26,0,6,24,'#c8452f'); R(0,0,32,2,'#7a2a1d'); break;
+    case 'poster': R(0,0,16,24,'#1d1d1d'); R(1,1,14,22,'#c8302a'); R(3,4,10,7,'#1d1d1d'); R(5,6,6,4,'#e2c44c'); R(3,14,10,2,'#f4f0e2'); R(3,17,7,2,'#f4f0e2'); R(3,20,9,1,'#f4f0e2'); break;
+    case 'poster2': R(0,0,24,16,'#1d1d1d'); R(1,1,22,14,'#2e3274'); [3,8,13,18].forEach(x=>{ R(x,5,3,3,'#e8c9a0'); R(x-1,8,5,6,'#111'); }); R(2,2,20,2,'#e2c44c'); break;
+    case 'jam': R(1,0,6,8,'#f4f0e2'); R(0,1,8,6,'#f4f0e2'); R(3,2,1,3,ink); R(3,4,3,1,ink); R(1,0,6,1,'#8a6a48'); break;
+    case 'kalender': R(0,0,16,16,'#f4f0e2'); R(0,0,16,4,'#c8302a'); for(let i=0;i<4;i++) for(let j=0;j<3;j++) R(2+i*3.5,6+j*3,2,2,'#8c877a'); R(7,1,2,2,'#f4f0e2'); break;
+    case 'rakdinding': R(0,5,24,3,'#8b5a2b'); ['#d23b2b','#2f5fa8','#e2c44c','#2f8f45','#8a4fb3','#1d1d1d','#e08a2e','#f4f0e2'].forEach((col,i)=>R(1+i*3,0,2,5,col)); break;
+    case 'fotoband': R(0,0,16,16,'#8b5a2b'); R(2,2,12,12,'#f4f0e2'); [3,6,9,12].forEach(x=>{ R(x,6,2,2,'#c98f62'); R(x,8,2,4,'#2e3274'); }); R(3,3,10,2,'#e2c44c'); break;
+    case 'bendera': R(0,0,32,8,'#2e3274'); R(0,3,32,2,'#e2c44c'); R(0,0,2,8,'#f4f0e2'); R(30,0,2,8,'#f4f0e2'); break;
+    case 'kasur': R(0,8,56,12,'#6b4a2b'); R(2,4,52,10,'#f4f0e2'); R(2,4,14,6,'#ffffff'); R(16,6,38,10,'#2f6db0'); R(16,6,38,2,'#4a86c8'); R(0,2,4,22,'#6b4a2b'); R(52,10,4,14,'#6b4a2b'); break;
+    case 'meja': R(0,0,40,4,'#a8743f'); R(0,0,40,1,'#c08a52'); R(2,4,3,20,'#6b4a2b'); R(35,4,3,20,'#6b4a2b'); R(22,4,12,10,'#8b5a2b'); R(26,8,4,1,'#e2c44c'); break;
+    case 'kursi': R(0,0,4,24,'#6b4a2b'); R(0,10,16,4,'#8b5a2b'); R(12,14,3,10,'#6b4a2b'); R(1,14,3,10,'#6b4a2b'); break;
+    case 'lemari': R(0,0,24,56,'#8b5a2b'); R(1,1,22,54,'#a8743f'); R(12,1,1,54,'#6b4a2b'); R(9,26,2,4,'#e2c44c'); R(14,26,2,4,'#e2c44c'); R(3,4,7,10,'#c9e6f2'); break;
+    case 'rakbuku': R(0,0,24,40,'#6b4a2b'); [4,16,28].forEach(y=>{ R(2,y,20,10,'#3a2a1a'); ['#d23b2b','#2f5fa8','#e2c44c','#2f8f45','#f4f0e2','#8a4fb3'].forEach((col,i)=>R(3+i*3,y+(i%2),2,10-(i%2),col)); }); break;
+    case 'tv': R(0,0,24,20,'#3a3a3a'); R(2,2,16,14,'#5a8fb8'); R(3,3,6,4,'#8fc0e0'); R(19,4,3,2,'#c8302a'); R(19,9,3,1,ink); R(19,11,3,1,ink); R(4,20,16,4,'#2a2a2a'); break;
+    case 'komputer': R(2,0,20,15,'#e6e1d2'); R(4,2,16,11,'#1d3a5a'); R(5,3,8,2,'#7fd17f'); R(5,6,11,1,'#7fd17f'); R(5,8,6,1,'#7fd17f'); R(8,15,8,2,'#cfc9b8'); R(0,19,24,5,'#e6e1d2'); R(2,20,20,1,'#9a9484'); R(2,22,20,1,'#9a9484'); break;
+    case 'compo': R(0,2,32,14,'#2a2a2a'); R(1,4,8,10,'#111'); R(23,4,8,10,'#111'); R(3,6,4,6,'#444'); R(25,6,4,6,'#444'); R(11,5,10,5,'#9fb4c8'); R(12,6,8,3,'#2a2a2a'); R(11,11,10,2,'#555'); R(14,0,4,2,'#888'); break;
+    case 'konsol': R(0,2,12,6,'#9a9aa8'); R(1,3,6,2,'#6a6a78'); R(9,4,2,2,'#c8302a'); R(12,5,4,3,'#555'); break;
+    case 'kaset': ['#d23b2b','#2f5fa8','#e2c44c'].forEach((col,i)=>{ R(i*2,8-3*(i+1),12,3,'#111'); R(1+i*2,8-3*(i+1)+1,10,1,col); }); break;
+    case 'gitar': R(3,0,2,22,'#5a3a22'); R(2,0,4,3,'#2a1a10'); R(0,22,8,6,'#c8452f'); R(1,26,6,8,'#c8452f'); R(3,25,2,2,'#2a1a10'); R(0,34,8,6,'#c8452f'); break;
+    case 'drum': R(1,10,14,10,'#f4f0e2'); R(1,10,14,2,'#bbb'); R(1,18,14,2,'#bbb'); R(3,20,2,4,'#888'); R(11,20,2,4,'#888'); R(2,2,1,9,'#e6c27a'); R(12,0,1,10,'#e6c27a'); break;
+    case 'ampli': R(0,0,16,16,'#1d1d1d'); R(1,1,14,4,'#3a3a3a'); R(2,2,2,2,'#e2c44c'); R(6,2,2,2,'#e2c44c'); R(2,6,12,9,'#2a2a2a'); for(let i=0;i<4;i++) R(3,7+i*2,10,1,'#3a3a3a'); break;
+    case 'kipas': R(4,0,10,10,'#cfd6dc'); R(8,4,2,2,'#5a6a7a'); R(5,1,8,1,'#9aa6b0'); R(5,8,8,1,'#9aa6b0'); R(8,10,2,18,'#7a8690'); R(3,28,12,4,'#5a6a7a'); break;
+    case 'tanaman': R(1,12,6,12,'#b0563a'); R(0,10,8,3,'#8a3f2a'); R(1,2,2,9,'#2f8f45'); R(4,0,2,11,'#3aa055'); R(6,4,2,7,'#2f8f45'); break;
+    case 'bola': R(1,1,6,6,'#f4f0e2'); R(0,2,8,4,'#f4f0e2'); R(3,3,2,2,ink); R(1,1,2,1,ink); R(5,6,2,1,ink); break;
+    case 'karpet': R(0,2,64,6,'#b3243a'); R(2,3,60,4,'#d9822b'); R(4,4,56,2,'#b3243a'); for(let i=0;i<8;i++) R(4+i*8,4,2,2,'#f1e3a4'); break;
+  }
+}
+function kmDraw(){
+  const cv=$('#kmCv'); if(!cv) return; const c=cv.getContext('2d'), n=KM.who||kmMe(), room=kmRoom(n);
+  c.fillStyle=room.wall; c.fillRect(0,0,192,72);
+  c.fillStyle='rgba(0,0,0,.06)'; for(let x=0;x<192;x+=16) c.fillRect(x,0,1,72);
+  c.fillStyle='#8b5a2b'; c.fillRect(0,68,192,4);
+  const fl=room.floor;
+  if(fl==='kayu'){ c.fillStyle='#b07a4a'; c.fillRect(0,72,192,72); c.fillStyle='#9a6a3e'; for(let y=72;y<144;y+=6) c.fillRect(0,y,192,1); for(let y=72,k=0;y<144;y+=6,k++) for(let x=(k%2)*20;x<192;x+=40) c.fillRect(x,y,1,6); }
+  else if(fl==='tikar'){ c.fillStyle='#d8c08a'; c.fillRect(0,72,192,72); c.fillStyle='#c4a86e'; for(let y=72;y<144;y+=3) for(let x=((y/3)%2)*3;x<192;x+=6) c.fillRect(x,y,3,1); }
+  else { for(let y=72;y<144;y+=12) for(let x=0;x<192;x+=12){ c.fillStyle=((x+y)/12)%2?'#e9e6df':'#d9d5cc'; c.fillRect(x,y,12,12); } }
+  const items=room.items.map((it,i)=>({it,i}));
+  const order=items.filter(o=>KM_ITEMS[o.it.t]&&KM_ITEMS[o.it.t].zone==='wall').concat(items.filter(o=>KM_ITEMS[o.it.t]&&KM_ITEMS[o.it.t].flat), items.filter(o=>KM_ITEMS[o.it.t]&&KM_ITEMS[o.it.t].zone==='floor'&&!KM_ITEMS[o.it.t].flat).sort((a,b)=>a.it.y-b.it.y));
+  order.forEach(({it,i})=>{
+    if(KM_ITEMS[it.t].zone==='floor'&&!KM_ITEMS[it.t].flat){ const b=kmBox(it); c.fillStyle='rgba(0,0,0,.18)'; c.fillRect(b.x+1,b.y+b.h-2,b.w,3); }
+    kmDrawItem(c,it,it.f);
+    if(KM.sel===i&&n===kmMe()){ const b=kmBox(it); c.strokeStyle='#e2402b'; c.lineWidth=1; c.setLineDash([2,2]); c.strokeRect(b.x-.5,b.y-.5,b.w+1,b.h+1); c.setLineDash([]); }
+  });
+}
+function renderKamar(){
+  const me=kmMe(); KM.who=KM.who||me; const n=KM.who, mine=n===me, room=kmRoom(n), r=S.rooms[n];
+  $('#kmWho').innerHTML=BAND.concat(BAND.includes(me)?[]:[me]).map(x=>`<button class="small ${x===n?'sel':''}" data-kw="${esc(x)}">${esc(x===me?'Kamarku':x)}</button>`).join('');
+  $('#kmTitle').textContent=mine?'Kamar kamu':`Kamar ${n}`;
+  $('#kmNote').textContent=mine?(KM.pick?`Ketuk ruangan buat taruh ${KM_ITEMS[KM.pick].name.toLowerCase()}.`:KM.sel!=null?'Ketuk tempat lain buat mindahin, atau pakai tombol di bawah.':'Pilih barang di bawah, lalu ketuk ruangan. Ketuk barang buat geser.')
+    :(r&&r.at?`Terakhir diubah ${momDate(r.at)}.`:`${n} belum nata kamarnya. Ini kamar standar dulu.`);
+  $('#kmEdit').hidden=!mine;
+  if(mine){
+    const sel=KM.sel!=null?room.items[KM.sel]:null;
+    $('#kmSelBar').innerHTML=sel?`<b>${esc(KM_ITEMS[sel.t].name)}</b><span class="spacer"></span><button class="small" data-km="l">◀</button><button class="small" data-km="u">▲</button><button class="small" data-km="d">▼</button><button class="small" data-km="r">▶</button><button class="small" data-km="flip">Balik</button><button class="small" data-km="up">Depan</button><button class="small dark" data-km="del">Hapus</button><button class="small" data-km="done">Selesai</button>`:'';
+    $('#kmSelBar').hidden=!sel;
+    const btn=([k,d])=>`<button class="small ${KM.pick===k?'sel':''}" data-kp="${k}">${esc(d.name)}</button>`;
+    $('#kmPalette').innerHTML=`<div class="kmGrp">Dinding</div>${Object.entries(KM_ITEMS).filter(([,d])=>d.zone==='wall').map(btn).join('')}<div class="kmGrp">Lantai</div>${Object.entries(KM_ITEMS).filter(([,d])=>d.zone==='floor').map(btn).join('')}`;
+    $('#kmLook').innerHTML=`<div class="tmRow"><div class="tmLbl">Cat</div><div class="tmChips">${KM_WALLS.map(col=>`<button class="tmSw ${room.wall===col?'sel':''}" style="background:${col}" data-kwall="${col}" aria-label="Cat ${col}"></button>`).join('')}</div></div>
+      <div class="tmRow"><div class="tmLbl">Lantai</div><div class="tmChips">${Object.entries(KM_FLOORS).map(([k,v])=>`<button class="small ${room.floor===k?'sel':''}" data-kfloor="${k}">${v}</button>`).join('')}</div></div>`;
+  }
+  kmDraw();
+}
+function kmSave(room){ room.at=new Date().toISOString(); S.rooms[kmMe()]=room; save(); }
+function kmMine(){ const me=kmMe(); const r=kmRoom(me); return S.rooms[me]===r?r:JSON.parse(JSON.stringify(r)); }
+$('#kmCv').addEventListener('click',e=>{
+  const me=kmMe(); if((KM.who||me)!==me) return;
+  const cv=e.currentTarget, rc=cv.getBoundingClientRect(), px=(e.clientX-rc.left)/rc.width*192, py=(e.clientY-rc.top)/rc.height*144;
+  const cx=Math.floor(px/8), cy=Math.floor(py/8), room=kmMine();
+  if(KM.pick){
+    const d=KM_ITEMS[KM.pick], it=kmClamp({t:KM.pick,x:cx-Math.floor(d.w/2),y:d.zone==='wall'?cy-Math.floor(d.h/2):Math.max(KM.WALLR,cy)});
+    room.items.push(it); KM.sel=room.items.length-1; KM.pick=null; kmSave(room); return renderKamar();
+  }
+  // tap on an item: select the frontmost one under the finger
+  const order=room.items.map((it,i)=>({it,i})).sort((a,b)=>{ const za=KM_ITEMS[a.it.t].zone==='wall'?0:KM_ITEMS[a.it.t].flat?1:2+a.it.y/100, zb=KM_ITEMS[b.it.t].zone==='wall'?0:KM_ITEMS[b.it.t].flat?1:2+b.it.y/100; return zb-za; });
+  const hit=order.find(({it})=>{ const b=kmBox(it); return px>=b.x&&px<b.x+b.w&&py>=b.y&&py<b.y+b.h; });
+  if(hit&&hit.i!==KM.sel){ KM.sel=hit.i; return renderKamar(); }
+  if(KM.sel!=null&&!hit){ const it=room.items[KM.sel], d=KM_ITEMS[it.t]; it.x=cx-Math.floor(d.w/2); it.y=d.zone==='wall'?cy-Math.floor(d.h/2):Math.max(KM.WALLR,cy); kmClamp(it); kmSave(room); return renderKamar(); }
+  if(!hit){ KM.sel=null; renderKamar(); }
+});
+$('#tabKamar').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  if(b.dataset.kw){ KM.who=b.dataset.kw; KM.sel=null; KM.pick=null; return renderKamar(); }
+  if(b.dataset.kp){ KM.pick=KM.pick===b.dataset.kp?null:b.dataset.kp; KM.sel=null; return renderKamar(); }
+  const room=kmMine();
+  if(b.dataset.kwall){ room.wall=b.dataset.kwall; kmSave(room); return renderKamar(); }
+  if(b.dataset.kfloor){ room.floor=b.dataset.kfloor; kmSave(room); return renderKamar(); }
+  const a=b.dataset.km; if(!a||KM.sel==null) return; const it=room.items[KM.sel]; if(!it) return;
+  if(a==='done'){ KM.sel=null; return renderKamar(); }
+  if(a==='del'){ room.items.splice(KM.sel,1); KM.sel=null; }
+  else if(a==='flip') it.f=!it.f;
+  else if(a==='up'){ room.items.splice(KM.sel,1); room.items.push(it); KM.sel=room.items.length-1; }
+  else { if(a==='l') it.x--; if(a==='r') it.x++; if(a==='u') it.y--; if(a==='d') it.y++; kmClamp(it); }
+  kmSave(room); renderKamar();
+});
+
 /* =================== TABS =================== */
-const TABS={cito:['#tabCito','#tabCitoBtn','cito'],kuis:['#tabKuis','#tabKuisBtn','kuis'],tamiya:['#tabTamiya','#tabTamiyaBtn','tamiya'],james:['#tabJames','#tabJamesBtn','jamesbon'],relay:['#tabRelay','#tabRelayBtn','jam'],moments:['#tabMoments','#tabMomBtn','momen'],nostalgia:['#tabNostalgia','#tabNosBtn','nostalgia']};
-const TAB_GROUP={nostalgia:'kenangan',moments:'kenangan',tamiya:'seru',relay:'seru',kuis:'seru',cito:'ngobrol',james:'ngobrol'};
+const TABS={cito:['#tabCito','#tabCitoBtn','cito'],kuis:['#tabKuis','#tabKuisBtn','kuis'],tamiya:['#tabTamiya','#tabTamiyaBtn','tamiya'],kamar:['#tabKamar','#tabKamarBtn','kamar'],james:['#tabJames','#tabJamesBtn','jamesbon'],relay:['#tabRelay','#tabRelayBtn','jam'],moments:['#tabMoments','#tabMomBtn','momen'],nostalgia:['#tabNostalgia','#tabNosBtn','nostalgia']};
+const TAB_GROUP={nostalgia:'kenangan',moments:'kenangan',tamiya:'seru',kamar:'kenangan',relay:'seru',kuis:'seru',cito:'ngobrol',james:'ngobrol'};
 const LAST_IN_GROUP={kenangan:'nostalgia',seru:'relay',ngobrol:'cito'};
 function switchTab(t){
   if(!TABS[t]) t='nostalgia';
@@ -3948,18 +4117,20 @@ function switchTab(t){
   else if(t==='nostalgia') renderNostalgia();
   else if(t==='james') renderJames();
   else if(t==='tamiya') renderTamiya();
+  else if(t==='kamar') renderKamar();
   else if(t==='kuis') renderKuis();
   else if(t==='cito'){ CITO.drawn=false; renderCito(); }
   else { renderRelay(); renderBand(); }
   try{ history.replaceState(null,'','#'+TABS[t][2]); }catch(e){}
   window.scrollTo({top:0});
 }
-const tabFromHash=()=>({'#cito':'cito','#kuis':'kuis','#kereta':'tamiya','#tamiya':'tamiya','#jamesbon':'james','#estafet':'relay','#jam':'relay','#momen':'moments'})[location.hash]||'nostalgia';
+const tabFromHash=()=>({'#cito':'cito','#kuis':'kuis','#kereta':'tamiya','#tamiya':'tamiya','#kamar':'kamar','#jamesbon':'james','#estafet':'relay','#jam':'relay','#momen':'moments'})[location.hash]||'nostalgia';
 $('#tabRelayBtn').onclick=()=>switchTab('relay');
 $('#tabMomBtn').onclick=()=>switchTab('moments');
 $('#tabNosBtn').onclick=()=>switchTab('nostalgia');
 $('#tabJamesBtn').onclick=()=>switchTab('james');
 $('#tabTamiyaBtn').onclick=()=>switchTab('tamiya');
+$('#tabKamarBtn').onclick=()=>switchTab('kamar');
 $('#tabKuisBtn').onclick=()=>switchTab('kuis');
 $('#tabCitoBtn').onclick=()=>switchTab('cito');
 document.querySelectorAll('nav.tabs .gnav button').forEach(b=>b.onclick=()=>switchTab(LAST_IN_GROUP[b.dataset.g]));
