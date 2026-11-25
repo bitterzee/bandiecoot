@@ -12,7 +12,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.min.js"></script>
 <script src="/config.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Press+Start+2P&family=Rubik+Distressed&family=Special+Elite&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Press+Start+2P&family=Rubik+Distressed&family=Special+Elite&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#0f0e0c; --ink:#151412; --paper:#ebe5d6; --paper2:#d9d1bd; --red:#2e3274; --tape:#e2c44c; --mustard:#e2c44c; --navy:#2e3274;
@@ -478,8 +478,9 @@ body.gaming{overflow:hidden}
 #tmNick{flex:1;font-family:'Space Mono',monospace;font-size:14px;padding:6px 8px;border:2px solid var(--ink);background:#fff8ea;text-transform:uppercase}
 .tmTrack{background:#3a6b3a;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--navy);max-width:360px;margin:8px auto 0}
 .tmTrack canvas{display:block;width:100%;height:auto}
-.kmFrame{border:3px solid var(--ink);box-shadow:4px 4px 0 var(--navy);background:#111}
-.kmFrame canvas{display:block;width:100%;height:auto;image-rendering:pixelated;image-rendering:crisp-edges;cursor:pointer;touch-action:manipulation}
+.kmCap{display:inline-block;position:relative;z-index:1;margin:0 0 -10px 10px;transform:rotate(-2deg);background:var(--mustard);border:3px solid #141414;box-shadow:3px 3px 0 #141414;padding:3px 12px 1px;font-family:Bangers,Anton,Impact,sans-serif;font-size:24px;letter-spacing:1px;text-transform:uppercase;color:#141414}
+.kmFrame{box-shadow:5px 5px 0 var(--navy);background:#111}
+.kmFrame canvas{display:block;width:100%;height:auto;cursor:pointer;touch-action:manipulation}
 .kmSelBar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:var(--navy);color:var(--mustard);padding:8px;margin:10px 0 0}
 .kmSelBar b{font-family:Anton,Impact,sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.5px}
 .kmSelBar button{font-size:12px;padding:5px 8px}
@@ -639,11 +640,12 @@ body.gaming{overflow:hidden}
 
   <section id="tabKamar" hidden>
     <div class="panel">
-      <span class="tape corner">kamar · circa 2002</span>
+      <span class="tape corner">komik · circa 2002</span>
       <h2 id="kmTitle">Kamar kamu</h2>
       <p class="sub">Tata ulang kamar SMA kamu: poster, tape compo, gitar di pojok. Main ke kamar yang lain juga bisa.</p>
       <div class="tmChips" id="kmWho" style="margin:0 0 12px"></div>
-      <div class="kmFrame"><canvas id="kmCv" width="192" height="144"></canvas></div>
+      <div class="kmCap" id="kmCap"></div>
+      <div class="kmFrame"><canvas id="kmCv" width="960" height="720"></canvas></div>
       <p class="hint" id="kmNote" style="margin:8px 0 0"></p>
       <div id="kmEdit">
         <div class="kmSelBar" id="kmSelBar" hidden></div>
@@ -3999,8 +4001,11 @@ const kmRoom=n=>S.rooms[n]&&S.rooms[n].items?S.rooms[n]:kmDefault();
 function kmBox(it){ const d=KM_ITEMS[it.t]; if(d.zone==='wall') return {x:it.x*8,y:it.y*8,w:d.w*8,h:d.h*8}; return {x:it.x*8,y:(it.y+1-d.h)*8,w:d.w*8,h:d.h*8}; }
 function kmClamp(it){ const d=KM_ITEMS[it.t]; it.x=Math.max(0,Math.min(KM.W-d.w,it.x));
   if(d.zone==='wall') it.y=Math.max(0,Math.min(KM.WALLR-d.h,it.y)); else it.y=Math.max(KM.WALLR,Math.min(KM.ROWS-1,it.y)); return it; }
-function kmDrawItem(c,it,flip){
-  const b=kmBox(it), R=(x,y,w,h,col)=>{ c.fillStyle=col; c.fillRect(b.x+(flip?b.w-x-w:x),b.y+y,w,h); }, ink='#1d1d1d';
+function kmDrawItem(c,it,flip,comic){
+  const b=kmBox(it), ink='#1d1d1d', R=(x,y,w,h,col)=>{ const X=b.x+(flip?b.w-x-w:x), Y=b.y+y; c.fillStyle=col;
+    if(comic&&w>=2&&h>=2&&c.roundRect){ c.beginPath(); c.roundRect(X,Y,w,h,Math.min(1.2,w/4,h/4)); c.fill(); } else c.fillRect(X,Y,w,h);
+    if(comic&&w>=3&&h>=3){ c.strokeStyle='rgba(20,20,20,.6)'; c.lineWidth=.35; c.strokeRect(X,Y,w,h); }
+    if(comic&&w>=4&&h>=3){ c.fillStyle='rgba(255,255,255,.28)'; c.fillRect(X+.6,Y+.6,Math.max(.6,w*.18),h-1.2); } };
   switch(it.t){
     case 'jendela': R(0,0,32,24,'#6b4a2b'); R(2,2,28,20,'#9fd3f0'); R(2,14,28,8,'#bfe3a0'); R(15,2,2,20,'#6b4a2b'); R(2,11,28,2,'#6b4a2b'); R(0,0,6,24,'#c8452f'); R(26,0,6,24,'#c8452f'); R(0,0,32,2,'#7a2a1d'); break;
     case 'poster': R(0,0,16,24,'#1d1d1d'); R(1,1,14,22,'#c8302a'); R(3,4,10,7,'#1d1d1d'); R(5,6,6,4,'#e2c44c'); R(3,14,10,2,'#f4f0e2'); R(3,17,7,2,'#f4f0e2'); R(3,20,9,1,'#f4f0e2'); break;
@@ -4029,23 +4034,71 @@ function kmDrawItem(c,it,flip){
     case 'karpet': R(0,2,64,6,'#b3243a'); R(2,3,60,4,'#d9822b'); R(4,4,56,2,'#b3243a'); for(let i=0;i<8;i++) R(4+i*8,4,2,2,'#f1e3a4'); break;
   }
 }
+// Comic-book rendering: everything is laid out in the same 192x144 units, drawn 5x larger with ink outlines,
+// flat colours, halftone shading and one-point-perspective floor lines.
+const KMS=5, KM_INK='#141414';
+let KM_DOTS=null;
+function kmDots(c){
+  if(KM_DOTS) return KM_DOTS;
+  const p=document.createElement('canvas'); p.width=p.height=9; const x=p.getContext('2d');
+  x.fillStyle='rgba(0,0,0,.3)'; x.beginPath(); x.arc(2.5,2.5,1.7,0,7); x.arc(7,7,1.7,0,7); x.fill();
+  return KM_DOTS=c.createPattern(p,'repeat');
+}
+function kmRenderItem(c,it,flip){
+  const b=kmBox(it), pad=2, W=Math.ceil((b.w+pad*2)*KMS), H=Math.ceil((b.h+pad*2)*KMS);
+  const off=document.createElement('canvas'); off.width=W; off.height=H; const o=off.getContext('2d');
+  o.scale(KMS,KMS); o.translate(pad-b.x,pad-b.y); o.lineJoin='round';
+  kmDrawItem(o,it,flip,true);
+  // halftone shading on the right/lower side of the item
+  o.setTransform(1,0,0,1,0,0); o.globalCompositeOperation='source-atop'; o.fillStyle=kmDots(o);
+  o.fillRect(W*.62,0,W*.38,H); o.fillRect(0,H*.78,W,H*.22);
+  // thick ink outline: the item's silhouette stamped around it
+  const sil=document.createElement('canvas'); sil.width=W; sil.height=H; const s=sil.getContext('2d');
+  s.drawImage(off,0,0); s.globalCompositeOperation='source-in'; s.fillStyle=KM_INK; s.fillRect(0,0,W,H);
+  const X=(b.x-pad)*KMS, Y=(b.y-pad)*KMS, t=3.2;
+  for(let a=0;a<8;a++) c.drawImage(sil,X+Math.cos(a*Math.PI/4)*t,Y+Math.sin(a*Math.PI/4)*t);
+  c.drawImage(off,X,Y);
+}
+function kmBackground(c,room,n){
+  const S=KMS, ink=KM_INK; c.save(); c.scale(S,S); c.lineJoin='round';
+  // back wall
+  c.fillStyle=room.wall; c.fillRect(0,0,192,72);
+  c.fillStyle='rgba(255,255,255,.18)'; c.beginPath(); c.moveTo(150,0); c.lineTo(192,0); c.lineTo(110,72); c.lineTo(80,72); c.closePath(); c.fill();
+  c.restore(); c.save(); c.fillStyle=kmDots(c); c.fillRect(0,0,960,70); c.fillRect(0,0,90,360); c.fillRect(870,0,90,360); c.restore();
+  c.save(); c.scale(S,S);
+  // floor with one-point perspective toward the middle of the wall
+  const fl=room.floor, base=fl==='kayu'?'#c48a52':fl==='tikar'?'#dcc48e':'#ece8de', line=fl==='kayu'?'#8a5a2e':fl==='tikar'?'#b0945c':'#b9b3a6';
+  c.fillStyle=base; c.fillRect(0,72,192,72);
+  const vx=96, vy=28; c.strokeStyle=line; c.lineWidth=fl==='tikar'?.45:.7;
+  const step=fl==='tikar'?6:fl==='kayu'?14:16;
+  for(let x=-300;x<=500;x+=step){ c.beginPath(); c.moveTo(vx+(x-vx)*((72-vy)/(144-vy)),72); c.lineTo(x,144); c.stroke(); }
+  if(fl!=='kayu'){ for(let k=1;k<12;k++){ const y=72+72*Math.pow(k/12,1.6); c.beginPath(); c.moveTo(0,y); c.lineTo(192,y); c.stroke(); } }
+  else { c.lineWidth=.5; for(let k=0;k<26;k++){ const y=72+((k*37)%72), x=(k*53)%192; c.beginPath(); c.moveTo(x,y); c.lineTo(x+3,y); c.stroke(); } }
+  // baseboard and the wall/floor line
+  c.fillStyle='#7a4f2a'; c.fillRect(0,67,192,5); c.strokeStyle=ink; c.lineWidth=.9; c.beginPath(); c.moveTo(0,67); c.lineTo(192,67); c.moveTo(0,72); c.lineTo(192,72); c.stroke();
+  c.restore();
+  c.save(); c.fillStyle=kmDots(c); c.fillRect(0,360,960,26); c.fillRect(0,640,960,80); c.restore();
+}
+function kmFrame(c,n){
+  c.save(); c.strokeStyle=KM_INK; c.lineWidth=14; c.strokeRect(7,7,946,706);
+  c.restore(); const cap=$('#kmCap'); if(cap) cap.textContent=`Kamar ${n} · 2002`;
+}
 function kmDraw(){
   const cv=$('#kmCv'); if(!cv) return; const c=cv.getContext('2d'), n=KM.who||kmMe(), room=kmRoom(n);
-  c.fillStyle=room.wall; c.fillRect(0,0,192,72);
-  c.fillStyle='rgba(0,0,0,.06)'; for(let x=0;x<192;x+=16) c.fillRect(x,0,1,72);
-  c.fillStyle='#8b5a2b'; c.fillRect(0,68,192,4);
-  const fl=room.floor;
-  if(fl==='kayu'){ c.fillStyle='#b07a4a'; c.fillRect(0,72,192,72); c.fillStyle='#9a6a3e'; for(let y=72;y<144;y+=6) c.fillRect(0,y,192,1); for(let y=72,k=0;y<144;y+=6,k++) for(let x=(k%2)*20;x<192;x+=40) c.fillRect(x,y,1,6); }
-  else if(fl==='tikar'){ c.fillStyle='#d8c08a'; c.fillRect(0,72,192,72); c.fillStyle='#c4a86e'; for(let y=72;y<144;y+=3) for(let x=((y/3)%2)*3;x<192;x+=6) c.fillRect(x,y,3,1); }
-  else { for(let y=72;y<144;y+=12) for(let x=0;x<192;x+=12){ c.fillStyle=((x+y)/12)%2?'#e9e6df':'#d9d5cc'; c.fillRect(x,y,12,12); } }
-  const items=room.items.map((it,i)=>({it,i}));
-  const order=items.filter(o=>KM_ITEMS[o.it.t]&&KM_ITEMS[o.it.t].zone==='wall').concat(items.filter(o=>KM_ITEMS[o.it.t]&&KM_ITEMS[o.it.t].flat), items.filter(o=>KM_ITEMS[o.it.t]&&KM_ITEMS[o.it.t].zone==='floor'&&!KM_ITEMS[o.it.t].flat).sort((a,b)=>a.it.y-b.it.y));
+  c.setTransform(1,0,0,1,0,0); c.clearRect(0,0,cv.width,cv.height);
+  kmBackground(c,room,n);
+  const items=room.items.map((it,i)=>({it,i})).filter(o=>KM_ITEMS[o.it.t]);
+  const order=items.filter(o=>KM_ITEMS[o.it.t].zone==='wall').concat(items.filter(o=>KM_ITEMS[o.it.t].flat), items.filter(o=>KM_ITEMS[o.it.t].zone==='floor'&&!KM_ITEMS[o.it.t].flat).sort((a,b)=>a.it.y-b.it.y));
   order.forEach(({it,i})=>{
-    if(KM_ITEMS[it.t].zone==='floor'&&!KM_ITEMS[it.t].flat){ const b=kmBox(it); c.fillStyle='rgba(0,0,0,.18)'; c.fillRect(b.x+1,b.y+b.h-2,b.w,3); }
-    kmDrawItem(c,it,it.f);
-    if(KM.sel===i&&n===kmMe()){ const b=kmBox(it); c.strokeStyle='#e2402b'; c.lineWidth=1; c.setLineDash([2,2]); c.strokeRect(b.x-.5,b.y-.5,b.w+1,b.h+1); c.setLineDash([]); }
+    const b=kmBox(it), d=KM_ITEMS[it.t];
+    if(d.zone==='floor'&&!d.flat){ c.fillStyle='rgba(0,0,0,.22)'; c.beginPath(); c.ellipse((b.x+b.w/2)*KMS,(b.y+b.h)*KMS,(b.w/2+2)*KMS,2.4*KMS,0,0,7); c.fill(); }
+    if(d.zone==='wall'){ c.fillStyle='rgba(0,0,0,.18)'; c.fillRect((b.x+1.5)*KMS,(b.y+1.5)*KMS,b.w*KMS,b.h*KMS); }
+    kmRenderItem(c,it,it.f);
+    if(KM.sel===i&&n===kmMe()){ c.save(); c.strokeStyle='#e2402b'; c.lineWidth=4; c.setLineDash([12,8]); c.strokeRect((b.x-1.5)*KMS,(b.y-1.5)*KMS,(b.w+3)*KMS,(b.h+3)*KMS); c.restore(); }
   });
+  kmFrame(c,n);
 }
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ if(curTab()==='kamar') kmDraw(); });
 function renderKamar(){
   const me=kmMe(); KM.who=KM.who||me; const n=KM.who, mine=n===me, room=kmRoom(n), r=S.rooms[n];
   $('#kmWho').innerHTML=BAND.concat(BAND.includes(me)?[]:[me]).map(x=>`<button class="small ${x===n?'sel':''}" data-kw="${esc(x)}">${esc(x===me?'Kamarku':x)}</button>`).join('');
