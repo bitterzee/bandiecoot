@@ -198,7 +198,9 @@ textarea{font-family:'Special Elite',monospace;font-size:15px;width:100%;min-hei
 .qzX{background:#fff8ea;border:2px dashed var(--ink);padding:9px 10px;font-size:13px;margin:4px 0 12px}
 .qzTbl{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0 14px}
 .qzTbl td{border-bottom:1px solid #c9c0aa;padding:7px 4px}.qzTbl td:last-child{text-align:right;font-family:Anton,Impact,sans-serif;font-size:15px}
-.qzTbl tr.me td{background:#f3e7b8}.qzTbl .no{color:var(--mut)}
+.qzTbl tr.me td{background:#f3e7b8}
+.akak{display:inline-block;margin-left:6px;padding:1px 7px;border:2px solid var(--ink);background:linear-gradient(#ffe066,#e0a800);color:#2a1a00;font-family:Anton,Impact,sans-serif;font-size:11px;letter-spacing:.5px;transform:rotate(-3deg);box-shadow:2px 2px 0 var(--ink);white-space:nowrap}
+.akakBig{display:block;margin:6px 0 10px;padding:10px 12px;border:3px solid var(--ink);background:linear-gradient(135deg,#ffe066,#f5b700);font-family:Anton,Impact,sans-serif;font-size:20px;text-align:center;box-shadow:4px 4px 0 var(--ink);transform:rotate(-1deg)}.qzTbl .no{color:var(--mut)}
 .qzH3{font-family:Anton,Impact,sans-serif;text-transform:uppercase;font-size:16px;margin:16px 0 2px;letter-spacing:.5px}
 .qzBig{font-family:Anton,Impact,sans-serif;font-size:54px;line-height:1;color:var(--navy)}
 .waBtn{display:inline-flex;align-items:center;gap:6px;background:#25d366;color:#0b2e17;border:2px solid var(--ink);box-shadow:2px 2px 0 var(--navy);padding:6px 10px;font-family:Anton,Impact,sans-serif;font-size:13px;letter-spacing:.5px;text-transform:uppercase;text-decoration:none}
@@ -3564,19 +3566,20 @@ function renderKuis(){
   } else {
     const r=qzRight(mine,Q), p=qzPts(mine,Q);
     h+=`<div style="display:flex;align-items:center;gap:14px;margin:4px 0 6px"><div class="qzBig">${r}/10</div><div><b>${p} poin</b><br><span class="hint" style="margin:0">${['Remedial dulu ya.','Remedial dulu ya.','Remedial dulu ya.','Masih bisa dikatrol.','Lumayan, naik kelas.','Lumayan, naik kelas.','Lumayan, naik kelas.','Ranking 10 besar.','Juara kelas!','Juara umum!','Juara umum!'][r]}</span></div></div>
-      <div class="row" style="gap:8px;flex-wrap:wrap"><button class="small" id="qzMyRev">Lihat pembahasan</button>${qzWaBtn(`🧪 Kuis Mingguan Bandiecoot: ${Q.subject}\nAku dapat ${r}/10 (${p} poin). Berani lawan? 😏\n${QZ_URL}`,'Pamer skor ke WA')}</div>`;
+      ${r===10?'<div class="akakBig">🏅 AKAK AWARD 🏅<div style="font-family:inherit;font-size:12px;font-weight:400">Sempurna 10/10. Kamu akak minggu ini.</div></div>':''}
+      <div class="row" style="gap:8px;flex-wrap:wrap"><button class="small" id="qzMyRev">Lihat pembahasan</button>${qzWaBtn(`🧪 Kuis Mingguan Bandiecoot: ${Q.subject}\nAku dapat ${r}/10 (${p} poin).${r===10?' 🏅 AKAK AWARD!':''} Berani lawan? 😏\n${QZ_URL}`,'Pamer skor ke WA')}</div>`;
   }
   const board=qzBoard(wk), played=new Set(board.map(b=>b.name));
-  h+=`<div class="qzH3">Papan nilai minggu ini</div><table class="qzTbl">${board.map((b,i)=>`<tr class="${b.name===me?'me':''}"><td>${i===0?'👑':i+1+'.'} ${esc(b.name)}</td><td>${b.right}/10</td><td>${b.pts}</td></tr>`).join('')}
+  h+=`<div class="qzH3">Papan nilai minggu ini</div><table class="qzTbl">${board.map((b,i)=>`<tr class="${b.name===me?'me':''}"><td>${i===0?'👑':i+1+'.'} ${esc(b.name)}${b.right===10?'<span class="akak">🏅 AKAK AWARD</span>':''}</td><td>${b.right}/10</td><td>${b.pts}</td></tr>`).join('')}
     ${BAND.filter(n=>!played.has(n)).map(n=>`<tr class="${n===me?'me':''}"><td class="no" colspan="2">${esc(n)}: ${Object.values(S.qres).some(r=>r.week===wk&&r.name===n)?'lagi ngerjain…':'belum ngerjain'}</td><td class="no">–</td></tr>`).join('')}</table>`;
   const weeks=Object.keys(S.quiz).sort().reverse(), past=weeks.filter(k=>k<wk);
-  const tot={}; BAND.forEach(n=>tot[n]={pts:0,wins:0,n:0});
-  weeks.forEach(k=>{ const b=qzBoard(k); b.forEach(x=>{ if(!tot[x.name]) tot[x.name]={pts:0,wins:0,n:0}; tot[x.name].pts+=x.pts; tot[x.name].n++; }); if(k<wk&&b[0]) tot[b[0].name].wins++; });
+  const tot={}; BAND.forEach(n=>tot[n]={pts:0,wins:0,n:0,akak:0});
+  weeks.forEach(k=>{ const b=qzBoard(k); b.forEach(x=>{ if(!tot[x.name]) tot[x.name]={pts:0,wins:0,n:0,akak:0}; tot[x.name].pts+=x.pts; tot[x.name].n++; if(x.right===10) tot[x.name].akak++; }); if(k<wk&&b[0]) tot[b[0].name].wins++; });
   if(weeks.length){
-    h+=`<div class="qzH3">Klasemen semester</div><table class="qzTbl">${Object.entries(tot).sort((a,b)=>b[1].pts-a[1].pts).map(([n,t],i)=>`<tr class="${n===me?'me':''}"><td>${i+1}. ${esc(n)} ${'👑'.repeat(Math.min(t.wins,5))}</td><td class="no">${t.n} kuis</td><td>${t.pts}</td></tr>`).join('')}</table>`;
+    h+=`<div class="qzH3">Klasemen semester</div><table class="qzTbl">${Object.entries(tot).sort((a,b)=>b[1].pts-a[1].pts).map(([n,t],i)=>`<tr class="${n===me?'me':''}"><td>${i+1}. ${esc(n)} ${'👑'.repeat(Math.min(t.wins,5))}${t.akak?`<span class="akak">🏅 ${t.akak>1?t.akak+'× ':''}AKAK</span>`:''}</td><td class="no">${t.n} kuis</td><td>${t.pts}</td></tr>`).join('')}</table>`;
   }
   if(past.length){
-    h+=`<div class="qzH3">Ulangan yang lalu</div><table class="qzTbl">${past.map(k=>{ const b=qzBoard(k); return `<tr><td>${weekRange(k)}<br><b>${esc(S.quiz[k].subject)}</b></td><td>${b[0]?'👑 '+esc(b[0].name):'<span class="no">nggak ada</span>'}</td><td><button class="small" data-qrev="${k}">Soal</button></td></tr>`; }).join('')}</table>`;
+    h+=`<div class="qzH3">Ulangan yang lalu</div><table class="qzTbl">${past.map(k=>{ const b=qzBoard(k); return `<tr><td>${weekRange(k)}<br><b>${esc(S.quiz[k].subject)}</b></td><td>${b[0]?'👑 '+esc(b[0].name):'<span class="no">nggak ada</span>'}${b.filter(x=>x.right===10).map(x=>`<br><span class="akak">🏅 ${esc(x.name)}</span>`).join('')}</td><td><button class="small" data-qrev="${k}">Soal</button></td></tr>`; }).join('')}</table>`;
   }
   if(Q){
     const lagi=BAND.filter(n=>!played.has(n)&&n!==me);
