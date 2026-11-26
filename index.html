@@ -4729,6 +4729,7 @@ function renderKamar(){
   const me=kmMe(); KM.who=KM.who||me; const n=KM.who, mine=n===me, room=kmRoom(n), r=S.rooms[n];
   $('#kmWho').innerHTML=BAND.concat(BAND.includes(me)?[]:[me]).map(x=>`<button class="small ${x===n?'sel':''}" data-kw="${esc(x)}">${esc(x===me?'Kamarku':x)}</button>`).join('');
   $('#kmTitle').textContent=mine?'Kamar kamu':`Kamar ${n}`;
+  const cap=$('#kmCap'); if(cap) cap.textContent=`Kamar ${n} · 2002`; // the 2D painter only runs until 3D is ready, so the caption is set here
   $('#kmNote').textContent=mine?(KM.pick?`Ketuk ruangan buat taruh ${KM_ITEMS[KM.pick].name.toLowerCase()}.`:KM.sel!=null?'Ketuk tempat lain buat mindahin, atau pakai tombol di bawah.':'Pilih barang di bawah, lalu ketuk lantai atau dinding. Ketuk barang buat geser atau putar.')
     :(room.items.length?(r&&r.at?`Terakhir diubah ${momDate(r.at)}.`:''):`Kamar ${n} masih kosong. Belum menang kuis kayaknya.`);
   $('#kmEdit').hidden=!mine;
