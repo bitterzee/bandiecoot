@@ -569,29 +569,76 @@ for side in (0, 1):
     box(-.35 if side == 0 else 3.5, .5 if side == 0 else 4.35, .35, .62, 1.1, 1.25, '#e2c44c', .03)
 finish('w_jendela')
 
-# w_rakvcd [6 x 2]: wall shelf packed with VCD cases
-for z in (0, 1):
-    box(0, 6, 0, .7, z, z + .1, '#6b4a2b', .03)
-    for u in (.25, 5.6):
-        box(u, u + .1, 0, .12, z - .25, z, '#3a2a1a', .02)
-    k, u = 0, .1
-    while u < 5.8:
-        t = .1
-        lean = .25 if k % 13 == 9 else 0
-        box(u, u + t, .08, .62, z + .1, z + .92, BOOKS[(k * 5) % len(BOOKS)], .01, rot=(0, lean, 0))
-        box(u - .002, u + t + .002, .6, .63, z + .55, z + .7, '#f4f0e2', 0, rot=(0, lean, 0))
-        u += t + (.4 if k % 17 == 16 else .012)
+# w_rakvcd [6 x 2]: wooden wall cabinet packed with VCD jewel cases (spines out)
+WOODV = '#7a4f2c'
+box(0, 6, 0, .08, 0, 2, '#5e3b20', .01)                       # back panel
+for u0 in (0, 5.88):
+    box(u0, u0 + .12, 0, .72, 0, 2, WOODV, .02)               # sides
+for z in (0, .96, 1.9):
+    box(0, 6, 0, .74, z, z + .1, WOODV, .02)                  # bottom, middle, top shelves
+box(-.05, 6.05, 0, .78, 1.96, 2.04, '#6a4426', .02)            # top lip
+box(2.96, 3.04, .08, .72, .1, .96, WOODV, .01)                # centre divider, lower row
+SPINES = ['#d23b2b', '#2f5fa8', '#e2c44c', '#2f8f45', '#f4f0e2', '#8a4fb3', '#e08a2e', '#1d1d1d', '#2f9e9a', '#c2185b', '#5d4037', '#90a4ae']
+k = 0
+for zb in (.1, 1.06):
+    u = .16
+    end = 5.84
+    while u < end - .05:
+        if zb == .1 and 2.9 < u < 3.1:
+            u = 3.08
+        if k % 23 == 11 and u + .7 < end:                       # a little stack lying flat
+            for j in range(4):
+                box(u + .02, u + .62, .12, .66, zb + j * .045, zb + j * .045 + .04, SPINES[(k + j) % 12], .005)
+            u += .7
+            k += 1
+            continue
+        if k % 29 == 17 and u + .34 < end:                      # gap with one case leaning
+            box(u + .05, u + .09, .12, .66, zb, zb + .56, SPINES[k % 12], .004, rot=(0, -.35, 0))
+            PARTS[-1].location = (u + .18, -.39, zb + .27)
+            u += .34
+            k += 1
+            continue
+        col = SPINES[(k * 7) % 12]
+        box(u, u + .045, .12, .64, zb, zb + .56, '#d9dde2', .004)          # clear case
+        box(u - .001, u + .046, .6, .645, zb + .02, zb + .54, col, 0)       # printed spine
+        box(u - .002, u + .047, .63, .65, zb + .3, zb + .44, '#f4f0e2', 0)  # title strip
+        box(u - .002, u + .047, .63, .65, zb + .07, zb + .1, '#1d1d1d' if col != '#1d1d1d' else '#e2c44c', 0)
+        u += .047 + (.01 if k % 9 else .03)
         k += 1
+# a disc out of its case, leaning on the front of the lower shelf
+cyl(1.4, .78, 0, .02, .27, '#cfd8e3', axis='Y', seg=32, h=.38, bev=0)
+PARTS[-1].rotation_euler = (math.pi / 2 - .25, 0, 0)
+cyl(1.4, .8, 0, .02, .05, '#8a96a3', axis='Y', seg=16, h=.38, bev=0)
+PARTS[-1].rotation_euler = (math.pi / 2 - .25, 0, 0)
 finish('w_rakvcd')
 
-# w_rakdinding [3 x 1]: little shelf with cassettes standing up
-box(0, 3, 0, .5, .05, .15, '#8b5a2b', .02)
-box(.1, .2, 0, .5, .05, .9, '#8b5a2b', .02)
-box(2.8, 2.9, 0, .5, .05, .9, '#8b5a2b', .02)
-for i in range(13):
-    u = .25 + i * .19
-    box(u, u + .16, .08, .45, .15, .75, '#1d1d1d', .01)
-    box(u - .005, u + .165, .43, .46, .3, .6, BOOKS[i % len(BOOKS)], 0)
+# w_rakdinding [3 x 1]: wall cassette rack, six columns of tapes lying flat, spines out
+CASW = .43
+box(0, 3, 0, .06, 0, 1, '#5e3b20', .01)
+for i in range(7):
+    u = .03 + i * (CASW + .05)
+    box(u, u + .05, 0, .5, 0, 1, '#8b5a2b', .015)              # dividers
+box(0, 3, 0, .52, 0, .06, '#8b5a2b', .015)
+box(0, 3, 0, .52, .94, 1, '#8b5a2b', .015)
+JC = ['#d23b2b', '#2f5fa8', '#e2c44c', '#2f8f45', '#f4f0e2', '#8a4fb3', '#e08a2e', '#1d1d1d', '#2f9e9a', '#c2185b', '#ff8a65', '#6d8b3a']
+k = 0
+for col in range(6):
+    u0 = .08 + col * (CASW + .05)
+    rows = 11 - (col * 3 % 4)                                   # some columns not full
+    for r in range(rows):
+        z = .06 + r * .078
+        out = .06 if (k % 17 == 5) else 0                       # one tape pulled out a bit
+        box(u0 + .005, u0 + CASW - .005, .06, .46 + out, z, z + .072, '#cfd4da', .006)   # clear case
+        c = JC[(k * 5) % 12]
+        box(u0 + .01, u0 + CASW - .01, .44 + out, .465 + out, z + .006, z + .066, c, 0)  # J-card spine
+        box(u0 + .06, u0 + CASW * .72, .46 + out, .468 + out, z + .022, z + .05, '#f8f4ea', 0)  # handwritten label
+        box(u0 + CASW * .78, u0 + CASW - .04, .46 + out, .468 + out, z + .022, z + .05, '#1d1d1d' if c != '#1d1d1d' else '#f8f4ea', 0)
+        k += 1
+# a loose tape on top showing its reels
+box(.5, 1.0, .1, .42, 1.0, 1.06, '#2a2a2a', .01)
+box(.56, .94, .4, .43, 1.06, 1.065, '#f4f0e2', 0)
+for uu in (.63, .87):
+    cyl(uu, .26, 1.06, 1.07, .045, '#f4f0e2', seg=12, bev=0)
 finish('w_rakdinding')
 
 # w_jam [1 x 1]: round wall clock
