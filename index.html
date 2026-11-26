@@ -534,13 +534,13 @@ body.gaming{overflow:hidden}
     <div class="snav" data-g="kenangan">
       <button id="tabNosBtn" class="sel">Peta</button>
       <button id="tabMomBtn">Momen</button>
-      <button id="tabKamarBtn">Kamar</button>
-      <button id="tabSuzuyaBtn">Suzuya</button>
     </div>
     <div class="snav" data-g="seru" hidden>
       <button id="tabRelayBtn">Studio</button>
       <button id="tabKuisBtn">Kuis</button>
       <button id="tabTamiyaBtn">Tamiya</button>
+      <button id="tabKamarBtn">Kamar</button>
+      <button id="tabSuzuyaBtn">Suzuya</button>
     </div>
     <div class="snav" data-g="ngobrol" hidden>
       <button id="tabCitoBtn">Cito Bongak<span class="nbadge" id="chatBadge" hidden></span></button>
@@ -4643,7 +4643,7 @@ $('#tabKamar').addEventListener('click',e=>{
 
 /* =================== TABS =================== */
 const TABS={cito:['#tabCito','#tabCitoBtn','cito'],kuis:['#tabKuis','#tabKuisBtn','kuis'],tamiya:['#tabTamiya','#tabTamiyaBtn','tamiya'],kamar:['#tabKamar','#tabKamarBtn','kamar'],suzuya:['#tabSuzuya','#tabSuzuyaBtn','suzuya'],james:['#tabJames','#tabJamesBtn','jamesbon'],relay:['#tabRelay','#tabRelayBtn','jam'],moments:['#tabMoments','#tabMomBtn','momen'],nostalgia:['#tabNostalgia','#tabNosBtn','nostalgia']};
-const TAB_GROUP={nostalgia:'kenangan',moments:'kenangan',tamiya:'seru',kamar:'kenangan',suzuya:'kenangan',relay:'seru',kuis:'seru',cito:'ngobrol',james:'ngobrol'};
+const TAB_GROUP={nostalgia:'kenangan',moments:'kenangan',tamiya:'seru',kamar:'seru',suzuya:'seru',relay:'seru',kuis:'seru',cito:'ngobrol',james:'ngobrol'};
 const LAST_IN_GROUP={kenangan:'nostalgia',seru:'relay',ngobrol:'cito'};
 function switchTab(t){
   if(!TABS[t]) t='nostalgia';
