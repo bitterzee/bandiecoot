@@ -550,6 +550,65 @@ box(.1, 3.9, 0, .32, 3.8, 4, '#cfcfd6', .03)
 cyl(3.6, .3, .4, 3.8, .012, '#888', seg=6)
 finish('w_kerai')
 
+
+# w_jendela [4 x 3]: wooden window, four glass panes, curtains on a rod
+box(0, 4, 0, .22, 0, 3, '#e6e1d2', .03)
+box(.2, 3.8, .12, .16, .2, 2.8, '#a9d3f0', 0, glow=.8)
+box(1.94, 2.06, .14, .3, .2, 2.8, '#e6e1d2', .02)
+box(.2, 3.8, .14, .3, 1.44, 1.56, '#e6e1d2', .02)
+box(-.15, 4.15, 0, .55, -.1, .05, '#d8d2c0', .03)
+cyl(2, .55, -.3, 4.3, .04, '#5a3a22', axis='Y', seg=10)
+PARTS[-1].rotation_euler = (0, math.pi / 2, 0)
+PARTS[-1].location = (2, -.55, 3.15)
+for side in (0, 1):
+    for i in range(4):
+        u = (-.25 + i * .22) if side == 0 else (4.25 - i * .22)
+        cyl(u, .5, -.2, 3.1, .14, '#c8452f', seg=12)
+        PARTS[-1].scale = (1, .55, 1)
+        bpy.ops.object.select_all(action='DESELECT')
+    box(-.35 if side == 0 else 3.5, .5 if side == 0 else 4.35, .35, .62, 1.1, 1.25, '#e2c44c', .03)
+finish('w_jendela')
+
+# w_rakvcd [6 x 2]: wall shelf packed with VCD cases
+for z in (0, 1):
+    box(0, 6, 0, .7, z, z + .1, '#6b4a2b', .03)
+    for u in (.25, 5.6):
+        box(u, u + .1, 0, .12, z - .25, z, '#3a2a1a', .02)
+    k, u = 0, .1
+    while u < 5.8:
+        t = .1
+        lean = .25 if k % 13 == 9 else 0
+        box(u, u + t, .08, .62, z + .1, z + .92, BOOKS[(k * 5) % len(BOOKS)], .01, rot=(0, lean, 0))
+        box(u - .002, u + t + .002, .6, .63, z + .55, z + .7, '#f4f0e2', 0, rot=(0, lean, 0))
+        u += t + (.4 if k % 17 == 16 else .012)
+        k += 1
+finish('w_rakvcd')
+
+# w_rakdinding [3 x 1]: little shelf with cassettes standing up
+box(0, 3, 0, .5, .05, .15, '#8b5a2b', .02)
+box(.1, .2, 0, .5, .05, .9, '#8b5a2b', .02)
+box(2.8, 2.9, 0, .5, .05, .9, '#8b5a2b', .02)
+for i in range(13):
+    u = .25 + i * .19
+    box(u, u + .16, .08, .45, .15, .75, '#1d1d1d', .01)
+    box(u - .005, u + .165, .43, .46, .3, .6, BOOKS[i % len(BOOKS)], 0)
+finish('w_rakdinding')
+
+# w_jam [1 x 1]: round wall clock
+cyl(.5, 0, 0, .14, .48, '#c8302a', axis='Y', seg=36, h=.5)
+cyl(.5, .14, 0, .02, .41, '#f8f4ea', axis='Y', seg=36, h=.5, bev=0)
+for i in range(12):
+    a = i / 12 * math.tau
+    L = .09 if i % 3 == 0 else .05
+    box(.5 + math.sin(a) * .33 - .012, .5 + math.sin(a) * .33 + .012, .16, .18, .5 + math.cos(a) * .33 - L / 2, .5 + math.cos(a) * .33 + L / 2, '#1d1d1d', 0, rot=(0, a, 0))
+    PARTS[-1].location = (.5 + math.sin(a) * .33, -.17, .5 + math.cos(a) * .33)
+box(.485, .515, .17, .19, .5, .74, '#1d1d1d', 0, rot=(0, .9, 0))
+PARTS[-1].location = (.5 + math.sin(.9) * .12, -.18, .5 + math.cos(.9) * .12)
+box(.49, .51, .18, .2, .5, .84, '#1d1d1d', 0, rot=(0, 2.6, 0))
+PARTS[-1].location = (.5 + math.sin(2.6) * .17, -.19, .5 + math.cos(2.6) * .17)
+cyl(.5, .2, 0, .03, .035, '#c8302a', axis='Y', seg=12, h=.5, bev=0)
+finish('w_jam')
+
 bpy.ops.export_scene.gltf(filepath=OUT, export_format='GLB', export_apply=True, export_yup=True,
                           export_materials='EXPORT', export_normals=True, export_texcoords=False,
                           export_draco_mesh_compression_enable=True, export_draco_mesh_compression_level=7, export_draco_position_quantization=12, export_draco_normal_quantization=8)
