@@ -199,6 +199,21 @@ textarea{font-family:'Special Elite',monospace;font-size:15px;width:100%;min-hei
 .qzTbl{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0 14px}
 .qzTbl td{border-bottom:1px solid #c9c0aa;padding:7px 4px}.qzTbl td:last-child{text-align:right;font-family:Anton,Impact,sans-serif;font-size:15px}
 .qzTbl tr.me td{background:#f3e7b8}
+.suzSign{margin:-4px 0 10px;padding:10px 14px 8px;background:#c8102e;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);color:#fff;text-align:center;transform:rotate(-1deg)}
+.suzSign span{display:block;font-family:Anton,Impact,sans-serif;font-size:40px;letter-spacing:4px;font-style:italic;line-height:1;text-shadow:3px 3px 0 #f5c400}
+.suzSign small{display:block;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#ffe9a8;margin-top:4px}
+.suzWal{display:flex;align-items:center;gap:12px;padding:10px 12px;margin:0 0 12px;background:#fff8ea;border:2px solid var(--ink)}
+.suzWal b{font-family:Anton,Impact,sans-serif;font-size:26px;color:#c8102e;font-weight:400}
+.suzGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:8px 0 16px}
+.suzCard{background:#fff;border:2px solid var(--ink);padding:8px;display:flex;flex-direction:column;gap:4px;position:relative}
+.suzCard img,.suzCard .ph{width:100%;aspect-ratio:1;object-fit:contain;background:radial-gradient(circle,#fff 40%,#f1ead8);display:block}
+.suzCard .ph{display:flex;align-items:center;justify-content:center;font-size:28px;color:#bbb}
+.suzCard .nm{font-weight:700;font-size:13px;line-height:1.2}
+.suzCard .pr{font-family:Anton,Impact,sans-serif;font-size:17px;color:#c8102e}
+.suzCard .own{position:absolute;top:6px;right:6px;background:var(--navy);color:#fff;font-size:11px;padding:1px 6px;border:2px solid var(--ink)}
+.suzCard button{margin-top:auto}
+.suzCard.poor .pr{color:#9a9080}
+.suzMsg{padding:8px 10px;background:#e4f5e0;border:2px solid #2d7a43;margin:0 0 10px;font-size:13px}
 .akak{display:inline-block;margin-left:6px;padding:1px 7px;border:2px solid var(--ink);background:linear-gradient(#ffe066,#e0a800);color:#2a1a00;font-family:Anton,Impact,sans-serif;font-size:11px;letter-spacing:.5px;transform:rotate(-3deg);box-shadow:2px 2px 0 var(--ink);white-space:nowrap}
 .akak.mandan{background:linear-gradient(#9ff0e0,#3cb8a0);color:#06261f;transform:rotate(2deg)}
 .akakBig{display:block;margin:6px 0 10px;padding:10px 12px;border:3px solid var(--ink);background:linear-gradient(135deg,#ffe066,#f5b700);font-family:Anton,Impact,sans-serif;font-size:20px;text-align:center;box-shadow:4px 4px 0 var(--ink);transform:rotate(-1deg)}.qzTbl .no{color:var(--mut)}
@@ -520,6 +535,7 @@ body.gaming{overflow:hidden}
       <button id="tabNosBtn" class="sel">Peta</button>
       <button id="tabMomBtn">Momen</button>
       <button id="tabKamarBtn">Kamar</button>
+      <button id="tabSuzuyaBtn">Suzuya</button>
     </div>
     <div class="snav" data-g="seru" hidden>
       <button id="tabRelayBtn">Studio</button>
@@ -644,6 +660,14 @@ body.gaming{overflow:hidden}
       <h2>Kuis Mingguan</h2>
       <p class="sub">Tiap Senin pelajaran baru, diacak. 10 soal, 20 detik per soal, satu kali coba. Nyontek? Kita udah 40-an.</p>
       <div id="kuisBox"></div>
+    </div>
+  </section>
+
+  <section id="tabSuzuya" hidden>
+    <div class="panel">
+      <div class="suzSign"><span>SUZUYA</span><small>toserba · lantai 1 sampai 3</small></div>
+      <p class="sub">Isi kamarmu di sini. Uangnya dari Kuis Mingguan: tiap poin kuis jadi Rp 100. Nggak ikut kuis, nggak bisa belanja.</p>
+      <div id="suzBox"></div>
     </div>
   </section>
 
@@ -3193,6 +3217,7 @@ async function refreshAfterRemote(){
   if(t==='game'&&cs.has('song')&&!G.running) renderGameSetup();
   if(t==='kereta'&&cs.has('bike')&&document.activeElement!==$('#bkPrompt')) renderKereta();
   if(t==='kamar'&&cs.has('room')&&(KM.who&&KM.who!==kmMe()||KM.sel==null)) renderKamar();
+  if(t==='suzuya'&&(cs.has('room')||cs.has('quizres')||cs.has('quiz'))) renderSuzuya();
   if(t==='tamiya'&&cs.has('tamiya')&&!TAM.running&&document.activeElement!==$('#tmNick')) renderTamiya();
   if(t==='kuis'&&(cs.has('quiz')||cs.has('quizres'))&&!QZ.play) renderKuis();
   if(cs.has('chat')){ if(t==='cito') renderCito(); else chatBadge(); }
@@ -3573,6 +3598,7 @@ function renderKuis(){
     const r=qzRight(mine,Q), p=qzPts(mine,Q);
     h+=`<div style="display:flex;align-items:center;gap:14px;margin:4px 0 6px"><div class="qzBig">${r}/10</div><div><b>${p} poin</b><br><span class="hint" style="margin:0">${['Remedial dulu ya.','Remedial dulu ya.','Remedial dulu ya.','Masih bisa dikatrol.','Lumayan, naik kelas.','Lumayan, naik kelas.','Lumayan, naik kelas.','Ranking 10 besar.','Juara kelas!','Juara umum!','Juara umum!'][r]}</span></div></div>
       ${(()=>{ const twins=qzBoard(wk).filter(x=>x.right===r&&x.name!==me).map(x=>x.name); return twins.length?`<div class="akakBig" style="background:linear-gradient(135deg,#9ff0e0,#3cb8a0);font-size:18px">🤝 MANDAN AWARD 🤝<div style="font-family:inherit;font-size:12px;font-weight:400">Skornya sama-sama ${r}/10 dengan ${twins.map(esc).join(', ')}.</div></div>`:''; })()}
+      <p class="hint" style="margin:0 0 8px">💰 ${(()=>{ const e=suzEarn(me).find(x=>x.wk===wk); return e?`+${suzRp(e.c)} masuk saldo Suzuya${wk===weekKey()?' (bonus juara dihitung Senin)':''}.`:''; })()}</p>
       ${r===10?'<div class="akakBig">🏅 AKAK AWARD 🏅<div style="font-family:inherit;font-size:12px;font-weight:400">Sempurna 10/10. Kamu akak minggu ini.</div></div>':''}
       <div class="row" style="gap:8px;flex-wrap:wrap"><button class="small" id="qzMyRev">Lihat pembahasan</button>${qzWaBtn(qzBoardText(wk),'Pamer skor ke WA')}</div>`;
   }
@@ -4096,6 +4122,8 @@ const shadeC=(hex,p)=>{ const n=parseInt(hex.slice(1),16); let r=n>>16,g=n>>8&25
 function kmDims(it){ const d=KM3[it.t]||[1,1,1]; return it.r?{w:d[1],d:d[0],h:d[2]}:{w:d[0],d:d[1],h:d[2]}; }
 // older rooms were laid out flat; place their floor items roughly where they stood
 function kmUpgrade(room){
+  if(!(room.v>=3)){ room.items=[]; room.buys=[]; room.v=3; } // Suzuya update: every room starts empty
+  room.buys=room.buys||[];
   room.items.forEach(it=>{ const def=KM_ITEMS[it.t]; if(!def||def.zone!=='floor'||it.gx!=null) return;
     const s=((it.x||0)+def.w/2)/24, dp=Math.max(0,Math.min(1,((it.y||9)-9)/8)), a=(s*2-1)*9, b=3+dp*14, D=kmDims(it);
     it.gx=Math.max(0,Math.min(ISO.N-D.w,Math.round((a+b)/2-D.w/2))); it.gy=Math.max(0,Math.min(ISO.N-D.d,Math.round((b-a)/2-D.d/2))); it.r=0; });
@@ -4110,13 +4138,7 @@ function kmZ(room,it){
   room.items.forEach(o=>{ if(o===it||!KM3[o.t]||KM3[o.t][3]==null||KM_ITEMS[o.t].zone!=='floor') return; const E=kmDims(o); if(cx>o.gx&&cx<o.gx+E.w&&cy>o.gy&&cy<o.gy+E.d) z=Math.max(z,KM3[o.t][3]); });
   return z;
 }
-function kmDefault(){ return {v:2,wall:'#c9d6e8',floor:'kayu',mood:'malam',items:[
-  {t:'poster',x:0,y:0},{t:'poster3',x:2,y:0},{t:'jendela',x:4,y:1},{t:'poster5',x:9,y:0},{t:'stiker',x:9,y:4},{t:'poster2',x:1,y:4},
-  {t:'rakvcd',x:13,y:1},{t:'poster4',x:20,y:0},{t:'fotoband',x:20,y:3},{t:'jam',x:17,y:4},{t:'kalender',x:13,y:4},{t:'poster',x:22,y:3},
-  {t:'kasur',gx:0,gy:4,r:1},{t:'meja',gx:5,gy:0,r:0},{t:'komputer',gx:6,gy:0,r:0},{t:'lampu',gx:9,gy:0,r:0},{t:'lava',gx:5,gy:1,r:0},
-  {t:'kursi',gx:7,gy:3,r:0},{t:'lemari',gx:0,gy:0,r:1},{t:'rakbuku',gx:10.8,gy:3,r:1},{t:'tv',gx:10.8,gy:3.4,r:1},
-  {t:'karpet',gx:5,gy:6,r:0},{t:'kardus',gx:6,gy:7,r:0},{t:'majalah',gx:9,gy:9,r:0},{t:'konsol',gx:8,gy:5,r:0},{t:'gitar',gx:11,gy:8,r:1},{t:'bola',gx:4,gy:10,r:0},{t:'ampli',gx:10,gy:10,r:1},
-  {t:'neon',x:5,y:4},{t:'boneka',gx:1,gy:6.5,r:1},{t:'kaleng',gx:7.6,gy:1.7,r:0},{t:'sepatu',gx:8.5,gy:10.8,r:0},{t:'pizza',gx:1.5,gy:9.4,r:0},{t:'stik',gx:8.6,gy:6.6,r:0},{t:'kerucut',gx:10.9,gy:.9,r:0}]}; }
+function kmDefault(){ return {v:3,wall:'#c9d6e8',floor:'kayu',mood:'malam',items:[],buys:[]}; }
 const kmRoom=n=>S.rooms[n]&&S.rooms[n].items?kmUpgrade(S.rooms[n]):kmDefault();
 
 // drawing primitives
@@ -4447,6 +4469,7 @@ function k3Tap(e){
     if(d.zone==='wall'){ if(surf.object===K3.surf.floor) return false; if(surf.object===K3.surf.left){ it.x=Math.round(12-p.z-d.w/2); } else { it.x=Math.round(12+p.x-d.w/2); } it.y=Math.round(9.6-p.y-d.h/2); }
     else { if(surf.object!==K3.surf.floor) return false; const D=kmDims(it); it.gx=Math.round((p.x-D.w/2)*2)/2; it.gy=Math.round((p.z-D.d/2)*2)/2; }
     kmClamp(it); return true; };
+  if(KM.pick&&suzAvail(room,KM.pick)<=0){ KM.pick=null; return renderKamar(); }
   if(KM.pick){ const d=KM_ITEMS[KM.pick], it=d.zone==='wall'?{t:KM.pick,x:0,y:0}:{t:KM.pick,gx:0,gy:0,r:0}; if(!place(it)) return; room.items.push(it); KM.sel=room.items.length-1; KM.pick=null; kmSave(room); return renderKamar(); }
   const hit=ray.intersectObjects(K3.pick,true)[0]; let idx=null; if(hit){ let o=hit.object; while(o&&o.userData.idx==null) o=o.parent; idx=o?o.userData.idx:null; }
   if(idx!=null&&idx!==KM.sel){ KM.sel=idx; return renderKamar(); }
@@ -4455,20 +4478,96 @@ function k3Tap(e){
 }
 
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ if(curTab()==='kamar') kmDraw(); });
+// ===== Suzuya: the store. Money comes only from the weekly quiz =====
+const SUZ_START='2026-W48', SUZ_BONUS={akak:500,juara:300,mandan:100};
+const SUZ_PRICE={jendela:400,poster:150,poster2:150,poster3:150,poster4:150,poster5:150,jam:200,kalender:100,rakdinding:300,fotoband:250,bendera:200,rakvcd:350,stiker:100,neon:900,ring:600,kerai:500,
+  kasur:2000,meja:1200,kursi:600,lemari:1500,rakbuku:1000,tv:1400,komputer:2500,compo:1100,konsol:1600,kaset:150,gitar:1300,drum:1500,ampli:900,kipas:500,tanaman:300,bola:200,karpet:600,lampu:400,lava:500,
+  keyboard:1800,majalah:100,kardus:250,speaker:500,vcr:800,stik:300,topi:200,sepatu:450,kaleng:50,pizza:150,skate:500,kerucut:150,globe:350,boneka:400};
+const SUZ_DEPT=[['Mebel',['kasur','meja','kursi','lemari','rakbuku','karpet']],['Elektronik',['tv','komputer','konsol','vcr','stik','compo','speaker','kipas','lampu','lava']],
+  ['Alat musik',['gitar','drum','ampli','keyboard','kaset']],['Hiasan dinding',['jendela','kerai','neon','ring','poster','poster2','poster3','poster4','poster5','fotoband','rakvcd','rakdinding','jam','kalender','bendera','stiker']],
+  ['Pernak-pernik',['tanaman','bola','globe','boneka','topi','sepatu','skate','kerucut','majalah','kardus','kaleng','pizza']]];
+const SUZ={dept:0,confirm:null,msg:'',img:null,busy:false};
+const suzRp=v=>'Rp '+Math.round(v*100).toLocaleString('id-ID');
+function suzEarn(name){ const now=weekKey(), out=[];
+  Object.keys(S.quiz).filter(k=>k>=SUZ_START).sort().forEach(k=>{ const b=qzBoard(k), x=b.find(y=>y.name===name); if(!x) return; const mm=qzMandan(b);
+    const akak=x.right===10, juara=k<now&&b[0]&&b[0].name===name, mandan=mm(x);
+    out.push({wk:k,subj:S.quiz[k].subject,pts:x.pts,akak,juara,mandan,c:x.pts+(akak?SUZ_BONUS.akak:0)+(juara?SUZ_BONUS.juara:0)+(mandan?SUZ_BONUS.mandan:0)}); });
+  return out; }
+function suzSpent(name){ const r=S.rooms[name]; return r&&r.v>=3?(r.buys||[]).reduce((t,b)=>t+b.p,0):0; }
+function suzSaldo(name){ return suzEarn(name).reduce((t,e)=>t+e.c,0)-suzSpent(name); }
+function suzOwned(room){ const o={}; (room.buys||[]).forEach(b=>o[b.t]=(o[b.t]||0)+1); return o; }
+function suzAvail(room,t){ return (suzOwned(room)[t]||0)-room.items.filter(i=>i.t===t).length; }
+function renderSuzuya(){
+  const me=kmMe(), box=$('#suzBox'); if(!box) return;
+  if(!ME){ box.innerHTML='<p class="hint">Masuk dulu buat belanja.</p>'; return; }
+  const saldo=suzSaldo(me), room=kmRoom(me), own=suzOwned(room), earn=suzEarn(me);
+  let h=`<div class="suzWal"><div style="flex:1"><div class="hint" style="margin:0">Saldo kamu</div><b>${suzRp(saldo)}</b></div><button class="small" data-suzgo="kamar">Ke kamarku</button></div>`;
+  if(SUZ.msg) h+=`<div class="suzMsg">${SUZ.msg}</div>`;
+  h+=`<details style="margin:0 0 12px"><summary class="hint" style="cursor:pointer">Dari mana uangnya?</summary><p class="hint" style="margin:6px 0">Tiap poin kuis = Rp 100. Bonus: Akak Award ${suzRp(SUZ_BONUS.akak)}, juara minggu ${suzRp(SUZ_BONUS.juara)} (masuk setelah minggunya selesai), Mandan Award ${suzRp(SUZ_BONUS.mandan)}.</p>
+    <table class="qzTbl">${earn.length?earn.slice().reverse().map(e=>`<tr><td>${weekRange(e.wk)}<br><b>${esc(e.subj)}</b> ${e.akak?'🏅':''}${e.juara?'👑':''}${e.mandan?'🤝':''}</td><td>${suzRp(e.c)}</td></tr>`).join(''):'<tr><td class="no">Belum ada pemasukan. Kerjain kuis minggu ini dulu.</td></tr>'}
+    ${suzSpent(me)?`<tr><td>Belanja</td><td>−${suzRp(suzSpent(me))}</td></tr>`:''}</table></details>`;
+  h+=`<div class="tmChips" style="margin:0 0 4px">${SUZ_DEPT.map(([d],i)=>`<button class="small ${SUZ.dept===i?'sel':''}" data-suzd="${i}">${d}</button>`).join('')}</div>`;
+  const [,keys]=SUZ_DEPT[SUZ.dept];
+  h+=`<div class="suzGrid">${keys.filter(k=>KM_ITEMS[k]).map(k=>{ const p=SUZ_PRICE[k], poor=p>saldo, img=SUZ.img&&SUZ.img[k];
+    return `<div class="suzCard ${poor?'poor':''}">${own[k]?`<span class="own">punya ${own[k]}</span>`:''}${img?`<img src="${img}" alt="">`:'<div class="ph">🛍️</div>'}
+      <div class="nm">${esc(KM_ITEMS[k].name)}</div><div class="pr">${suzRp(p)}</div>
+      <button class="small ${SUZ.confirm===k?'dark':''}" data-suzb="${k}" ${poor?'disabled':''}>${poor?'Uangnya kurang':SUZ.confirm===k?'Yakin? Bayar':'Beli'}</button></div>`; }).join('')}</div>`;
+  box.innerHTML=h; suzThumbs();
+}
+$('#tabSuzuya').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return; const me=kmMe();
+  if(b.dataset.suzgo){ SUZ.msg=''; return switchTab('kamar'); }
+  if(b.dataset.suzd){ SUZ.dept=+b.dataset.suzd; SUZ.confirm=null; SUZ.msg=''; return renderSuzuya(); }
+  const k=b.dataset.suzb; if(!k) return;
+  if(SUZ.confirm!==k){ SUZ.confirm=k; SUZ.msg=''; return renderSuzuya(); }
+  const p=SUZ_PRICE[k]; SUZ.confirm=null;
+  if(suzSaldo(me)<p){ SUZ.msg='Uangnya nggak cukup.'; return renderSuzuya(); }
+  const room=kmMine(); room.buys.push({t:k,p,at:new Date().toISOString()}); kmSave(room);
+  SUZ.msg=`🛍️ ${esc(KM_ITEMS[k].name)} sudah dibungkus. Taruh di kamarmu lewat tab Kamar. <button class="small" data-suzgo="kamar">Ke kamar</button>`;
+  renderSuzuya();
+});
+// product photos: each Blender model rendered once in the browser, flat art for wall items without a model
+async function suzThumbs(){
+  if(SUZ.img||SUZ.busy) return; SUZ.busy=true; const img={};
+  try{
+    Object.keys(KM_ITEMS).filter(k=>KM_ITEMS[k].zone==='wall').forEach(k=>{ const d=KM_ITEMS[k], kk=6, cv=document.createElement('canvas'); cv.width=d.w*8*kk; cv.height=d.h*8*kk; const o=cv.getContext('2d'); o.imageSmoothingEnabled=false; o.scale(kk,kk); kmDrawItem(o,{t:k,x:0,y:0},false); img[k]=cv.toDataURL(); });
+    const [T,GL,MO]=await Promise.all([import('three'),import('three/addons/loaders/GLTFLoader.js'),import('three/addons/libs/meshopt_decoder.module.js')]);
+    const gl=new GL.GLTFLoader(); gl.setMeshoptDecoder(MO.MeshoptDecoder); const g=await gl.loadAsync('models/kamar.glb');
+    const R=new T.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true}); R.setSize(240,240); R.setPixelRatio(1); R.outputColorSpace=T.SRGBColorSpace;
+    const sc=new T.Scene(); sc.add(new T.HemisphereLight('#fff6e8','#5a4a60',1.7)); const sun=new T.DirectionalLight('#ffffff',2.4); sun.position.set(4,8,6); sc.add(sun);
+    const cam=new T.PerspectiveCamera(28,1,.05,100), ramp=new T.DataTexture(new Uint8Array([110,175,230,255]),4,1,T.RedFormat); ramp.minFilter=ramp.magFilter=T.NearestFilter; ramp.needsUpdate=true;
+    const mats={}, mat=m=>{ const n=(m&&m.name)||'', gm=n.match(/^g_([0-9a-f]{6})_([\d.]+)/), cm=n.match(/^c_([0-9a-f]{6})/), col='#'+(gm?gm[1]:cm?cm[1]:'888888');
+      return mats[n]=mats[n]||new T.MeshToonMaterial({color:col,gradientMap:ramp,emissive:gm?col:'#000000',emissiveIntensity:gm?Math.min(1,+gm[2]*.5):0}); };
+    for(const o of g.scene.children){
+      const key=o.name.replace(/^w_/,''); if(!KM_ITEMS[key]) continue;
+      const grp=new T.Group(), c=o.clone(true); grp.add(c); c.traverse(m=>{ if(m.isMesh) m.material=mat(m.material); }); sc.add(grp);
+      const bb=new T.Box3().setFromObject(grp), ctr=bb.getCenter(new T.Vector3()), r=bb.getSize(new T.Vector3()).length()/2;
+      const dir=(o.name.startsWith('w_')?new T.Vector3(.3,.15,1):new T.Vector3(1,.85,1.25)).normalize();
+      cam.position.copy(ctr).addScaledVector(dir,r/Math.sin(T.MathUtils.degToRad(14))); cam.lookAt(ctr);
+      R.render(sc,cam); img[key]=R.domElement.toDataURL(); sc.remove(grp);
+    }
+    R.dispose();
+  }catch(e){ console.warn('suzuya photos',e); }
+  SUZ.img=img; SUZ.busy=false; if(curTab()==='suzuya') renderSuzuya();
+}
 function renderKamar(){
   const me=kmMe(); KM.who=KM.who||me; const n=KM.who, mine=n===me, room=kmRoom(n), r=S.rooms[n];
   $('#kmWho').innerHTML=BAND.concat(BAND.includes(me)?[]:[me]).map(x=>`<button class="small ${x===n?'sel':''}" data-kw="${esc(x)}">${esc(x===me?'Kamarku':x)}</button>`).join('');
   $('#kmTitle').textContent=mine?'Kamar kamu':`Kamar ${n}`;
   $('#kmNote').textContent=mine?(KM.pick?`Ketuk ruangan buat taruh ${KM_ITEMS[KM.pick].name.toLowerCase()}.`:KM.sel!=null?'Ketuk tempat lain buat mindahin, atau pakai tombol di bawah.':'Pilih barang di bawah, lalu ketuk lantai atau dinding. Ketuk barang buat geser atau putar.')
-    :(r&&r.at?`Terakhir diubah ${momDate(r.at)}.`:`${n} belum nata kamarnya. Ini kamar standar dulu.`);
+    :(room.items.length?(r&&r.at?`Terakhir diubah ${momDate(r.at)}.`:''):`Kamar ${n} masih kosong. Belum menang kuis kayaknya.`);
   $('#kmEdit').hidden=!mine;
   if(mine){
     const sel=KM.sel!=null?room.items[KM.sel]:null;
     const wallSel=sel&&KM_ITEMS[sel.t].zone==='wall';
-    $('#kmSelBar').innerHTML=sel?`<b>${esc(KM_ITEMS[sel.t].name)}</b><span class="spacer"></span>${wallSel?'<button class="small" data-km="l">◀</button><button class="small" data-km="u">▲</button><button class="small" data-km="d">▼</button><button class="small" data-km="r">▶</button><button class="small" data-km="flip">Balik</button>':'<button class="small" data-km="nw" aria-label="Ke dinding kiri">↖</button><button class="small" data-km="ne" aria-label="Ke dinding kanan">↗</button><button class="small" data-km="sw" aria-label="Maju kiri">↙</button><button class="small" data-km="se" aria-label="Maju kanan">↘</button><button class="small" data-km="rot">Putar</button>'}<button class="small dark" data-km="del">Hapus</button><button class="small" data-km="done">Selesai</button>`:'';
+    $('#kmSelBar').innerHTML=sel?`<b>${esc(KM_ITEMS[sel.t].name)}</b><span class="spacer"></span>${wallSel?'<button class="small" data-km="l">◀</button><button class="small" data-km="u">▲</button><button class="small" data-km="d">▼</button><button class="small" data-km="r">▶</button><button class="small" data-km="flip">Balik</button>':'<button class="small" data-km="nw" aria-label="Ke dinding kiri">↖</button><button class="small" data-km="ne" aria-label="Ke dinding kanan">↗</button><button class="small" data-km="sw" aria-label="Maju kiri">↙</button><button class="small" data-km="se" aria-label="Maju kanan">↘</button><button class="small" data-km="rot">Putar</button>'}<button class="small dark" data-km="del">Simpan</button><button class="small" data-km="done">Selesai</button>`:'';
     $('#kmSelBar').hidden=!sel;
-    const btn=([k,d])=>`<button class="small ${KM.pick===k?'sel':''}" data-kp="${k}">${esc(d.name)}</button>`;
-    $('#kmPalette').innerHTML=`<div class="kmGrp">Dinding</div>${Object.entries(KM_ITEMS).filter(([,d])=>d.zone==='wall').map(btn).join('')}<div class="kmGrp">Lantai</div>${Object.entries(KM_ITEMS).filter(([,d])=>d.zone==='floor').map(btn).join('')}`;
+    const own=suzOwned(room), av=k=>(own[k]||0)-room.items.filter(i=>i.t===k).length;
+    const btn=([k,d])=>`<button class="small ${KM.pick===k?'sel':''}" data-kp="${k}" ${av(k)<=0?'disabled':''}>${esc(d.name)} ×${Math.max(0,av(k))}</button>`;
+    const mineW=Object.entries(KM_ITEMS).filter(([k,d])=>d.zone==='wall'&&own[k]), mineF=Object.entries(KM_ITEMS).filter(([k,d])=>d.zone==='floor'&&own[k]);
+    $('#kmPalette').innerHTML=`<div class="suzWal" style="margin:10px 0 8px"><div style="flex:1"><div class="hint" style="margin:0">Saldo Suzuya</div><b style="font-size:20px">${suzRp(suzSaldo(me))}</b></div><button class="small" data-gosuz="1">Belanja di Suzuya</button></div>`
+      +(mineW.length||mineF.length?`${mineW.length?`<div class="kmGrp">Dinding</div>${mineW.map(btn).join('')}`:''}${mineF.length?`<div class="kmGrp">Lantai</div>${mineF.map(btn).join('')}`:''}`
+      :`<p class="hint">Kamarmu masih kosong melompong. Menang kuis, kumpulin uang, terus belanja di Suzuya.</p>`);
     $('#kmLook').innerHTML=`<div class="tmRow"><div class="tmLbl">Cat</div><div class="tmChips">${KM_WALLS.map(col=>`<button class="tmSw ${room.wall===col?'sel':''}" style="background:${col}" data-kwall="${col}" aria-label="Cat ${col}"></button>`).join('')}</div></div>
       <div class="tmRow"><div class="tmLbl">Lantai</div><div class="tmChips">${Object.entries(KM_FLOORS).map(([k,v])=>`<button class="small ${room.floor===k?'sel':''}" data-kfloor="${k}">${v}</button>`).join('')}</div></div>
       <div class="tmRow"><div class="tmLbl">Suasana</div><div class="tmChips">${[['malam','Malam'],['siang','Siang']].map(([k,v])=>`<button class="small ${(room.mood||'malam')===k?'sel':''}" data-kmood="${k}">${v}</button>`).join('')}</div></div>
@@ -4483,7 +4582,7 @@ function renderKamar(){
   if(!KM.noDraw) kmDraw();
 }
 function kmSave(room){ room.at=new Date().toISOString(); S.rooms[kmMe()]=room; save(); }
-function kmMine(){ const me=kmMe(); const r=kmRoom(me); r.v=2; return S.rooms[me]===r?r:JSON.parse(JSON.stringify(r)); }
+function kmMine(){ const me=kmMe(); const r=kmRoom(me); r.v=3; return S.rooms[me]===r?r:JSON.parse(JSON.stringify(r)); }
 function kmTapSpot(px,py,def){
   // floor point under the finger, or the wall point for wall items
   if(def.zone==='wall'){ if(px<ISO.ox){ const y=(ISO.ox-px)/ISO.TW, z=(ISO.oy+y*ISO.TH-py)/ISO.ZH; return {x:Math.round(12-y-def.w/2), y:Math.round(9.6-z-def.h/2)}; }
@@ -4509,6 +4608,7 @@ function kmHit(room,px,py){
 $('#kmCv').addEventListener('click',e=>{
   const me=kmMe(); if((KM.who||me)!==me) return;
   const cv=e.currentTarget, rc=cv.getBoundingClientRect(), px=(e.clientX-rc.left)/rc.width*ISO.CW, py=(e.clientY-rc.top)/rc.height*ISO.CH, room=kmMine();
+  if(KM.pick&&suzAvail(room,KM.pick)<=0){ KM.pick=null; return renderKamar(); }
   if(KM.pick){ const def=KM_ITEMS[KM.pick], it=def.zone==='wall'?{t:KM.pick,x:0,y:0}:{t:KM.pick,gx:0,gy:0,r:0}; kmPlaceAt(it,px,py); room.items.push(it); KM.sel=room.items.length-1; KM.pick=null; kmSave(room); return renderKamar(); }
   const hit=kmHit(room,px,py);
   if(hit!=null&&hit!==KM.sel){ KM.sel=hit; return renderKamar(); }
@@ -4522,6 +4622,7 @@ function renderKamarControls(){ const y=window.scrollY; KM.noDraw=true; renderKa
 $('#tabKamar').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
   if(b.dataset.kw){ KM.who=b.dataset.kw; KM.sel=null; KM.pick=null; return renderKamar(); }
+  if(b.dataset.gosuz) return switchTab('suzuya');
   if(b.dataset.kp){ KM.pick=KM.pick===b.dataset.kp?null:b.dataset.kp; KM.sel=null; return renderKamar(); }
   const room=kmMine();
   if(b.dataset.kwall){ room.wall=b.dataset.kwall; kmSave(room); return renderKamar(); }
@@ -4541,8 +4642,8 @@ $('#tabKamar').addEventListener('click',e=>{
 });
 
 /* =================== TABS =================== */
-const TABS={cito:['#tabCito','#tabCitoBtn','cito'],kuis:['#tabKuis','#tabKuisBtn','kuis'],tamiya:['#tabTamiya','#tabTamiyaBtn','tamiya'],kamar:['#tabKamar','#tabKamarBtn','kamar'],james:['#tabJames','#tabJamesBtn','jamesbon'],relay:['#tabRelay','#tabRelayBtn','jam'],moments:['#tabMoments','#tabMomBtn','momen'],nostalgia:['#tabNostalgia','#tabNosBtn','nostalgia']};
-const TAB_GROUP={nostalgia:'kenangan',moments:'kenangan',tamiya:'seru',kamar:'kenangan',relay:'seru',kuis:'seru',cito:'ngobrol',james:'ngobrol'};
+const TABS={cito:['#tabCito','#tabCitoBtn','cito'],kuis:['#tabKuis','#tabKuisBtn','kuis'],tamiya:['#tabTamiya','#tabTamiyaBtn','tamiya'],kamar:['#tabKamar','#tabKamarBtn','kamar'],suzuya:['#tabSuzuya','#tabSuzuyaBtn','suzuya'],james:['#tabJames','#tabJamesBtn','jamesbon'],relay:['#tabRelay','#tabRelayBtn','jam'],moments:['#tabMoments','#tabMomBtn','momen'],nostalgia:['#tabNostalgia','#tabNosBtn','nostalgia']};
+const TAB_GROUP={nostalgia:'kenangan',moments:'kenangan',tamiya:'seru',kamar:'kenangan',suzuya:'kenangan',relay:'seru',kuis:'seru',cito:'ngobrol',james:'ngobrol'};
 const LAST_IN_GROUP={kenangan:'nostalgia',seru:'relay',ngobrol:'cito'};
 function switchTab(t){
   if(!TABS[t]) t='nostalgia';
@@ -4561,19 +4662,21 @@ function switchTab(t){
   else if(t==='james') renderJames();
   else if(t==='tamiya') renderTamiya();
   else if(t==='kamar') renderKamar();
+  else if(t==='suzuya') renderSuzuya();
   else if(t==='kuis') renderKuis();
   else if(t==='cito'){ CITO.drawn=false; renderCito(); }
   else { renderRelay(); renderBand(); }
   try{ history.replaceState(null,'','#'+TABS[t][2]); }catch(e){}
   window.scrollTo({top:0});
 }
-const tabFromHash=()=>({'#cito':'cito','#kuis':'kuis','#kereta':'tamiya','#tamiya':'tamiya','#kamar':'kamar','#jamesbon':'james','#estafet':'relay','#jam':'relay','#momen':'moments'})[location.hash]||'nostalgia';
+const tabFromHash=()=>({'#cito':'cito','#kuis':'kuis','#kereta':'tamiya','#tamiya':'tamiya','#kamar':'kamar','#suzuya':'suzuya','#jamesbon':'james','#estafet':'relay','#jam':'relay','#momen':'moments'})[location.hash]||'nostalgia';
 $('#tabRelayBtn').onclick=()=>switchTab('relay');
 $('#tabMomBtn').onclick=()=>switchTab('moments');
 $('#tabNosBtn').onclick=()=>switchTab('nostalgia');
 $('#tabJamesBtn').onclick=()=>switchTab('james');
 $('#tabTamiyaBtn').onclick=()=>switchTab('tamiya');
 $('#tabKamarBtn').onclick=()=>switchTab('kamar');
+$('#tabSuzuyaBtn').onclick=()=>switchTab('suzuya');
 $('#tabKuisBtn').onclick=()=>switchTab('kuis');
 $('#tabCitoBtn').onclick=()=>switchTab('cito');
 document.querySelectorAll('nav.tabs .gnav button').forEach(b=>b.onclick=()=>switchTab(LAST_IN_GROUP[b.dataset.g]));
