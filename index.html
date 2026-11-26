@@ -4121,7 +4121,9 @@ const KM3={kasur:[4.2,8,3,2],meja:[5,2.4,3,3],kursi:[1.8,1.8,3.6],lemari:[3,2,8,
   vcr:[1.6,1.2,.4,.5],stik:[.6,.4,.15],topi:[.7,.8,.35],sepatu:[1.2,.5,.45],kaleng:[.3,.3,.45],pizza:[1.5,1.5,.15],skate:[.9,.3,3],kerucut:[.9,.9,1.7],globe:[.8,.8,1.2],boneka:[.9,.8,1.1]};
 const KM_STACK=new Set(['tv','komputer','compo','konsol','kaset','lampu','lava','speaker','majalah','kardus','tanaman','bola','vcr','stik','topi','kaleng','globe','boneka']);
 const shadeC=(hex,p)=>{ const n=parseInt(hex.slice(1),16); let r=n>>16,g=n>>8&255,b=n&255; const k=p/100; const f=v=>Math.max(0,Math.min(255,Math.round(k>0?v+(255-v)*k:v*(1+k)))); return `rgb(${f(r)},${f(g)},${f(b)})`; };
-function kmDims(it){ const d=KM3[it.t]||[1,1,1]; return it.r?{w:d[1],d:d[0],h:d[2]}:{w:d[0],d:d[1],h:d[2]}; }
+// r = 0..3 quarter turns; the item's front faces +z, +x, -z, -x
+function kmDims(it){ const d=KM3[it.t]||[1,1,1]; return (it.r||0)%2?{w:d[1],d:d[0],h:d[2]}:{w:d[0],d:d[1],h:d[2]}; }
+function kmMap(it,W,Dp,u,v){ switch((it.r||0)%4){ case 1: return [it.gx+v,it.gy+W-u]; case 2: return [it.gx+W-u,it.gy+Dp-v]; case 3: return [it.gx+Dp-v,it.gy+u]; default: return [it.gx+u,it.gy+v]; } }
 // older rooms were laid out flat; place their floor items roughly where they stood
 function kmUpgrade(room){
   if(!(room.v>=3)){ room.items=[]; room.buys=[]; room.v=3; } // Suzuya update: every room starts empty
@@ -4153,7 +4155,7 @@ function kmBox3(c,x,y,z,w,d,h,col){
 // an item's own frame: u across its front (left→right on screen), v from back to front, z up
 function kmFrameOf(it,z0){
   const D=kmDims(it), W=KM3[it.t][0], Dp=KM3[it.t][1];
-  const map=(u,v)=>it.r?[it.gx+v, it.gy+W-u]:[it.gx+u, it.gy+v];
+  const map=(u,v)=>kmMap(it,W,KM3[it.t][1],u,v);
   return {W,Dp,
     B:(c,u0,u1,v0,v1,za,zb,col)=>{ const a=map(u0,v0), b=map(u1,v1); kmBox3(c,Math.min(a[0],b[0]),Math.min(a[1],b[1]),z0+za,Math.abs(b[0]-a[0]),Math.abs(b[1]-a[1]),zb-za,col); },
     C:(c,u,v,z,r,col,ring)=>{ const m=map(u,v), q=pj(m[0],m[1],z0+z); c.beginPath(); c.arc(q[0],q[1],r*28,0,7); c.fillStyle=col; c.fill(); if(ring){ c.strokeStyle=ring; c.lineWidth=1.2; c.stroke(); } },
@@ -4373,18 +4375,18 @@ function k3Tex(kind,wall){
   const t=new T.CanvasTexture(cv); t.colorSpace=T.SRGBColorSpace; t.wrapS=t.wrapT=T.RepeatWrapping; t.repeat.set(rep,rep); t.anisotropy=8; return K3.tex[key]=t;
 }
 function k3Frame(it,z0,G){
-  const T=K3.T, W=KM3[it.t][0], Dp=KM3[it.t][1], map=(u,v)=>it.r?[it.gx+v, it.gy+W-u]:[it.gx+u, it.gy+v];
+  const T=K3.T, W=KM3[it.t][0], Dp=KM3[it.t][1], map=(u,v)=>kmMap(it,W,Dp,u,v), R4=(it.r||0)%4;
   const put=(geo,mat,x,y,z)=>{ const m=new T.Mesh(geo,mat); m.position.set(x,y,z); m.castShadow=true; m.receiveShadow=true; G.add(m); return m; };
-  const front=(m)=>{ if(it.r) m.rotation.y=Math.PI/2; };
+  const front=(m)=>{ m.rotation.y=R4*Math.PI/2; };
   return {W,Dp,
     B:(c,u0,u1,v0,v1,za,zb,col,glow)=>{ const a=map(u0,v0), b=map(u1,v1), w=Math.abs(b[0]-a[0]), d=Math.abs(b[1]-a[1]), h=zb-za; if(w<=0||d<=0||h<=0) return;
       const key=[w,h,d].map(v=>v.toFixed(3)).join('x'); let g=K3.geo[key];
       if(!g){ const r=Math.min(.07,w*.18,h*.18,d*.18); g=K3.geo[key]=r>.012?new K3.RB(w,h,d,2,r):new T.BoxGeometry(w,h,d); }
       put(g,k3Mat(col,glow?{glow}:{}),(a[0]+b[0])/2,z0+(za+zb)/2,(a[1]+b[1])/2); },
-    F:(c,u0,u1,za,zb,col,v,glow)=>{ v=v==null?Dp:v; const m0=map((u0+u1)/2,v), off=.012; const mesh=put(new T.PlaneGeometry(Math.abs(u1-u0),zb-za),k3Mat(col,glow?{glow,rough:.25}:{}),m0[0]+(it.r?off:0),z0+(za+zb)/2,m0[1]+(it.r?0:off)); mesh.castShadow=false; front(mesh); },
+    F:(c,u0,u1,za,zb,col,v,glow)=>{ v=v==null?Dp:v; const m0=map((u0+u1)/2,v), off=.012; const mesh=put(new T.PlaneGeometry(Math.abs(u1-u0),zb-za),k3Mat(col,glow?{glow,rough:.25}:{}),m0[0]+[0,off,0,-off][R4],z0+(za+zb)/2,m0[1]+[off,0,-off,0][R4]); mesh.castShadow=false; front(mesh); },
     T:(c,u0,u1,v0,v1,z,col)=>{ const a=map(u0,v0), b=map(u1,v1), mesh=put(new T.PlaneGeometry(Math.abs(b[0]-a[0]),Math.abs(b[1]-a[1])),k3Mat(col),(a[0]+b[0])/2,z0+z+.006,(a[1]+b[1])/2); mesh.rotation.x=-Math.PI/2; mesh.castShadow=false; },
     C:(c,u,v,z,r,col)=>{ const m=map(u,v); put(new T.SphereGeometry(r,20,14),k3Mat(col,{rough:.55}),m[0],z0+z,m[1]); },
-    D:(c,u,v,z,r,col)=>{ const m=map(u,v), mesh=put(new T.CylinderGeometry(r,r,.08,28),k3Mat(col,{rough:.4,metal:.2}),m[0],z0+z,m[1]); mesh.rotation.x=Math.PI/2; if(it.r) mesh.rotation.z=Math.PI/2; },
+    D:(c,u,v,z,r,col)=>{ const m=map(u,v), mesh=put(new T.CylinderGeometry(r,r,.08,28),k3Mat(col,{rough:.4,metal:.2}),m[0],z0+z,m[1]); mesh.rotation.x=Math.PI/2; if(R4%2) mesh.rotation.z=Math.PI/2; },
     P:(u,v,z)=>{ const m=map(u,v); return [m[0],z0+z,m[1]]; }};
 }
 function k3Build(){
@@ -4423,7 +4425,8 @@ function k3Build(){
   // furniture
   room.items.forEach((it,i)=>{ const d=KM_ITEMS[it.t]; if(!d||d.zone!=='floor'||!KM3[it.t]) return; const z=kmZ(room,it), g=new T.Group(); g.userData.idx=i; root.add(g); K3.pick.push(g);
     const K=k3Frame(it,z,g), M=k3Model(it.t);
-    if(M){ if(it.r){ M.rotation.y=Math.PI/2; M.position.set(it.gx,z,it.gy+KM3[it.t][0]); } else M.position.set(it.gx,z,it.gy); g.add(M); }
+    if(M){ const R4=(it.r||0)%4, Wd=KM3[it.t][0], Dd=KM3[it.t][1]; M.rotation.y=R4*Math.PI/2;
+      M.position.set(it.gx+(R4===2?Wd:R4===3?Dd:0),z,it.gy+(R4===1?Wd:R4===2?Dd:0)); g.add(M); }
     else kmItem3(null,it,z,K);
     const lamp=(u,v,zz,col,pow,dist)=>{ if(!night&&pow<30) return; const p=K.P(u,v,zz), L=new T.PointLight(col,night?pow:pow*.4,dist,2); L.position.set(...p); root.add(L); return L; };
     if(it.t==='lampu'){ const Lt=kmLights(room); if(Lt.desk.p>0){ const p=K.P(.5,.6,1.45), L=new T.PointLight(Lt.desk.c,60*Lt.desk.p*(night?1:.5),12,2); L.position.set(...p); L.castShadow=K3.hq&&night; L.shadow.mapSize.set(1024,1024); L.shadow.bias=-.003; L.shadow.radius=6; root.add(L); K3.L.desk.push(L); }
@@ -4811,7 +4814,7 @@ $('#tabKamar').addEventListener('click',e=>{
   if(a==='done'){ KM.sel=null; return renderKamar(); }
   if(a==='del'){ room.items.splice(KM.sel,1); KM.sel=null; }
   else if(a==='flip') it.f=!it.f;
-  else if(a==='rot'){ it.r=it.r?0:1; kmClamp(it); }
+  else if(a==='rot'){ const D0=kmDims(it), cx=it.gx+D0.w/2, cy=it.gy+D0.d/2; it.r=((it.r||0)+1)%4; const D1=kmDims(it); it.gx=Math.round((cx-D1.w/2)*2)/2; it.gy=Math.round((cy-D1.d/2)*2)/2; kmClamp(it); }
   else { if(a==='l') it.x--; if(a==='r') it.x++; if(a==='u') it.y--; if(a==='d') it.y++;
     if(a==='nw') it.gx-=.5; if(a==='se') it.gx+=.5; if(a==='ne') it.gy-=.5; if(a==='sw') it.gy+=.5; kmClamp(it); }
   kmSave(room); renderKamar();
