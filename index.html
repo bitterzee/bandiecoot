@@ -4334,7 +4334,7 @@ function k3Init(){
     gl.load('models/kamar.glb',g=>{ K3.models={}; g.scene.children.forEach(o=>{ K3.models[o.name]=o; }); if(curTab()==='kamar') k3Build(); },undefined,e=>console.warn('room models unavailable',e));
   }).catch(e=>{ console.warn('3D room unavailable',e); K3.failed=true; K3.loading=false; });
 }
-function k3Size(){ const cv=K3.R.domElement, w=cv.parentNode.clientWidth||360, h=Math.round(w*.92); K3.R.setPixelRatio(Math.min(K3.hq?1.75:1.1,devicePixelRatio||1)); K3.R.setSize(w,h,false); cv.style.width='100%'; cv.style.height='auto'; K3.comp.setPixelRatio(K3.R.getPixelRatio()); K3.comp.setSize(w,h); const pr=K3.R.getPixelRatio(); K3.nrt.setSize(w*pr,h*pr); K3.ink.uniforms.res.value.set(w*pr,h*pr); K3.ink.uniforms.px.value=Math.max(.8,.7*pr); K3.ink.uniforms.dotSz.value=3*pr; K3.cam.aspect=w/h; K3.cam.updateProjectionMatrix(); K3.dirty=true; }
+function k3Size(){ const cv=K3.R.domElement, w=cv.parentNode.clientWidth||360, h=Math.round(w*.92); K3.R.setPixelRatio(Math.min(K3.hq?2:1.1,devicePixelRatio||1)); K3.R.setSize(w,h,false); cv.style.width='100%'; cv.style.height='auto'; K3.comp.setPixelRatio(K3.R.getPixelRatio()); K3.comp.setSize(w,h); const pr=K3.R.getPixelRatio(); K3.nrt.setSize(w*pr,h*pr); K3.ink.uniforms.res.value.set(w*pr,h*pr); K3.ink.uniforms.px.value=Math.max(.8,.7*pr); K3.ink.uniforms.dotSz.value=3*pr; K3.cam.aspect=w/h; K3.cam.updateProjectionMatrix(); K3.dirty=true; }
 window.addEventListener('resize',()=>{ if(K3.ready) k3Size(); });
 function k3Loop(){ if(!K3.ready) return; const on=curTab()==='kamar'&&!document.hidden;
   if(on){ const moved=K3.ctl.update(); if(moved||K3.dirty||!K3.wasOn){ k3Normals(); K3.comp.render(); K3.dirty=false; } }

@@ -11,6 +11,7 @@ OUT = sys.argv[sys.argv.index('--') + 1] if '--' in sys.argv else '/tmp/kamar.gl
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 MATS = {}
+RES = 1.8  # mesh resolution multiplier for round parts
 PARTS = []
 
 
@@ -41,11 +42,14 @@ def _fin(o, col, glow, bev, smooth=False):
     o.select_set(True)
     bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
     if bev:
+        # rounded edges with hardened normals: flat faces stay crisp, the bevels shade smoothly
+        for p in o.data.polygons:
+            p.use_smooth = True
         md = o.modifiers.new('bev', 'BEVEL')
         md.width = bev
-        md.segments = 3
+        md.segments = 5 if bev >= .08 else 4 if bev >= .03 else 2
         md.limit_method = 'ANGLE'
-        md.harden_normals = False
+        md.harden_normals = True
         with bpy.context.temp_override(object=o, active_object=o):
             bpy.ops.object.modifier_apply(modifier=md.name)
     if smooth:
@@ -74,9 +78,9 @@ def cyl(u, v, z0, z1, r, col, r2=None, seg=28, glow=0, axis='Z', bev=.02, h=0):
     else:  # along u
         loc, rot = ((z0 + z1) / 2, -v, u), (0, math.pi / 2, 0)
     if r2 is None:
-        bpy.ops.mesh.primitive_cylinder_add(vertices=seg, radius=r, depth=depth, location=loc, rotation=rot)
+        bpy.ops.mesh.primitive_cylinder_add(vertices=max(12, int(seg * RES)), radius=r, depth=depth, location=loc, rotation=rot)
     else:
-        bpy.ops.mesh.primitive_cone_add(vertices=seg, radius1=r, radius2=r2, depth=depth, location=loc, rotation=rot)
+        bpy.ops.mesh.primitive_cone_add(vertices=max(12, int(seg * RES)), radius1=r, radius2=r2, depth=depth, location=loc, rotation=rot)
     o = bpy.context.object
     o = _fin(o, col, glow, min(bev, r * .3, depth * .3) if bev else 0)
     for p in o.data.polygons:
@@ -85,15 +89,68 @@ def cyl(u, v, z0, z1, r, col, r2=None, seg=28, glow=0, axis='Z', bev=.02, h=0):
 
 
 def sph(u, v, z, r, col, sc=(1, 1, 1), glow=0, rot=(0, 0, 0), seg=24):
-    bpy.ops.mesh.primitive_uv_sphere_add(segments=seg, ring_count=seg // 2, radius=r, location=(u, -v, z), rotation=rot)
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=int(seg * RES), ring_count=int(seg * RES) // 2, radius=r, location=(u, -v, z), rotation=rot)
     o = bpy.context.object
     o.scale = sc
     return _fin(o, col, glow, 0, smooth=True)
 
 
 def tor(u, v, z, R, r, col, rot=(0, 0, 0), glow=0, arc=None):
-    bpy.ops.mesh.primitive_torus_add(major_radius=R, minor_radius=r, major_segments=36, minor_segments=10, location=(u, -v, z), rotation=rot)
+    bpy.ops.mesh.primitive_torus_add(major_radius=R, minor_radius=r, major_segments=int(36 * RES), minor_segments=int(10 * RES), location=(u, -v, z), rotation=rot)
     return _fin(bpy.context.object, col, glow, 0, smooth=True)
+
+
+
+def rod(p0, p1, r, col, seg=16, glow=0):
+    """Cylinder between two (u, v, z) points."""
+    from mathutils import Vector
+    a = Vector((p0[0], -p0[1], p0[2])); b = Vector((p1[0], -p1[1], p1[2]))
+    d = b - a
+    bpy.ops.mesh.primitive_cylinder_add(vertices=max(12, int(seg * RES)), radius=r, depth=d.length, location=(a + b) / 2)
+    o = bpy.context.object
+    o.rotation_mode = 'QUATERNION'
+    o.rotation_quaternion = d.to_track_quat('Z', 'Y')
+    o = _fin(o, col, glow, 0)
+    for p in o.data.polygons:
+        p.use_smooth = len(p.vertices) == 4
+    return o
+
+
+def slab(pts, v0, v1, col, bev=.03, ox=0, oz=0, sc=1, glow=0, samples=10):
+    """Closed Catmull-Rom outline in the (u, z) plane, extruded from v0 to v1 toward the front."""
+    import bmesh
+    n = len(pts)
+    out = []
+    for i in range(n):
+        p0, p1, p2, p3 = pts[i - 1], pts[i], pts[(i + 1) % n], pts[(i + 2) % n]
+        for k in range(samples):
+            t = k / samples
+            t2, t3 = t * t, t * t * t
+            out.append(tuple(.5 * ((2 * p1[j]) + (-p0[j] + p2[j]) * t + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t2 + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * t3) for j in (0, 1)))
+    me = bpy.data.meshes.new('slab')
+    bm = bmesh.new()
+    back = [bm.verts.new((ox + x * sc, -v0, oz + z * sc)) for x, z in out]
+    front = [bm.verts.new((ox + x * sc, -v1, oz + z * sc)) for x, z in out]
+    bm.faces.new(back[::-1])
+    bm.faces.new(front)
+    m = len(out)
+    for i in range(m):
+        bm.faces.new((back[i], back[(i + 1) % m], front[(i + 1) % m], front[i]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(me)
+    bm.free()
+    o = bpy.data.objects.new('slab', me)
+    bpy.context.collection.objects.link(o)
+    for p in o.data.polygons:
+        p.use_smooth = len(p.vertices) == 4
+    md = None
+    if bev:
+        md = o.modifiers.new('bev', 'BEVEL'); md.width = bev; md.segments = 4; md.limit_method = 'ANGLE'; md.angle_limit = math.radians(40); md.harden_normals = True
+        with bpy.context.temp_override(object=o, active_object=o):
+            bpy.ops.object.modifier_apply(modifier=md.name)
+    o.data.materials.append(mat(col, glow))
+    PARTS.append(o)
+    return o
 
 
 def finish(name):
@@ -187,15 +244,14 @@ finish('rakbuku')
 box(0, 2.2, 1.05, 2, 0, 2, '#3a3a3a', .14)
 box(.3, 1.9, .15, 1.1, .2, 1.8, '#2e2e2e', .25)
 box(.14, 1.66, 1.96, 2.02, .18, 1.8, '#1f1f1f', .05)
-sph(.9, 2.0, .99, .7, '#5a8fb8', sc=(1.05, .08, .78), glow=.9)
+box(.24, 1.56, 1.96, 2.05, .27, 1.72, '#5a8fb8', .2, glow=.9)  # rounded-rectangle CRT glass
 for z in (1.3, 1.0, .7):
     cyl(1.93, 2.0, 0, .06, .07, '#c8302a' if z == 1.3 else '#111', axis='Y', seg=12)
     PARTS[-1].location.z = z
-cyl(1.1, .8, 2, 2.15, .16, '#2a2a2a', seg=12)
+cyl(1.1, 1.5, 2, 2.12, .18, '#2a2a2a', seg=24)
 for a in (-.45, .45):
-    cyl(1.1, .8, 2.1, 3.1, .025, '#9a9aa8', seg=8)
-    o = PARTS[-1]
-    o.rotation_euler = (0, a, 0)
+    rod((1.1, 1.5, 2.1), (1.1 + math.sin(a) * 1.0, 1.4, 2.1 + math.cos(a) * 1.0), .02, '#9a9aa8')
+    sph(1.1 + math.sin(a) * 1.0, 1.4, 2.1 + math.cos(a) * 1.0, .04, '#9a9aa8')
 finish('tv')
 
 # komputer [2.6, 2.8, 2.6]: beige CRT monitor + keyboard + mouse
@@ -246,18 +302,36 @@ for i, col in enumerate(('#d23b2b', '#2f5fa8', '#e2c44c')):
     box(.1 + i * .03, .9, .68, .72, i * .16 + .03, i * .16 + .11, col, .005, rot=(0, 0, (i - 1) * .12))
 finish('kaset')
 
-# gitar [1.2, .5, 4.6]: electric guitar on a stand
-sph(.6, .25, .8, .55, '#c8452f', sc=(1, .26, 1))
-sph(.6, .25, 1.45, .42, '#c8452f', sc=(1, .26, 1))
-sph(.6, .37, 1.05, .32, '#f4f0e2', sc=(1, .08, 1.3))
-box(.5, .7, .15, .32, 1.7, 4.2, '#5a3a22', .03)
-for z in (2.0, 2.4, 2.8, 3.2, 3.6, 4.0):
-    box(.5, .7, .31, .33, z, z + .02, '#c9c9c9', 0)
-box(.42, .78, .17, .3, 4.15, 4.6, '#2a1a10', .05)
-for z in (1.05, 1.3):
-    box(.38, .82, .33, .36, z, z + .08, '#1d1d1d', .01)
-for u in (.2, 1.0):
-    cyl(u, .25, 0, .45, .04, '#333', seg=8)
+# gitar [1.2, .5, 4.6]: offset double-cutaway electric guitar on an A-frame stand
+BODY = [(0, 0), (.33, .03), (.5, .18), (.55, .42), (.43, .63), (.41, .78), (.49, .96), (.52, 1.16), (.43, 1.26), (.31, 1.14), (.17, 1.0), (.07, 1.02),
+        (-.07, 1.02), (-.17, 1.05), (-.31, 1.23), (-.44, 1.3), (-.5, 1.13), (-.42, .93), (-.4, .76), (-.5, .55), (-.55, .3), (-.43, .08), (-.2, 0)]
+slab(BODY, .14, .36, '#c8452f', bev=.05, ox=.6, oz=.35)
+GUARD = [(.05, .1), (.3, .2), (.38, .45), (.3, .62), (.3, .8), (.36, .98), (.18, .98), (.07, .9), (-.07, .9), (-.2, 1.0), (-.33, 1.06), (-.3, .8), (-.32, .55), (-.24, .25)]
+slab(GUARD, .36, .375, '#f4f0e2', bev=.008, ox=.6, oz=.35)
+for z in (.82, 1.02, 1.2):
+    box(.47, .73, .37, .395, z, z + .07, '#f8f4ea', .015)
+    for k in range(6):
+        cyl(.5 + k * .042, .39, 0, .012, .01, '#9a9a9a', axis='Y', seg=8, h=z + .035, bev=0)
+box(.46, .74, .36, .4, .58, .7, '#c9c9c9', .02)                              # bridge
+for k, z in enumerate((.62, .48, .4)):
+    cyl(.92 - k * .03, .37, 0, .06, .045, '#e6e6e6', axis='Y', seg=16, h=z + .2)  # knobs
+box(.52, .68, .17, .34, 1.32, 4.0, '#6b3e1e', .025)                           # neck
+box(.53, .67, .34, .37, 1.4, 4.0, '#2a1a10', .01)                             # fretboard
+for i in range(20):
+    z = 1.45 + (4.0 - 1.45) * (1 - .94 ** i) / (1 - .94 ** 20)
+    box(.53, .67, .365, .375, z, z + .012, '#d8d8d8', 0)
+for z in (2.0, 2.45, 2.9, 3.3):
+    cyl(.6, .375, 0, .006, .018, '#f4f0e2', axis='Y', seg=10, h=z, bev=0)
+HEAD = [(-.08, 0), (.08, 0), (.12, .2), (.2, .38), (.16, .48), (.0, .46), (-.1, .3)]
+slab(HEAD, .2, .32, '#c8452f', bev=.02, ox=.6, oz=3.98)
+for k in range(6):
+    cyl(.73 + (k % 2) * .0, .28, 0, .12, .025, '#d0d0d0', axis='Y', seg=10, h=4.04 + k * .065, bev=0)
+    PARTS[-1].location.x = .7 + k * .012
+for x0, x1 in ((.15, .55), (1.05, .65)):                                      # A-frame stand
+    rod((x0, .1, 0), (x1, .25, 1.0), .03, '#2a2a2a')
+    rod((x0, .45, 0), (x1, .25, 1.0), .03, '#2a2a2a')
+rod((.3, .25, .3), (.9, .25, .3), .035, '#2a2a2a')
+rod((.6, .1, 1.3), (.6, .1, 3.3), .025, '#2a2a2a')
 finish('gitar')
 
 # drum [1.4, 1.4, 1.6]: snare on a stand with sticks
@@ -332,15 +406,20 @@ for i in range(16):
     box(.1 + i * .37, .14 + i * .37, 4, 4.12, 0, .02, '#f1e3a4', 0)
 finish('karpet')
 
-# lampu [1, 1, 2.2]: desk lamp
-cyl(.5, .5, 0, .12, .38, '#2a2a2a', seg=24)
-cyl(.5, .5, .1, 1.35, .04, '#3a3a3a', seg=10)
-PARTS[-1].rotation_euler = (.25, 0, 0)
-cyl(.5, .75, 1.3, 1.9, .04, '#3a3a3a', seg=10)
-PARTS[-1].rotation_euler = (-.6, 0, 0)
-cyl(.5, .75, 1.55, 2.05, .4, '#2f8f45', r2=.14, seg=24)
-PARTS[-1].rotation_euler = (-.5, 0, 0)
-sph(.5, .85, 1.62, .13, '#fff3c4', glow=4)
+# lampu [1, 1, 2.2]: anglepoise desk lamp
+cyl(.5, .45, 0, .1, .36, '#1f5f3a', seg=32, bev=.03)
+cyl(.5, .45, .1, .16, .12, '#2a2a2a', seg=20)
+B0, E, H = (.5, .45, .16), (.5, .2, 1.25), (.5, .72, 1.8)
+for du in (-.05, .05):
+    rod((B0[0] + du, B0[1], B0[2]), (E[0] + du, E[1], E[2]), .022, '#2f7a4a')
+    rod((E[0] + du, E[1], E[2]), (H[0] + du, H[1], H[2]), .022, '#2f7a4a')
+rod((.42, .32, .7), (.42, .28, 1.0), .008, '#bbbbbb')                       # spring
+for p in (B0, E, H):
+    cyl(p[0], p[1], 0, .14, .055, '#2a2a2a', axis='X', seg=16) if False else sph(p[0], p[1], p[2], .06, '#2a2a2a')
+cyl(.5, .85, 1.5, 1.92, .36, '#1f5f3a', r2=.13, seg=32, bev=.02)
+PARTS[-1].rotation_euler = (-.75, 0, 0)
+PARTS[-1].location = (.5, -.88, 1.7)
+sph(.5, .95, 1.58, .12, '#fff3c4', glow=4)
 finish('lampu')
 
 # lava [.6, .6, 2.2]: lava lamp
