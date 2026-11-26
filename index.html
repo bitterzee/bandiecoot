@@ -3539,7 +3539,11 @@ function weekRange(k){
   return `${f(mon)} – ${f(mon+6*864e5)}`;
 }
 const qzName=()=>ME&&ME.name||'Aku';
-const QZ_URL='https://bandiecoot.vercel.app/#kuis';
+const QZ_URL='https://bandiecoot.vercel.app/#kuis', QZ_SHORT='bandiecoot.vercel.app/#kuis';
+// the weekly ranking board as plain WhatsApp text, with the short link under it
+function qzBoardText(wk){ const Q=S.quiz[wk], b=qzBoard(wk), mm=qzMandan(b);
+  const rows=b.map((x,i)=>`${i===0?'👑':(i+1)+'.'} ${x.name} ${x.right}/10 · ${x.pts}${x.right===10?' 🏅':''}${mm(x)?' 🤝':''}`);
+  return `📚 Papan nilai · ${Q.subject}\n${rows.length?rows.join('\n'):'Belum ada yang ngerjain'}\n${QZ_SHORT}`; }
 // WhatsApp share: wa.me opens the app on phones and WhatsApp Web on a computer, with the text ready to send
 const qzWaBtn=(text,label)=>`<a class="btnlike waBtn" href="https://wa.me/?text=${encodeURIComponent(text)}" target="_blank" rel="noopener"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21l1.7-4.9A8.5 8.5 0 1 1 8 19.6z"/><path d="M9 9.5c.3 2 2.2 4 4.5 4.6l1-1.2 2 .9c-.2 1.3-1.4 2-2.6 1.8C10.6 15 8.3 12.7 7.8 9.9c-.2-1.2.5-2.3 1.8-2.6l.9 2z"/></svg>${esc(label)}</a>`;
 const qzId=(wk,n)=>`${wk}~${n}`;
@@ -3570,7 +3574,7 @@ function renderKuis(){
     h+=`<div style="display:flex;align-items:center;gap:14px;margin:4px 0 6px"><div class="qzBig">${r}/10</div><div><b>${p} poin</b><br><span class="hint" style="margin:0">${['Remedial dulu ya.','Remedial dulu ya.','Remedial dulu ya.','Masih bisa dikatrol.','Lumayan, naik kelas.','Lumayan, naik kelas.','Lumayan, naik kelas.','Ranking 10 besar.','Juara kelas!','Juara umum!','Juara umum!'][r]}</span></div></div>
       ${(()=>{ const twins=qzBoard(wk).filter(x=>x.right===r&&x.name!==me).map(x=>x.name); return twins.length?`<div class="akakBig" style="background:linear-gradient(135deg,#9ff0e0,#3cb8a0);font-size:18px">🤝 MANDAN AWARD 🤝<div style="font-family:inherit;font-size:12px;font-weight:400">Skornya sama-sama ${r}/10 dengan ${twins.map(esc).join(', ')}.</div></div>`:''; })()}
       ${r===10?'<div class="akakBig">🏅 AKAK AWARD 🏅<div style="font-family:inherit;font-size:12px;font-weight:400">Sempurna 10/10. Kamu akak minggu ini.</div></div>':''}
-      <div class="row" style="gap:8px;flex-wrap:wrap"><button class="small" id="qzMyRev">Lihat pembahasan</button>${qzWaBtn(`🧪 Kuis Mingguan Bandiecoot: ${Q.subject}\nAku dapat ${r}/10 (${p} poin).${r===10?' 🏅 AKAK AWARD!':''} Berani lawan? 😏\n${QZ_URL}`,'Pamer skor ke WA')}</div>`;
+      <div class="row" style="gap:8px;flex-wrap:wrap"><button class="small" id="qzMyRev">Lihat pembahasan</button>${qzWaBtn(qzBoardText(wk),'Pamer skor ke WA')}</div>`;
   }
   const board=qzBoard(wk), played=new Set(board.map(b=>b.name)), isMandan=qzMandan(board);
   h+=`<div class="qzH3">Papan nilai minggu ini</div><table class="qzTbl">${board.map((b,i)=>`<tr class="${b.name===me?'me':''}"><td>${i===0?'👑':i+1+'.'} ${esc(b.name)}${b.right===10?'<span class="akak">🏅 AKAK AWARD</span>':''}${isMandan(b)?'<span class="akak mandan">🤝 MANDAN</span>':''}</td><td>${b.right}/10</td><td>${b.pts}</td></tr>`).join('')}
@@ -3586,9 +3590,7 @@ function renderKuis(){
   }
   if(Q){
     const lagi=BAND.filter(n=>!played.has(n)&&n!==me);
-    const top=board.slice(0,3).map((b,i)=>`${['🥇','🥈','🥉'][i]} ${b.name} ${b.right}/10`).join('\n');
-    const txt=`📚 Kuis Mingguan Bandiecoot · ${Q.subject} (${weekRange(wk)})\n${top?top+'\n':''}${lagi.length?`Belum ngerjain: ${lagi.join(', ')} 👀\n`:''}${QZ_URL}`;
-    h+=`<div class="row" style="margin:4px 0 6px">${qzWaBtn(txt,lagi.length?'Colek yang belum di WA':'Kirim papan nilai ke WA')}</div>`;
+    h+=`<div class="row" style="margin:4px 0 6px">${qzWaBtn(qzBoardText(wk),lagi.length?'Colek yang belum di WA':'Kirim papan nilai ke WA')}</div>`;
   }
   if(QZ.msg) h+=`<div class="msg">${esc(QZ.msg)}</div>`;
   box.innerHTML=h;
